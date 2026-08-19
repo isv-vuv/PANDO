@@ -1,0 +1,9 @@
+requests
+geopy
+numpy
+pandas
+pyproj
+shapely
+geopandas
+pycountry
+osmium

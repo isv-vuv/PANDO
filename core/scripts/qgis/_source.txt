@@ -1,0 +1,7 @@
+Source & Methodology (Intra-municipal centralities / Model 5):
+
+Data Basis & Methodology:
+Wohnsdorf, Yannik (2026): "Zentrale Orte und innergemeindliche Zentralitäten in Deutschland für die Anwendung der RIN", DaRUS, V1, https://doi.org/10.18419/DARUS-5596
+
+Custom Application & Extension (Model 5):
+The methodology for intra-municipal centralities is based on the work by Wohnsdorf. Building upon this foundation, the QGIS model (Model 5 / Model5_CentralityMapper) was adapted and extended to incorporate the centrality analysis (local maxima analysis of OSM POIs to evaluate distance and intensity thresholds for centralities of levels 3 and 4) into the spatial data synthesis workflow prior to exporting to PTV Visum.

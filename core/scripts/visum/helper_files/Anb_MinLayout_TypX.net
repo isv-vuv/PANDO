@@ -1,0 +1,13 @@
+$VISION
+* Universität Stuttgart Fakultät 2 Bau+Umweltingenieurwissenschaften Stuttgart
+* 05.07.22
+* 
+* Tabelle: Versionsblock
+* 
+$VERSION:VERSNR;FILETYPE;LANGUAGE;UNIT
+12.000;Net;ENG;KM
+
+* 
+* Tabelle: Anbindungen
+* 
+$CONNECTOR:ZONENO;NODENO;DIRECTION;TYPENO;TSYSSET;ANBINDUNG_VFS1;ANBINDUNG_VFS2;ANBINDUNG_VFS3;ANBINDUNG_VFS4;ANBINDUNG_VFS5;ANBINDUNG_VFS8_9

@@ -1,0 +1,167 @@
+$VISION
+* PTV GROUP
+* 22.12.15
+* 
+* Table: Version block
+* 
+$VERSION:VERSNR;FILETYPE;LANGUAGE;UNIT
+8.200;Net;ENG;KM
+
+* 
+* Table: Notepad lines
+* 
+$INFO:INDEX;TEXT
+1;This network was build using data from OpenStreetMap
+2;© OpenStreetMap contributors
+
+* 
+* Table: Network
+* 
+$NETWORK:NETVERSIONID;NETVERSIONNAME;SCALE;LEFTHANDTRAFFIC;COORDDECPLACES;DECPLACESOTHER;CURRENCYDECPLACES;LONGLENGTHDECPLACES;SHORTLENGTHDECPLACES;TURNT0DECPLACES;SPEEDDECPLACES;MAXFLOATPRECISIONFILEEXPORT;CONCATMAXLEN;CONCATSEPARATOR;CREATEMODEDSEG;PROJECTIONDEFINITION;TURNTYPEDEFAULT;LINKORIENTATIONCALCULATIONTYPE
+1.210;;1.000;0;10;3;2;3;2;0;0;0;255;,;1;GEOGCS["GCS_WGS_1984",DATUM["D_WGS_1984",SPHEROID["WGS_1984",6378137,298.257223563]],PRIMEM["Greenwich",0],UNIT["Degree",0.017453292519943295]];ONLYFROMANGLE;FOUR
+
+* 
+* Table: Transport systems
+* 
+$TSYS:CODE;NAME;TYPE;PCU
+BIKE;Bike;PrT;1.000
+BUS;Bus;PuT;1.000
+CAR;Car;PrT;1.000
+HGV;HGV;PrT;2.000
+LR;Light Rail;PuT;1.000
+PED;Pedestrians;PrT;1.000
+PUTW;PuT Walk;PuTWalk;1.000
+RAIL;Rail;PuT;1.000
+SUB;Subway;PuT;1.000
+TRAM;Tram;PuT;1.000
+
+* 
+* Table: Modes
+* 
+$MODE:CODE;NAME;TSYSSET;INTERCHANGEABLE
+BIKE;Bike;BIKE;1
+C;Car;CAR;0
+H;HGV;HGV;0
+PED;Pedestrians;PED;1
+PuT;PuT;BUS,LR,PUTW,RAIL,SUB,TRAM;1
+
+* 
+* Table: Demand segments
+* 
+$DEMANDSEGMENT:CODE;NAME;MODE
+BIKE;Bike;BIKE
+PED;Pedestrians;PED
+C;Car;C
+H;Hgv;H
+
+* 
+* Table: Directions
+* 
+$DIRECTION:NO;CODE;NAME
+1;>;up
+2;<;down
+
+* 
+* Table: Link types
+* 
+$LINKTYPE:NO;NAME;STRICT;RANK;TSYSSET;NUMLANES;CAPPRT;V0PRT;VMINPRT;VMAX_PRTSYS(BIKE);VMAX_PRTSYS(CAR);VMAX_PRTSYS(HGV);VMAX_PRTSYS(PED);VDEF_PUTSYS(BUS);VDEF_PUTSYS(LR);VDEF_PUTSYS(PUTW);VDEF_PUTSYS(RAIL);VDEF_PUTSYS(SUB);VDEF_PUTSYS(TRAM)
+0;Blocked Oneway;0;1;BIKE,PED;0;0;0km/h;0km/h;20km/h;100km/h;1km/h;4km/h;50km/h;50km/h;2km/h;50km/h;50km/h;50km/h
+1;Construction;0;1;;0;0;0km/h;0km/h;20km/h;100km/h;1km/h;4km/h;50km/h;50km/h;2km/h;50km/h;50km/h;50km/h
+2;NA;0;1;BIKE,PED;0;0;0km/h;0km/h;20km/h;100km/h;1km/h;4km/h;50km/h;50km/h;2km/h;50km/h;50km/h;50km/h
+3;NA;0;1;BIKE,PED;0;0;0km/h;0km/h;20km/h;100km/h;1km/h;4km/h;50km/h;50km/h;2km/h;50km/h;50km/h;50km/h
+4;NA;0;1;BIKE,PED;0;0;0km/h;0km/h;20km/h;100km/h;1km/h;4km/h;50km/h;50km/h;2km/h;50km/h;50km/h;50km/h
+5;NA;0;1;BIKE,PED;0;0;0km/h;0km/h;20km/h;100km/h;1km/h;4km/h;50km/h;50km/h;3km/h;50km/h;50km/h;50km/h
+6;NA;0;1;BIKE,PED;0;0;0km/h;0km/h;20km/h;100km/h;1km/h;4km/h;50km/h;50km/h;2km/h;50km/h;50km/h;50km/h
+7;NA;0;1;BIKE,PED;0;0;0km/h;0km/h;20km/h;100km/h;1km/h;4km/h;50km/h;50km/h;3km/h;50km/h;50km/h;50km/h
+8;NA;0;1;BIKE,PED;0;0;0km/h;0km/h;20km/h;100km/h;1km/h;4km/h;50km/h;50km/h;3km/h;50km/h;50km/h;50km/h
+9;NA;0;1;BIKE,PED;0;0;0km/h;0km/h;20km/h;100km/h;1km/h;4km/h;50km/h;50km/h;2km/h;50km/h;50km/h;50km/h
+10;Motorway, 1 lane;0;1;CAR,HGV;1;1500;130km/h;0km/h;20km/h;130km/h;100km/h;4km/h;50km/h;50km/h;4km/h;50km/h;50km/h;50km/h
+11;Motorway, 2 lanes;0;1;CAR,HGV;2;3000;130km/h;0km/h;20km/h;130km/h;100km/h;4km/h;50km/h;50km/h;4km/h;50km/h;50km/h;50km/h
+12;Motorway, 3 lanes;0;1;CAR,HGV;3;4500;130km/h;0km/h;20km/h;130km/h;100km/h;4km/h;50km/h;50km/h;4km/h;50km/h;50km/h;50km/h
+13;Motorway, 4 lanes;0;1;CAR,HGV;4;6000;130km/h;0km/h;20km/h;130km/h;100km/h;4km/h;50km/h;50km/h;4km/h;50km/h;50km/h;50km/h
+14;NA;0;1;BIKE,CAR,HGV,PED;0;0;0km/h;0km/h;20km/h;110km/h;80km/h;4km/h;50km/h;50km/h;4km/h;50km/h;50km/h;50km/h
+15;NA;0;1;BIKE,CAR,HGV,PED;0;0;0km/h;0km/h;20km/h;140km/h;95km/h;4km/h;50km/h;50km/h;4km/h;50km/h;50km/h;50km/h
+16;NA;0;1;BIKE,CAR,HGV,PED;0;0;0km/h;0km/h;20km/h;125km/h;90km/h;4km/h;50km/h;50km/h;4km/h;50km/h;50km/h;50km/h
+17;NA;0;1;BIKE,CAR,HGV,PED;0;0;0km/h;0km/h;20km/h;110km/h;80km/h;4km/h;50km/h;50km/h;4km/h;50km/h;50km/h;50km/h
+18;Motorway_link, 1 lane;0;1;CAR,HGV;0;1100;80km/h;0km/h;20km/h;80km/h;50km/h;4km/h;50km/h;50km/h;4km/h;50km/h;50km/h;50km/h
+19;Motorway_link, 2 lanes;0;1;CAR,HGV;0;1200;80km/h;0km/h;20km/h;80km/h;50km/h;4km/h;50km/h;50km/h;4km/h;50km/h;50km/h;50km/h
+20;Trunk, 1 lane;0;1;BUS,CAR,HGV;1;1500;100km/h;0km/h;20km/h;100km/h;85km/h;4km/h;37km/h;50km/h;4km/h;50km/h;50km/h;50km/h
+21;Trunk, 2 lanes;0;1;BUS,CAR,HGV;2;3000;100km/h;0km/h;20km/h;100km/h;80km/h;4km/h;70km/h;50km/h;4km/h;50km/h;50km/h;50km/h
+22;Trunk, 3 lanes;0;1;BUS,CAR,HGV;3;4500;100km/h;0km/h;20km/h;100km/h;75km/h;4km/h;60km/h;50km/h;4km/h;50km/h;50km/h;50km/h
+23;NA;0;1;BIKE,BUS,CAR,HGV,PED;0;0;0km/h;0km/h;20km/h;0km/h;0km/h;4km/h;70km/h;50km/h;4km/h;50km/h;50km/h;50km/h
+24;NA;0;1;BIKE,BUS,CAR,HGV,PED;0;0;0km/h;0km/h;20km/h;0km/h;0km/h;4km/h;60km/h;50km/h;4km/h;50km/h;50km/h;50km/h
+25;NA;0;1;BIKE,BUS,CAR,HGV,PED;0;0;0km/h;0km/h;20km/h;0km/h;0km/h;4km/h;50km/h;50km/h;4km/h;50km/h;50km/h;50km/h
+26;NA;0;1;BIKE,BUS,CAR,HGV,PED;0;0;0km/h;0km/h;20km/h;0km/h;0km/h;4km/h;50km/h;50km/h;4km/h;50km/h;50km/h;50km/h
+27;NA;0;1;BIKE,BUS,CAR,HGV,PED;0;0;0km/h;0km/h;20km/h;0km/h;0km/h;4km/h;70km/h;50km/h;4km/h;50km/h;50km/h;50km/h
+28;Trunk_link, 1 lane;0;1;BUS,CAR,HGV;1;1100;80km/h;0km/h;20km/h;80km/h;70km/h;4km/h;60km/h;50km/h;4km/h;50km/h;50km/h;50km/h
+29;Trunk_link, 2 lanes;0;1;BUS,CAR,HGV;2;1200;80km/h;0km/h;20km/h;80km/h;60km/h;4km/h;50km/h;50km/h;4km/h;50km/h;50km/h;50km/h
+30;Primary, 1 lane;0;1;BIKE,BUS,CAR,HGV,PED,PUTW;1;1300;100km/h;0km/h;20km/h;70km/h;60km/h;4km/h;45km/h;50km/h;3km/h;50km/h;50km/h;50km/h
+31;Primary, 2 lanes;0;1;BIKE,BUS,CAR,HGV,PED,PUTW;2;2600;100km/h;0km/h;20km/h;60km/h;60km/h;4km/h;40km/h;50km/h;3km/h;50km/h;50km/h;50km/h
+32;Primary, 3 lanes;0;1;BIKE,BUS,CAR,HGV,PED,PUTW;3;3900;100km/h;0km/h;20km/h;55km/h;55km/h;4km/h;35km/h;50km/h;3km/h;50km/h;50km/h;50km/h
+33;NA;0;1;BIKE,BUS,CAR,HGV,PED,PUTW;2;0;0km/h;0km/h;20km/h;50km/h;50km/h;4km/h;30km/h;50km/h;3km/h;50km/h;50km/h;50km/h
+34;NA;0;1;BIKE,BUS,CAR,HGV,PED,PUTW;2;0;0km/h;0km/h;20km/h;50km/h;50km/h;4km/h;35km/h;50km/h;3km/h;50km/h;50km/h;50km/h
+35;NA;0;1;BIKE,BUS,CAR,HGV,PED,PUTW;2;0;0km/h;0km/h;20km/h;45km/h;45km/h;4km/h;30km/h;50km/h;3km/h;50km/h;50km/h;50km/h
+36;NA;0;1;BIKE,BUS,CAR,HGV,PED,PUTW;1;0;0km/h;0km/h;20km/h;55km/h;50km/h;4km/h;40km/h;50km/h;3km/h;50km/h;50km/h;50km/h
+37;NA;0;1;BIKE,BUS,CAR,HGV,PED,PUTW;1;0;0km/h;0km/h;20km/h;50km/h;50km/h;4km/h;35km/h;50km/h;3km/h;50km/h;50km/h;50km/h
+38;NA;0;1;BIKE,BUS,CAR,HGV,PED,PUTW;1;0;0km/h;0km/h;20km/h;45km/h;40km/h;4km/h;30km/h;50km/h;3km/h;50km/h;50km/h;50km/h
+39;Primary_link;0;1;BIKE,BUS,CAR,HGV,PED,PUTW;1;1000;40km/h;0km/h;20km/h;40km/h;30km/h;4km/h;25km/h;50km/h;3km/h;50km/h;50km/h;50km/h
+40;Secondary, 1 lane;0;1;BIKE,BUS,CAR,HGV,PED;1;1000;80km/h;0km/h;20km/h;110km/h;70km/h;4km/h;50km/h;50km/h;4km/h;50km/h;50km/h;50km/h
+41;Secondary, 2 lanes;0;1;BIKE,BUS,CAR,HGV,PED;2;2000;80km/h;0km/h;20km/h;95km/h;65km/h;4km/h;50km/h;50km/h;4km/h;50km/h;50km/h;50km/h
+42;NA;0;1;BIKE,BUS,CAR,HGV,PED;0;0;0km/h;0km/h;20km/h;80km/h;55km/h;4km/h;50km/h;50km/h;4km/h;50km/h;50km/h;50km/h
+43;NA;0;1;BIKE,BUS,CAR,HGV,PED;0;0;0km/h;0km/h;20km/h;65km/h;45km/h;4km/h;50km/h;50km/h;4km/h;50km/h;50km/h;50km/h
+44;NA;0;1;BIKE,BUS,CAR,HGV,PED;0;0;0km/h;0km/h;20km/h;50km/h;30km/h;4km/h;50km/h;50km/h;4km/h;50km/h;50km/h;50km/h
+45;NA;0;1;BIKE,BUS,CAR,HGV,PED;0;0;0km/h;0km/h;20km/h;80km/h;80km/h;4km/h;50km/h;50km/h;4km/h;50km/h;50km/h;50km/h
+46;NA;0;1;BIKE,BUS,CAR,HGV,PED;0;0;0km/h;0km/h;20km/h;80km/h;80km/h;4km/h;50km/h;50km/h;4km/h;50km/h;50km/h;50km/h
+47;NA;0;1;BIKE,BUS,CAR,HGV,PED;0;0;0km/h;0km/h;20km/h;80km/h;80km/h;4km/h;50km/h;50km/h;4km/h;50km/h;50km/h;50km/h
+48;NA;0;1;BIKE,BUS,CAR,HGV,PED;0;0;0km/h;0km/h;20km/h;15km/h;15km/h;4km/h;15km/h;50km/h;3km/h;50km/h;50km/h;50km/h
+49;Secondary_link;0;1;BIKE,BUS,CAR,HGV,PED;1;1000;20km/h;0km/h;20km/h;15km/h;15km/h;4km/h;50km/h;50km/h;4km/h;50km/h;50km/h;50km/h
+50;Tertiary, 1 lane;0;1;BIKE,BUS,CAR,HGV,PED;1;800;70km/h;0km/h;20km/h;110km/h;85km/h;4km/h;50km/h;50km/h;3km/h;50km/h;50km/h;50km/h
+51;Tertiary, 2 lanes;0;1;BIKE,BUS,CAR,HGV,PED;2;1600;70km/h;0km/h;20km/h;110km/h;85km/h;4km/h;50km/h;50km/h;3km/h;50km/h;50km/h;50km/h
+52;NA;0;1;BIKE,BUS,CAR,HGV,PED;0;0;0km/h;0km/h;20km/h;80km/h;70km/h;4km/h;50km/h;50km/h;3km/h;50km/h;50km/h;50km/h
+53;NA;0;1;BIKE,BUS,CAR,HGV,PED;0;0;0km/h;0km/h;20km/h;65km/h;55km/h;4km/h;50km/h;50km/h;3km/h;50km/h;50km/h;50km/h
+54;NA;0;1;BIKE,BUS,CAR,HGV,PED;0;0;0km/h;0km/h;20km/h;110km/h;80km/h;4km/h;75km/h;50km/h;3km/h;50km/h;50km/h;50km/h
+55;NA;0;1;BIKE,BUS,CAR,HGV,PED;0;0;0km/h;0km/h;20km/h;95km/h;75km/h;4km/h;70km/h;50km/h;3km/h;50km/h;50km/h;50km/h
+56;NA;0;1;BIKE,BUS,CAR,HGV,PED;0;0;0km/h;0km/h;20km/h;80km/h;70km/h;4km/h;60km/h;50km/h;3km/h;50km/h;50km/h;50km/h
+57;NA;0;1;BIKE,BUS,CAR,HGV,PED;0;0;0km/h;0km/h;20km/h;65km/h;50km/h;4km/h;50km/h;50km/h;3km/h;50km/h;50km/h;50km/h
+58;NA;0;1;BIKE,BUS,CAR,HGV,PED;0;0;0km/h;0km/h;20km/h;50km/h;40km/h;4km/h;40km/h;50km/h;3km/h;50km/h;50km/h;50km/h
+59;Tertiary_link;0;1;BIKE,BUS,CAR,HGV,PED;1;800;20km/h;0km/h;20km/h;35km/h;20km/h;4km/h;30km/h;50km/h;3km/h;50km/h;50km/h;50km/h
+60;Unclassified, 1 lane;0;1;BIKE,BUS,CAR,HGV,PED,PUTW;1;800;70km/h;0km/h;20km/h;70km/h;60km/h;4km/h;40km/h;50km/h;2km/h;50km/h;50km/h;50km/h
+61;NA;0;1;BIKE,BUS,CAR,HGV,PED,PUTW;0;0;0km/h;0km/h;20km/h;60km/h;55km/h;4km/h;40km/h;50km/h;2km/h;50km/h;50km/h;50km/h
+62;NA;0;1;BIKE,BUS,CAR,HGV,PED,PUTW;0;0;0km/h;0km/h;20km/h;55km/h;50km/h;4km/h;35km/h;50km/h;2km/h;50km/h;50km/h;50km/h
+63;NA;0;1;BIKE,BUS,CAR,HGV,PED,PUTW;0;0;0km/h;0km/h;20km/h;50km/h;45km/h;4km/h;35km/h;50km/h;2km/h;50km/h;50km/h;50km/h
+64;NA;0;1;BIKE,BUS,CAR,HGV,PED,PUTW;0;0;0km/h;0km/h;20km/h;50km/h;50km/h;4km/h;35km/h;50km/h;2km/h;50km/h;50km/h;50km/h
+65;NA;0;1;BIKE,BUS,CAR,HGV,PED,PUTW;0;0;0km/h;0km/h;20km/h;45km/h;45km/h;4km/h;30km/h;50km/h;2km/h;50km/h;50km/h;50km/h
+66;NA;0;1;BIKE,BUS,CAR,HGV,PED,PUTW;0;0;0km/h;0km/h;20km/h;55km/h;50km/h;4km/h;40km/h;50km/h;2km/h;50km/h;50km/h;50km/h
+67;NA;0;1;BIKE,BUS,CAR,HGV,PED,PUTW;0;0;0km/h;0km/h;20km/h;50km/h;45km/h;4km/h;35km/h;50km/h;2km/h;50km/h;50km/h;50km/h
+68;NA;0;1;BIKE,BUS,CAR,HGV,PED,PUTW;0;0;0km/h;0km/h;20km/h;45km/h;40km/h;4km/h;30km/h;50km/h;2km/h;50km/h;50km/h;50km/h
+69;NA;0;1;BIKE,BUS,CAR,HGV,PED,PUTW;0;0;0km/h;0km/h;20km/h;40km/h;30km/h;4km/h;25km/h;50km/h;2km/h;50km/h;50km/h;50km/h
+70;Residential;0;1;BIKE,BUS,CAR,HGV,PED,PUTW;1;400;50km/h;0km/h;20km/h;50km/h;45km/h;4km/h;50km/h;50km/h;2km/h;50km/h;50km/h;50km/h
+71;Living_street;0;1;BIKE,BUS,CAR,HGV,PED,PUTW;1;200;30km/h;0km/h;20km/h;45km/h;45km/h;4km/h;50km/h;50km/h;2km/h;50km/h;50km/h;50km/h
+72;NA;0;1;BIKE,BUS,CAR,HGV,PED,PUTW;0;0;0km/h;0km/h;20km/h;50km/h;45km/h;4km/h;50km/h;50km/h;2km/h;50km/h;50km/h;50km/h
+73;NA;0;1;BIKE,BUS,CAR,HGV,PED,PUTW;0;0;0km/h;0km/h;20km/h;45km/h;45km/h;4km/h;50km/h;50km/h;2km/h;50km/h;50km/h;50km/h
+74;NA;0;1;BIKE,BUS,CAR,HGV,PED,PUTW;0;0;0km/h;0km/h;20km/h;50km/h;45km/h;4km/h;40km/h;50km/h;2km/h;50km/h;50km/h;50km/h
+75;Footway;0;1;BUS,PED,PUTW;1;9999;4km/h;0km/h;20km/h;45km/h;40km/h;4km/h;30km/h;50km/h;2km/h;50km/h;50km/h;50km/h
+76;Cycleway;0;1;BIKE,BUS,PED,PUTW;1;9999;20km/h;0km/h;20km/h;40km/h;35km/h;4km/h;30km/h;50km/h;2km/h;50km/h;50km/h;50km/h
+77;NA;0;1;BIKE,BUS,CAR,HGV,PED,PUTW;0;0;0km/h;0km/h;20km/h;35km/h;30km/h;4km/h;25km/h;50km/h;2km/h;50km/h;50km/h;50km/h
+78;NA;0;1;BIKE,BUS,CAR,HGV,PED,PUTW;0;0;0km/h;0km/h;20km/h;30km/h;20km/h;4km/h;20km/h;50km/h;2km/h;50km/h;50km/h;50km/h
+79;NA;0;1;BIKE,BUS,CAR,HGV,PED,PUTW;0;0;0km/h;0km/h;20km/h;50km/h;30km/h;4km/h;35km/h;50km/h;2km/h;50km/h;50km/h;50km/h
+80;General rail;0;1;LR,RAIL,SUB,TRAM;0;0;0km/h;0km/h;20km/h;100km/h;1km/h;4km/h;50km/h;50km/h;3km/h;50km/h;50km/h;50km/h
+81;Mainline rail;0;1;LR,RAIL;0;0;0km/h;0km/h;20km/h;100km/h;1km/h;4km/h;50km/h;50km/h;3km/h;50km/h;50km/h;50km/h
+82;Light rail;0;1;LR;0;0;0km/h;0km/h;20km/h;100km/h;1km/h;4km/h;50km/h;50km/h;3km/h;50km/h;50km/h;50km/h
+83;Subway;0;1;SUB;0;0;0km/h;0km/h;20km/h;100km/h;1km/h;4km/h;50km/h;50km/h;3km/h;50km/h;50km/h;50km/h
+84;Tram (separate tracks);0;1;TRAM;0;0;0km/h;0km/h;20km/h;100km/h;1km/h;4km/h;50km/h;50km/h;3km/h;50km/h;50km/h;50km/h
+85;NA;0;1;BIKE,CAR,HGV,PED,PUTW;0;0;0km/h;0km/h;20km/h;100km/h;1km/h;4km/h;50km/h;50km/h;3km/h;50km/h;50km/h;50km/h
+86;NA;0;1;BIKE,CAR,HGV,PED,PUTW;0;0;0km/h;0km/h;20km/h;100km/h;1km/h;4km/h;50km/h;50km/h;3km/h;50km/h;50km/h;50km/h
+87;NA;0;1;BIKE,CAR,HGV,PED,PUTW;0;0;0km/h;0km/h;20km/h;100km/h;1km/h;4km/h;50km/h;50km/h;3km/h;50km/h;50km/h;50km/h
+88;NA;0;1;BIKE,CAR,HGV,PED,PUTW;0;0;0km/h;0km/h;20km/h;100km/h;1km/h;4km/h;50km/h;50km/h;3km/h;50km/h;50km/h;50km/h
+89;NA;0;1;BIKE,CAR,HGV,PED,PUTW;0;0;0km/h;0km/h;20km/h;100km/h;1km/h;4km/h;50km/h;50km/h;3km/h;50km/h;50km/h;50km/h
+90;NA;0;1;BIKE,BUS,CAR,HGV,PED,PUTW;0;0;0km/h;0km/h;20km/h;5km/h;5km/h;4km/h;50km/h;50km/h;3km/h;50km/h;50km/h;50km/h
+91;NA;0;1;BIKE,BUS,CAR,HGV,PED,PUTW;0;0;0km/h;0km/h;20km/h;30km/h;30km/h;4km/h;50km/h;50km/h;3km/h;50km/h;50km/h;50km/h
+92;NA;0;1;BIKE,BUS,CAR,HGV,PED,PUTW;0;0;0km/h;0km/h;20km/h;10km/h;10km/h;4km/h;50km/h;50km/h;2km/h;50km/h;50km/h;50km/h
+93;NA;0;1;BIKE,BUS,CAR,HGV,PED,PUTW;0;0;0km/h;0km/h;20km/h;25km/h;25km/h;4km/h;50km/h;50km/h;3km/h;50km/h;50km/h;50km/h
+94;ferry;0;1;BIKE,BUS,CAR,HGV,PED,PUTW;1;100;5km/h;1km/h;5km/h;5km/h;5km/h;4km/h;50km/h;50km/h;3km/h;50km/h;50km/h;50km/h
+95;NA;0;1;BIKE,BUS,CAR,HGV,PED,PUTW;0;0;0km/h;0km/h;20km/h;5km/h;5km/h;4km/h;50km/h;50km/h;3km/h;50km/h;50km/h;50km/h
+96;NA;0;1;BIKE,BUS,CAR,HGV,PED,PUTW;0;0;0km/h;0km/h;20km/h;100km/h;50km/h;4km/h;50km/h;50km/h;3km/h;50km/h;50km/h;50km/h
+97;NA;0;1;BIKE,BUS,CAR,HGV,PED,PUTW;0;0;0km/h;0km/h;20km/h;100km/h;50km/h;4km/h;50km/h;50km/h;3km/h;50km/h;50km/h;50km/h
+98;NA;0;1;BIKE,BUS,CAR,HGV,PED,PUTW;0;0;0km/h;0km/h;20km/h;100km/h;50km/h;4km/h;50km/h;50km/h;3km/h;50km/h;50km/h;50km/h
+99;NA;0;1;BIKE,BUS,CAR,HGV,PED,PUTW;0;0;0km/h;0km/h;20km/h;100km/h;50km/h;4km/h;50km/h;50km/h;3km/h;50km/h;50km/h;50km/h

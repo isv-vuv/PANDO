@@ -1,0 +1,2 @@
+Converts road & PuT network with granular LinkTypes (10-84), lane counts, type-dependent impedance factors (Car/Bike/Ped), construction handling & custom UDAs (OSM_*). Customized for PANDO / Urban-Act. Based on PTV reference importer.
+## 20260811
