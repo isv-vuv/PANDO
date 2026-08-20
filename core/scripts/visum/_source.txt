@@ -1,0 +1,20 @@
+Access Node Deriver
+© ISV-VuV, University of Stuttgart (2026) MIT License
+https://www.isv.uni-stuttgart.de/vuv/tools/
+Terms: Open-source tool for automated derivation and determination of access nodes in transport networks. Free to use, modify, and redistribute under the terms of the MIT License.
+
+RIN-Tool
+© ISV-VuV, University of Stuttgart (2026) MIT License
+https://www.isv.uni-stuttgart.de/vuv/tools/
+Terms: Open-source tool for network analysis and evaluation of connection qualities according to the German guidelines for integrated network design (RIN). Free to use, modify, and redistribute under the terms of the MIT License.
+
+Luftlinientool
+© ISV-VuV, University of Stuttgart (2026) MIT License
+https://www.isv.uni-stuttgart.de/vuv/tools/
+Terms: Open-source tool for generating and analyzing direct line networks and distance relations in transport models. Free to use, modify, and redistribute under the terms of the MIT License.
+
+PTV Visum OpenStreetMap Importer (Import Configuration)
+© PTV Group (PTV Planung Transport Verkehr GmbH)
+https://www.ptvgroup.com/en/products/ptv-visum
+Terms: Component / configuration files of PTV Visum for importing OpenStreetMap data. All rights to the configuration scripts reserved by PTV Group.
+Contains mappings for OpenStreetMap data (© OpenStreetMap contributors).

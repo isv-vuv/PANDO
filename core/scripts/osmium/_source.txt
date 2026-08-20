@@ -1,0 +1,4 @@
+Osmium Tool
+© Jochen Topf (2026) GNU General Public License v3.0 (GPLv3)
+https://osmcode.org/osmium-tool/
+Terms: Open-source command-line tool for processing OpenStreetMap data. Free to use, modify, and redistribute under the terms of the GNU General Public License v3.0.

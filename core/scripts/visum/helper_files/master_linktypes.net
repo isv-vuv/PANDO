@@ -1,0 +1,946 @@
+$VISION
+* Universit‰t Stuttgart Fakult‰t 2 Bau+Umweltingenieurwissenschaften Stuttgart
+* 2025-09-04 09:59:16
+* 
+* Table: Version block
+* 
+$VERSION:VERSNR;FILETYPE;LANGUAGE;UNIT
+15;Net;ENG;KM
+
+* 
+* Table: User-defined attributes
+* 
+$USERATTDEF:OBJID;ATTID;CODE;NAME;VALUETYPE;MINVALUE;MAXVALUE;DEFAULTVALUE;DEFAULTSTRINGVALUE;COMMENT;MAXSTRINGLENGTH;NUMDECPLACES;DATASOURCETYPE;FORMULA;SCALEDBYLENGTH;CROSSSECTIONLOGIC;CSLIGNORECLOSED;SUBATTRS;CANBEEMPTY;USERDEFINEDGROUPNAME;OPERATIONREFERENCE;EXISTSINNET
+LINKTYPE;LINKTYPEIMPEDANCEFACTOR_BIKE;LinkTypeImpedanceFactor_Bike;LinkTypeImpedanceFactor_Bike;Double;MIN;MAX;1000;Type-dependent impedance factor for TSys bike (BASt-GiV);0;2;Data;0;SUM;0;0;1
+LINKTYPE;LINKTYPEIMPEDANCEFACTOR_CAR;LinkTypeImpedanceFactor_Car;LinkTypeImpedanceFactor_Car;Double;MIN;MAX;1000;Type-dependent impedance factor for TSys car (BASt-GiV);0;2;Data;0;SUM;0;0;1
+LINKTYPE;LINKTYPEIMPEDANCEFACTOR_PEDESTRIAN;LinkTypeImpedanceFactor_Pedestrian;LinkTypeImpedanceFactor_Pedestrian;Double;MIN;MAX;1000;Type-dependent impedance factor for TSys pedestrian (BASt-GiV);0;2;Data;0;SUM;0;0;1
+LINKTYPE;OSM_WIKI_REFERENCE;OSM_Wiki_Reference;OSM_Wiki_Reference;LongText;0.000;0.000;Reference to meaning in the OSM Wiki;2147483647;0;Data;0;SUM;0;0;1
+
+* 
+* Table: Link types
+* 
+$LINKTYPE:NO;GTYPE;NAME;STRICT;RANK;TSYSSET;NUMLANES;CAPPRT;V0PRT;VMINPRT;VMAX_PRTSYS(BIKE);VMAX_PRTSYS(CAR);VMAX_PRTSYS(HGV);VMAX_PRTSYS(WALK);VDEF_PUTSYS(BUS);VDEF_PUTSYS(LRT);VDEF_PUTSYS(PUTW);VDEF_PUTSYS(SUBWAY);VDEF_PUTSYS(TRAIN);VDEF_PUTSYS(TRAM);LINKTYPEIMPEDANCEFACTOR_BIKE;LINKTYPEIMPEDANCEFACTOR_CAR;LINKTYPEIMPEDANCEFACTOR_PEDESTRIAN;OSM_WIKI_REFERENCE
+100;10;Mo L4 V130;1;1;BUS,CAR,HGV;4;6000;130;1;20;130;100;4;80;50;4;50;50;50;10;0,8;10;Motorway: High-capacity, controlled-access road, physically separated lanes, special traffic restrictions ("Autobahn")
+101;10;Mo L4 V120;1;1;BUS,CAR,HGV;4;5600;120;1;20;130;100;4;80;50;4;50;50;50;10;0,8;10;Motorway: High-capacity, controlled-access road, physically separated lanes, special traffic restrictions ("Autobahn")
+102;10;Mo L4 V110;1;1;BUS,CAR,HGV;4;5200;110;1;20;130;100;4;80;50;4;50;50;50;10;0,8;10;Motorway: High-capacity, controlled-access road, physically separated lanes, special traffic restrictions ("Autobahn")
+103;10;Mo L4 V100;1;1;BUS,CAR,HGV;4;4800;100;1;20;130;100;4;80;50;4;50;50;50;10;0,8;10;Motorway: High-capacity, controlled-access road, physically separated lanes, special traffic restrictions ("Autobahn")
+104;10;Mo L4 V90;1;1;BUS,CAR,HGV;4;4400;90;1;20;130;100;4;80;50;4;50;50;50;10;0,8;10;Motorway: High-capacity, controlled-access road, physically separated lanes, special traffic restrictions ("Autobahn")
+105;10;Mo L4 V80;1;1;BUS,CAR,HGV;4;4000;80;1;20;130;100;4;80;50;4;50;50;50;10;0,8;10;Motorway: High-capacity, controlled-access road, physically separated lanes, special traffic restrictions ("Autobahn")
+106;10;Mo L4 V70;1;1;BUS,CAR,HGV;4;3200;70;1;20;130;100;4;80;50;4;50;50;50;10;0,8;10;Motorway: High-capacity, controlled-access road, physically separated lanes, special traffic restrictions ("Autobahn")
+107;10;Mo L4 V60;1;1;BUS,CAR,HGV;4;2400;60;1;20;130;100;4;80;50;4;50;50;50;10;0,8;10;Motorway: High-capacity, controlled-access road, physically separated lanes, special traffic restrictions ("Autobahn")
+108;10;Mo L4 V50;1;1;BUS,CAR,HGV;4;1600;50;1;20;130;100;4;80;50;4;50;50;50;10;0,8;10;Motorway: High-capacity, controlled-access road, physically separated lanes, special traffic restrictions ("Autobahn")
+109;10;free;1;1000;0;0;0;0;0;0;0;0;0;0;0;0;0;0;10;10;10
+110;10;free;1;1000;0;0;0;0;0;0;0;0;0;0;0;0;0;0;10;10;10
+111;10;free;1;1000;0;0;0;0;0;0;0;0;0;0;0;0;0;0;10;10;10
+112;10;free;1;1000;0;0;0;0;0;0;0;0;0;0;0;0;0;0;10;10;10
+113;10;free;1;1000;0;0;0;0;0;0;0;0;0;0;0;0;0;0;10;10;10
+114;10;free;1;1000;0;0;0;0;0;0;0;0;0;0;0;0;0;0;10;10;10
+115;10;free;1;1000;0;0;0;0;0;0;0;0;0;0;0;0;0;0;10;10;10
+116;10;free;1;1000;0;0;0;0;0;0;0;0;0;0;0;0;0;0;10;10;10
+117;10;free;1;1000;0;0;0;0;0;0;0;0;0;0;0;0;0;0;10;10;10
+118;10;free;1;1000;0;0;0;0;0;0;0;0;0;0;0;0;0;0;10;10;10
+119;10;free;1;1000;0;0;0;0;0;0;0;0;0;0;0;0;0;0;10;10;10
+120;10;Mo L3 V130;1;1;BUS,CAR,HGV;3;4500;130;1;20;130;100;4;80;50;4;50;50;50;10;0,8;10;Motorway: High-capacity, controlled-access road, physically separated lanes, special traffic restrictions ("Autobahn")
+121;10;Mo L3 V120;1;1;BUS,CAR,HGV;3;4200;120;1;20;130;100;4;80;50;4;50;50;50;10;0,8;10;Motorway: High-capacity, controlled-access road, physically separated lanes, special traffic restrictions ("Autobahn")
+122;10;Mo L3 V110;1;1;BUS,CAR,HGV;3;3900;110;1;20;130;100;4;80;50;4;50;50;50;10;0,8;10;Motorway: High-capacity, controlled-access road, physically separated lanes, special traffic restrictions ("Autobahn")
+123;10;Mo L3 V100;1;1;BUS,CAR,HGV;3;3600;100;1;20;130;100;4;80;50;4;50;50;50;10;0,8;10;Motorway: High-capacity, controlled-access road, physically separated lanes, special traffic restrictions ("Autobahn")
+124;10;Mo L3 V90;1;1;BUS,CAR,HGV;3;3300;90;1;20;130;100;4;80;50;4;50;50;50;10;0,8;10;Motorway: High-capacity, controlled-access road, physically separated lanes, special traffic restrictions ("Autobahn")
+125;10;Mo L3 V80;1;1;BUS,CAR,HGV;3;3000;80;1;20;130;100;4;80;50;4;50;50;50;10;0,8;10;Motorway: High-capacity, controlled-access road, physically separated lanes, special traffic restrictions ("Autobahn")
+126;10;Mo L3 V70;1;1;BUS,CAR,HGV;3;2400;70;1;20;130;100;4;80;50;4;50;50;50;10;0,8;10;Motorway: High-capacity, controlled-access road, physically separated lanes, special traffic restrictions ("Autobahn")
+127;10;Mo L3 V60;1;1;BUS,CAR,HGV;3;1800;60;1;20;130;100;4;80;50;4;50;50;50;10;0,8;10;Motorway: High-capacity, controlled-access road, physically separated lanes, special traffic restrictions ("Autobahn")
+128;10;Mo L3 V50;1;1;BUS,CAR,HGV;3;1200;50;1;20;130;100;4;80;50;4;50;50;50;10;0,8;10;Motorway: High-capacity, controlled-access road, physically separated lanes, special traffic restrictions ("Autobahn")
+129;10;free;1;1000;0;0;0;0;0;0;0;0;0;0;0;0;0;0;10;10;10
+130;10;free;1;1000;0;0;0;0;0;0;0;0;0;0;0;0;0;0;10;10;10
+131;10;free;1;1000;0;0;0;0;0;0;0;0;0;0;0;0;0;0;10;10;10
+132;10;free;1;1000;0;0;0;0;0;0;0;0;0;0;0;0;0;0;10;10;10
+133;10;free;1;1000;0;0;0;0;0;0;0;0;0;0;0;0;0;0;10;10;10
+134;10;free;1;1000;0;0;0;0;0;0;0;0;0;0;0;0;0;0;10;10;10
+135;10;free;1;1000;0;0;0;0;0;0;0;0;0;0;0;0;0;0;10;10;10
+136;10;free;1;1000;0;0;0;0;0;0;0;0;0;0;0;0;0;0;10;10;10
+137;10;free;1;1000;0;0;0;0;0;0;0;0;0;0;0;0;0;0;10;10;10
+138;10;free;1;1000;0;0;0;0;0;0;0;0;0;0;0;0;0;0;10;10;10
+139;10;free;1;1000;0;0;0;0;0;0;0;0;0;0;0;0;0;0;10;10;10
+140;10;Mo L2 V130;1;1;BUS,CAR,HGV;2;3000;130;1;20;130;100;4;80;50;4;50;50;50;10;0,8;10;Motorway: High-capacity, controlled-access road, physically separated lanes, special traffic restrictions ("Autobahn")
+141;10;Mo L2 V120;1;1;BUS,CAR,HGV;2;2800;120;1;20;130;100;4;80;50;4;50;50;50;10;0,8;10;Motorway: High-capacity, controlled-access road, physically separated lanes, special traffic restrictions ("Autobahn")
+142;10;Mo L2 V110;1;1;BUS,CAR,HGV;2;2600;110;1;20;130;100;4;80;50;4;50;50;50;10;0,8;10;Motorway: High-capacity, controlled-access road, physically separated lanes, special traffic restrictions ("Autobahn")
+143;10;Mo L2 V100;1;1;BUS,CAR,HGV;2;2400;100;1;20;130;100;4;80;50;4;50;50;50;10;0,8;10;Motorway: High-capacity, controlled-access road, physically separated lanes, special traffic restrictions ("Autobahn")
+144;10;Mo L2 V90;1;1;BUS,CAR,HGV;2;2200;90;1;20;130;100;4;80;50;4;50;50;50;10;0,8;10;Motorway: High-capacity, controlled-access road, physically separated lanes, special traffic restrictions ("Autobahn")
+145;10;Mo L2 V80;1;1;BUS,CAR,HGV;2;2000;80;1;20;130;100;4;80;50;4;50;50;50;10;0,8;10;Motorway: High-capacity, controlled-access road, physically separated lanes, special traffic restrictions ("Autobahn")
+146;10;Mo L2 V70;1;1;BUS,CAR,HGV;2;1600;70;1;20;130;100;4;80;50;4;50;50;50;10;0,8;10;Motorway: High-capacity, controlled-access road, physically separated lanes, special traffic restrictions ("Autobahn")
+147;10;Mo L2 V60;1;1;BUS,CAR,HGV;2;1200;60;1;20;130;100;4;80;50;4;50;50;50;10;0,8;10;Motorway: High-capacity, controlled-access road, physically separated lanes, special traffic restrictions ("Autobahn")
+148;10;Mo L2 V50;1;1;BUS,CAR,HGV;2;800;50;1;20;130;100;4;80;50;4;50;50;50;10;0,8;10;Motorway: High-capacity, controlled-access road, physically separated lanes, special traffic restrictions ("Autobahn")
+149;10;free;1;1000;0;0;0;0;0;0;0;0;0;0;0;0;0;0;10;10;10
+150;10;free;1;1000;0;0;0;0;0;0;0;0;0;0;0;0;0;0;10;10;10
+151;10;free;1;1000;0;0;0;0;0;0;0;0;0;0;0;0;0;0;10;10;10
+152;10;free;1;1000;0;0;0;0;0;0;0;0;0;0;0;0;0;0;10;10;10
+153;10;free;1;1000;0;0;0;0;0;0;0;0;0;0;0;0;0;0;10;10;10
+154;10;free;1;1000;0;0;0;0;0;0;0;0;0;0;0;0;0;0;10;10;10
+155;10;free;1;1000;0;0;0;0;0;0;0;0;0;0;0;0;0;0;10;10;10
+156;10;free;1;1000;0;0;0;0;0;0;0;0;0;0;0;0;0;0;10;10;10
+157;10;free;1;1000;0;0;0;0;0;0;0;0;0;0;0;0;0;0;10;10;10
+158;10;free;1;1000;0;0;0;0;0;0;0;0;0;0;0;0;0;0;10;10;10
+159;10;free;1;1000;0;0;0;0;0;0;0;0;0;0;0;0;0;0;10;10;10
+160;10;Mo L1 V130;1;1;BUS,CAR,HGV;1;1500;130;1;20;130;100;4;80;50;4;50;50;50;10;0,8;10;Motorway: High-capacity, controlled-access road, physically separated lanes, special traffic restrictions ("Autobahn")
+161;10;Mo L1 V120;1;1;BUS,CAR,HGV;1;1400;120;1;20;130;100;4;80;50;4;50;50;50;10;0,8;10;Motorway: High-capacity, controlled-access road, physically separated lanes, special traffic restrictions ("Autobahn")
+162;10;Mo L1 V110;1;1;BUS,CAR,HGV;1;1300;110;1;20;130;100;4;80;50;4;50;50;50;10;0,8;10;Motorway: High-capacity, controlled-access road, physically separated lanes, special traffic restrictions ("Autobahn")
+163;10;Mo L1 V100;1;1;BUS,CAR,HGV;1;1200;100;1;20;130;100;4;80;50;4;50;50;50;10;0,8;10;Motorway: High-capacity, controlled-access road, physically separated lanes, special traffic restrictions ("Autobahn")
+164;10;Mo L1 V90;1;1;BUS,CAR,HGV;1;1100;90;1;20;130;100;4;80;50;4;50;50;50;10;0,8;10;Motorway: High-capacity, controlled-access road, physically separated lanes, special traffic restrictions ("Autobahn")
+165;10;Mo L1 V80;1;1;BUS,CAR,HGV;1;1000;80;1;20;130;100;4;80;50;4;50;50;50;10;0,8;10;Motorway: High-capacity, controlled-access road, physically separated lanes, special traffic restrictions ("Autobahn")
+166;10;Mo L1 V70;1;1;BUS,CAR,HGV;1;800;70;1;20;130;100;4;80;50;4;50;50;50;10;0,8;10;Motorway: High-capacity, controlled-access road, physically separated lanes, special traffic restrictions ("Autobahn")
+167;10;Mo L1 V60;1;1;BUS,CAR,HGV;1;600;60;1;20;130;100;4;80;50;4;50;50;50;10;0,8;10;Motorway: High-capacity, controlled-access road, physically separated lanes, special traffic restrictions ("Autobahn")
+168;10;Mo L1 V50;1;1;BUS,CAR,HGV;1;400;50;1;20;130;100;4;80;50;4;50;50;50;10;0,8;10;Motorway: High-capacity, controlled-access road, physically separated lanes, special traffic restrictions ("Autobahn")
+169;10;free;1;1000;0;0;0;0;0;0;0;0;0;0;0;0;0;0;10;10;10
+170;10;free;1;1000;0;0;0;0;0;0;0;0;0;0;0;0;0;0;10;10;10
+171;10;free;1;1000;0;0;0;0;0;0;0;0;0;0;0;0;0;0;10;10;10
+172;10;free;1;1000;0;0;0;0;0;0;0;0;0;0;0;0;0;0;10;10;10
+173;10;free;1;1000;0;0;0;0;0;0;0;0;0;0;0;0;0;0;10;10;10
+174;10;free;1;1000;0;0;0;0;0;0;0;0;0;0;0;0;0;0;10;10;10
+175;10;free;1;1000;0;0;0;0;0;0;0;0;0;0;0;0;0;0;10;10;10
+176;10;free;1;1000;0;0;0;0;0;0;0;0;0;0;0;0;0;0;10;10;10
+177;10;free;1;1000;0;0;0;0;0;0;0;0;0;0;0;0;0;0;10;10;10
+178;10;free;1;1000;0;0;0;0;0;0;0;0;0;0;0;0;0;0;10;10;10
+179;10;free;1;1000;0;0;0;0;0;0;0;0;0;0;0;0;0;0;10;10;10
+180;10;free;1;1000;0;0;0;0;0;0;0;0;0;0;0;0;0;0;10;10;10
+181;10;free;1;1000;0;0;0;0;0;0;0;0;0;0;0;0;0;0;10;10;10
+182;10;free;1;1000;0;0;0;0;0;0;0;0;0;0;0;0;0;0;10;10;10
+183;10;free;1;1000;0;0;0;0;0;0;0;0;0;0;0;0;0;0;10;10;10
+184;10;free;1;1000;0;0;0;0;0;0;0;0;0;0;0;0;0;0;10;10;10
+185;10;free;1;1000;0;0;0;0;0;0;0;0;0;0;0;0;0;0;10;10;10
+186;10;free;1;1000;0;0;0;0;0;0;0;0;0;0;0;0;0;0;10;10;10
+187;10;free;1;1000;0;0;0;0;0;0;0;0;0;0;0;0;0;0;10;10;10
+188;10;free;1;1000;0;0;0;0;0;0;0;0;0;0;0;0;0;0;10;10;10
+189;10;free;1;1000;0;0;0;0;0;0;0;0;0;0;0;0;0;0;10;10;10
+190;10;free;1;1000;0;0;0;0;0;0;0;0;0;0;0;0;0;0;10;10;10
+191;10;free;1;1000;0;0;0;0;0;0;0;0;0;0;0;0;0;0;10;10;10
+192;10;free;1;1000;0;0;0;0;0;0;0;0;0;0;0;0;0;0;10;10;10
+193;10;free;1;1000;0;0;0;0;0;0;0;0;0;0;0;0;0;0;10;10;10
+194;10;free;1;1000;0;0;0;0;0;0;0;0;0;0;0;0;0;0;10;10;10
+195;10;free;1;1000;0;0;0;0;0;0;0;0;0;0;0;0;0;0;10;10;10
+196;10;free;1;1000;0;0;0;0;0;0;0;0;0;0;0;0;0;0;10;10;10
+197;10;free;1;1000;0;0;0;0;0;0;0;0;0;0;0;0;0;0;10;10;10
+198;10;free;1;1000;0;0;0;0;0;0;0;0;0;0;0;0;0;0;10;10;10
+199;10;free;1;1000;0;0;0;0;0;0;0;0;0;0;0;0;0;0;10;10;10
+200;20;Tr L3 V130;1;2;BUS,CAR,HGV;3;4500;130;1;20;130;100;4;80;50;4;50;50;50;10;0,8;10;Trunk: Major high-speed road, not a motorway, often excludes slow traffic ("Kraftfahrstraﬂe")
+201;20;Tr L3 V120;1;2;BUS,CAR,HGV;3;4200;120;1;20;130;100;4;80;50;4;50;50;50;10;0,8;10;Trunk: Major high-speed road, not a motorway, often excludes slow traffic ("Kraftfahrstraﬂe")
+202;20;Tr L3 V110;1;2;BUS,CAR,HGV;3;3900;110;1;20;130;100;4;80;50;4;50;50;50;10;0,8;10;Trunk: Major high-speed road, not a motorway, often excludes slow traffic ("Kraftfahrstraﬂe")
+203;20;Tr L3 V100;1;2;BUS,CAR,HGV;3;3600;100;1;20;130;100;4;80;50;4;50;50;50;10;0,8;10;Trunk: Major high-speed road, not a motorway, often excludes slow traffic ("Kraftfahrstraﬂe")
+204;20;Tr L3 V90;1;2;BUS,CAR,HGV;3;3300;90;1;20;130;100;4;80;50;4;50;50;50;10;0,8;10;Trunk: Major high-speed road, not a motorway, often excludes slow traffic ("Kraftfahrstraﬂe")
+205;20;Tr L3 V80;1;2;BUS,CAR,HGV;3;3000;80;1;20;130;100;4;80;50;4;50;50;50;10;0,8;10;Trunk: Major high-speed road, not a motorway, often excludes slow traffic ("Kraftfahrstraﬂe")
+206;20;Tr L3 V70;1;2;BUS,CAR,HGV;3;2400;70;1;20;130;100;4;80;50;4;50;50;50;10;0,8;10;Trunk: Major high-speed road, not a motorway, often excludes slow traffic ("Kraftfahrstraﬂe")
+207;20;Tr L3 V60;1;2;BUS,CAR,HGV;3;1800;60;1;20;130;100;4;80;50;4;50;50;50;10;0,8;10;Trunk: Major high-speed road, not a motorway, often excludes slow traffic ("Kraftfahrstraﬂe")
+208;20;Tr L3 V50;1;2;BUS,CAR,HGV;3;1200;50;1;20;130;100;4;80;50;4;50;50;50;10;0,8;10;Trunk: Major high-speed road, not a motorway, often excludes slow traffic ("Kraftfahrstraﬂe")
+209;20;Tr L3 V40;1;2;BUS,CAR,HGV;3;900;40;1;20;130;100;4;80;50;4;50;50;50;10;0,8;10;Trunk: Major high-speed road, not a motorway, often excludes slow traffic ("Kraftfahrstraﬂe")
+210;20;free;1;1000;0;0;0;0;0;0;0;0;0;0;0;0;0;0;10;10;10
+211;20;free;1;1000;0;0;0;0;0;0;0;0;0;0;0;0;0;0;10;10;10
+212;20;free;1;1000;0;0;0;0;0;0;0;0;0;0;0;0;0;0;10;10;10
+213;20;free;1;1000;0;0;0;0;0;0;0;0;0;0;0;0;0;0;10;10;10
+214;20;free;1;1000;0;0;0;0;0;0;0;0;0;0;0;0;0;0;10;10;10
+215;20;free;1;1000;0;0;0;0;0;0;0;0;0;0;0;0;0;0;10;10;10
+216;20;free;1;1000;0;0;0;0;0;0;0;0;0;0;0;0;0;0;10;10;10
+217;20;free;1;1000;0;0;0;0;0;0;0;0;0;0;0;0;0;0;10;10;10
+218;20;free;1;1000;0;0;0;0;0;0;0;0;0;0;0;0;0;0;10;10;10
+219;20;free;1;1000;0;0;0;0;0;0;0;0;0;0;0;0;0;0;10;10;10
+220;20;Tr L2 V130;1;2;BUS,CAR,HGV;2;3000;130;1;20;130;100;4;80;50;4;50;50;50;10;0,8;10;Trunk: Major high-speed road, not a motorway, often excludes slow traffic ("Kraftfahrstraﬂe")
+221;20;Tr L2 V120;1;2;BUS,CAR,HGV;2;2800;120;1;20;130;100;4;80;50;4;50;50;50;10;0,8;10;Trunk: Major high-speed road, not a motorway, often excludes slow traffic ("Kraftfahrstraﬂe")
+222;20;Tr L2 V110;1;2;BUS,CAR,HGV;2;2600;110;1;20;130;100;4;80;50;4;50;50;50;10;0,8;10;Trunk: Major high-speed road, not a motorway, often excludes slow traffic ("Kraftfahrstraﬂe")
+223;20;Tr L2 V100;1;2;BUS,CAR,HGV;2;2400;100;1;20;130;100;4;80;50;4;50;50;50;10;0,8;10;Trunk: Major high-speed road, not a motorway, often excludes slow traffic ("Kraftfahrstraﬂe")
+224;20;Tr L2 V90;1;2;BUS,CAR,HGV;2;2200;90;1;20;130;100;4;80;50;4;50;50;50;10;0,8;10;Trunk: Major high-speed road, not a motorway, often excludes slow traffic ("Kraftfahrstraﬂe")
+225;20;Tr L2 V80;1;2;BUS,CAR,HGV;2;2000;80;1;20;130;100;4;80;50;4;50;50;50;10;0,8;10;Trunk: Major high-speed road, not a motorway, often excludes slow traffic ("Kraftfahrstraﬂe")
+226;20;Tr L2 V70;1;2;BUS,CAR,HGV;2;1600;70;1;20;130;100;4;80;50;4;50;50;50;10;0,8;10;Trunk: Major high-speed road, not a motorway, often excludes slow traffic ("Kraftfahrstraﬂe")
+227;20;Tr L2 V60;1;2;BUS,CAR,HGV;2;1200;60;1;20;130;100;4;80;50;4;50;50;50;10;0,8;10;Trunk: Major high-speed road, not a motorway, often excludes slow traffic ("Kraftfahrstraﬂe")
+228;20;Tr L2 V50;1;2;BUS,CAR,HGV;2;800;50;1;20;130;100;4;80;50;4;50;50;50;10;0,8;10;Trunk: Major high-speed road, not a motorway, often excludes slow traffic ("Kraftfahrstraﬂe")
+229;20;Tr L2 V40;1;2;BUS,CAR,HGV;2;600;40;1;20;130;100;4;80;50;4;50;50;50;10;0,8;10;Trunk: Major high-speed road, not a motorway, often excludes slow traffic ("Kraftfahrstraﬂe")
+230;20;free;1;1000;0;0;0;0;0;0;0;0;0;0;0;0;0;0;10;10;10
+231;20;free;1;1000;0;0;0;0;0;0;0;0;0;0;0;0;0;0;10;10;10
+232;20;free;1;1000;0;0;0;0;0;0;0;0;0;0;0;0;0;0;10;10;10
+233;20;free;1;1000;0;0;0;0;0;0;0;0;0;0;0;0;0;0;10;10;10
+234;20;free;1;1000;0;0;0;0;0;0;0;0;0;0;0;0;0;0;10;10;10
+235;20;free;1;1000;0;0;0;0;0;0;0;0;0;0;0;0;0;0;10;10;10
+236;20;free;1;1000;0;0;0;0;0;0;0;0;0;0;0;0;0;0;10;10;10
+237;20;free;1;1000;0;0;0;0;0;0;0;0;0;0;0;0;0;0;10;10;10
+238;20;free;1;1000;0;0;0;0;0;0;0;0;0;0;0;0;0;0;10;10;10
+239;20;free;1;1000;0;0;0;0;0;0;0;0;0;0;0;0;0;0;10;10;10
+240;20;Tr L1 V130;1;2;BUS,CAR,HGV;1;1500;130;1;20;130;100;4;80;50;4;50;50;50;10;0,8;10;Trunk: Major high-speed road, not a motorway, often excludes slow traffic ("Kraftfahrstraﬂe")
+241;20;Tr L1 V120;1;2;BUS,CAR,HGV;1;1400;120;1;20;130;100;4;80;50;4;50;50;50;10;0,8;10;Trunk: Major high-speed road, not a motorway, often excludes slow traffic ("Kraftfahrstraﬂe")
+242;20;Tr L1 V110;1;2;BUS,CAR,HGV;1;1300;110;1;20;130;100;4;80;50;4;50;50;50;10;0,8;10;Trunk: Major high-speed road, not a motorway, often excludes slow traffic ("Kraftfahrstraﬂe")
+243;20;Tr L1 V100;1;2;BUS,CAR,HGV;1;1200;100;1;20;130;100;4;80;50;4;50;50;50;10;0,8;10;Trunk: Major high-speed road, not a motorway, often excludes slow traffic ("Kraftfahrstraﬂe")
+244;20;Tr L1 V90;1;2;BUS,CAR,HGV;1;1100;90;1;20;130;100;4;80;50;4;50;50;50;10;0,8;10;Trunk: Major high-speed road, not a motorway, often excludes slow traffic ("Kraftfahrstraﬂe")
+245;20;Tr L1 V80;1;2;BUS,CAR,HGV;1;1000;80;1;20;130;100;4;80;50;4;50;50;50;10;0,8;10;Trunk: Major high-speed road, not a motorway, often excludes slow traffic ("Kraftfahrstraﬂe")
+246;20;Tr L1 V70;1;2;BUS,CAR,HGV;1;800;70;1;20;130;100;4;80;50;4;50;50;50;10;0,8;10;Trunk: Major high-speed road, not a motorway, often excludes slow traffic ("Kraftfahrstraﬂe")
+247;20;Tr L1 V60;1;2;BUS,CAR,HGV;1;600;60;1;20;130;100;4;80;50;4;50;50;50;10;0,8;10;Trunk: Major high-speed road, not a motorway, often excludes slow traffic ("Kraftfahrstraﬂe")
+248;20;Tr L1 V50;1;2;BUS,CAR,HGV;1;400;50;1;20;130;100;4;80;50;4;50;50;50;10;0,8;10;Trunk: Major high-speed road, not a motorway, often excludes slow traffic ("Kraftfahrstraﬂe")
+249;20;Tr L1 V40;1;2;BUS,CAR,HGV;1;300;40;1;20;130;100;4;80;50;4;50;50;50;10;0,8;10;Trunk: Major high-speed road, not a motorway, often excludes slow traffic ("Kraftfahrstraﬂe")
+250;20;free;1;1000;0;0;0;0;0;0;0;0;0;0;0;0;0;0;10;10;10
+251;20;free;1;1000;0;0;0;0;0;0;0;0;0;0;0;0;0;0;10;10;10
+252;20;free;1;1000;0;0;0;0;0;0;0;0;0;0;0;0;0;0;10;10;10
+253;20;free;1;1000;0;0;0;0;0;0;0;0;0;0;0;0;0;0;10;10;10
+254;20;free;1;1000;0;0;0;0;0;0;0;0;0;0;0;0;0;0;10;10;10
+255;20;free;1;1000;0;0;0;0;0;0;0;0;0;0;0;0;0;0;10;10;10
+256;20;free;1;1000;0;0;0;0;0;0;0;0;0;0;0;0;0;0;10;10;10
+257;20;free;1;1000;0;0;0;0;0;0;0;0;0;0;0;0;0;0;10;10;10
+258;20;free;1;1000;0;0;0;0;0;0;0;0;0;0;0;0;0;0;10;10;10
+259;20;free;1;1000;0;0;0;0;0;0;0;0;0;0;0;0;0;0;10;10;10
+260;20;free;1;1000;0;0;0;0;0;0;0;0;0;0;0;0;0;0;10;10;10
+261;20;free;1;1000;0;0;0;0;0;0;0;0;0;0;0;0;0;0;10;10;10
+262;20;free;1;1000;0;0;0;0;0;0;0;0;0;0;0;0;0;0;10;10;10
+263;20;free;1;1000;0;0;0;0;0;0;0;0;0;0;0;0;0;0;10;10;10
+264;20;free;1;1000;0;0;0;0;0;0;0;0;0;0;0;0;0;0;10;10;10
+265;20;free;1;1000;0;0;0;0;0;0;0;0;0;0;0;0;0;0;10;10;10
+266;20;free;1;1000;0;0;0;0;0;0;0;0;0;0;0;0;0;0;10;10;10
+267;20;free;1;1000;0;0;0;0;0;0;0;0;0;0;0;0;0;0;10;10;10
+268;20;free;1;1000;0;0;0;0;0;0;0;0;0;0;0;0;0;0;10;10;10
+269;20;free;1;1000;0;0;0;0;0;0;0;0;0;0;0;0;0;0;10;10;10
+270;20;free;1;1000;0;0;0;0;0;0;0;0;0;0;0;0;0;0;10;10;10
+271;20;free;1;1000;0;0;0;0;0;0;0;0;0;0;0;0;0;0;10;10;10
+272;20;free;1;1000;0;0;0;0;0;0;0;0;0;0;0;0;0;0;10;10;10
+273;20;free;1;1000;0;0;0;0;0;0;0;0;0;0;0;0;0;0;10;10;10
+274;20;free;1;1000;0;0;0;0;0;0;0;0;0;0;0;0;0;0;10;10;10
+275;20;free;1;1000;0;0;0;0;0;0;0;0;0;0;0;0;0;0;10;10;10
+276;20;free;1;1000;0;0;0;0;0;0;0;0;0;0;0;0;0;0;10;10;10
+277;20;free;1;1000;0;0;0;0;0;0;0;0;0;0;0;0;0;0;10;10;10
+278;20;free;1;1000;0;0;0;0;0;0;0;0;0;0;0;0;0;0;10;10;10
+279;20;free;1;1000;0;0;0;0;0;0;0;0;0;0;0;0;0;0;10;10;10
+280;20;free;1;1000;0;0;0;0;0;0;0;0;0;0;0;0;0;0;10;10;10
+281;20;free;1;1000;0;0;0;0;0;0;0;0;0;0;0;0;0;0;10;10;10
+282;20;free;1;1000;0;0;0;0;0;0;0;0;0;0;0;0;0;0;10;10;10
+283;20;free;1;1000;0;0;0;0;0;0;0;0;0;0;0;0;0;0;10;10;10
+284;20;free;1;1000;0;0;0;0;0;0;0;0;0;0;0;0;0;0;10;10;10
+285;20;free;1;1000;0;0;0;0;0;0;0;0;0;0;0;0;0;0;10;10;10
+286;20;free;1;1000;0;0;0;0;0;0;0;0;0;0;0;0;0;0;10;10;10
+287;20;free;1;1000;0;0;0;0;0;0;0;0;0;0;0;0;0;0;10;10;10
+288;20;free;1;1000;0;0;0;0;0;0;0;0;0;0;0;0;0;0;10;10;10
+289;20;free;1;1000;0;0;0;0;0;0;0;0;0;0;0;0;0;0;10;10;10
+290;20;free;1;1000;0;0;0;0;0;0;0;0;0;0;0;0;0;0;10;10;10
+291;20;free;1;1000;0;0;0;0;0;0;0;0;0;0;0;0;0;0;10;10;10
+292;20;free;1;1000;0;0;0;0;0;0;0;0;0;0;0;0;0;0;10;10;10
+293;20;free;1;1000;0;0;0;0;0;0;0;0;0;0;0;0;0;0;10;10;10
+294;20;free;1;1000;0;0;0;0;0;0;0;0;0;0;0;0;0;0;10;10;10
+295;20;free;1;1000;0;0;0;0;0;0;0;0;0;0;0;0;0;0;10;10;10
+296;20;free;1;1000;0;0;0;0;0;0;0;0;0;0;0;0;0;0;10;10;10
+297;20;free;1;1000;0;0;0;0;0;0;0;0;0;0;0;0;0;0;10;10;10
+298;20;free;1;1000;0;0;0;0;0;0;0;0;0;0;0;0;0;0;10;10;10
+299;20;free;1;1000;0;0;0;0;0;0;0;0;0;0;0;0;0;0;10;10;10
+300;30;Pr L3 V130;1;3;BIKE,BUS,MINIBUS,CAR,HGV,PUTW,WALK;3;4500;130;1;20;130;100;4;80;50;4;50;50;50;1,3;1;1,3;Primary: Major road under national administration, connects large cities, significant interurban traffic (e.g. 10.000 veh / day, "Bundesstraﬂe")
+301;30;Pr L3 V120;1;3;BIKE,BUS,MINIBUS,CAR,HGV,PUTW,WALK;3;4200;120;1;20;130;100;4;80;50;4;50;50;50;1,3;1;1,3;Primary: Major road under national administration, connects large cities, significant interurban traffic (e.g. 10.000 veh / day, "Bundesstraﬂe")
+302;30;Pr L3 V110;1;3;BIKE,BUS,MINIBUS,CAR,HGV,PUTW,WALK;3;3900;110;1;20;130;100;4;80;50;4;50;50;50;1,3;1;1,3;Primary: Major road under national administration, connects large cities, significant interurban traffic (e.g. 10.000 veh / day, "Bundesstraﬂe")
+303;30;Pr L3 V100;1;3;BIKE,BUS,MINIBUS,CAR,HGV,PUTW,WALK;3;3600;100;1;20;130;100;4;80;50;4;50;50;50;1,3;1;1,3;Primary: Major road under national administration, connects large cities, significant interurban traffic (e.g. 10.000 veh / day, "Bundesstraﬂe")
+304;30;Pr L3 V90;1;3;BIKE,BUS,MINIBUS,CAR,HGV,PUTW,WALK;3;3300;90;1;20;130;100;4;80;50;4;50;50;50;1,3;1;1,3;Primary: Major road under national administration, connects large cities, significant interurban traffic (e.g. 10.000 veh / day, "Bundesstraﬂe")
+305;30;Pr L3 V80;1;3;BIKE,BUS,MINIBUS,CAR,HGV,PUTW,WALK;3;3000;80;1;20;130;100;4;80;50;4;50;50;50;1,3;1;1,3;Primary: Major road under national administration, connects large cities, significant interurban traffic (e.g. 10.000 veh / day, "Bundesstraﬂe")
+306;30;Pr L3 V70;1;3;BIKE,BUS,MINIBUS,CAR,HGV,PUTW,WALK;3;2400;70;1;20;130;100;4;80;50;4;50;50;50;1,3;1;1,3;Primary: Major road under national administration, connects large cities, significant interurban traffic (e.g. 10.000 veh / day, "Bundesstraﬂe")
+307;30;Pr L3 V60;1;3;BIKE,BUS,MINIBUS,CAR,HGV,PUTW,WALK;3;1800;60;1;20;130;100;4;80;50;4;50;50;50;1,3;1;1,3;Primary: Major road under national administration, connects large cities, significant interurban traffic (e.g. 10.000 veh / day, "Bundesstraﬂe")
+308;30;Pr L3 V50;1;3;BIKE,BUS,MINIBUS,CAR,HGV,PUTW,WALK;3;1200;50;1;20;130;100;4;80;50;4;50;50;50;1,3;1;1,3;Primary: Major road under national administration, connects large cities, significant interurban traffic (e.g. 10.000 veh / day, "Bundesstraﬂe")
+309;30;Pr L3 V40;1;3;BIKE,BUS,MINIBUS,CAR,HGV,PUTW,WALK;3;900;40;1;20;130;100;4;80;50;4;50;50;50;1,3;1;1,3;Primary: Major road under national administration, connects large cities, significant interurban traffic (e.g. 10.000 veh / day, "Bundesstraﬂe")
+310;30;free;1;1000;0;0;0;0;0;0;0;0;0;0;0;0;0;0;10;10;10
+311;30;free;1;1000;0;0;0;0;0;0;0;0;0;0;0;0;0;0;10;10;10
+312;30;free;1;1000;0;0;0;0;0;0;0;0;0;0;0;0;0;0;10;10;10
+313;30;free;1;1000;0;0;0;0;0;0;0;0;0;0;0;0;0;0;10;10;10
+314;30;free;1;1000;0;0;0;0;0;0;0;0;0;0;0;0;0;0;10;10;10
+315;30;free;1;1000;0;0;0;0;0;0;0;0;0;0;0;0;0;0;10;10;10
+316;30;free;1;1000;0;0;0;0;0;0;0;0;0;0;0;0;0;0;10;10;10
+317;30;free;1;1000;0;0;0;0;0;0;0;0;0;0;0;0;0;0;10;10;10
+318;30;free;1;1000;0;0;0;0;0;0;0;0;0;0;0;0;0;0;10;10;10
+319;30;free;1;1000;0;0;0;0;0;0;0;0;0;0;0;0;0;0;10;10;10
+320;30;Pr L2 V130;1;3;BIKE,BUS,MINIBUS,CAR,HGV,PUTW,WALK;2;3000;130;1;20;130;100;4;80;50;4;50;50;50;1,3;1;1,3;Primary: Major road under national administration, connects large cities, significant interurban traffic (e.g. 10.000 veh / day, "Bundesstraﬂe")
+321;30;Pr L2 V120;1;3;BIKE,BUS,MINIBUS,CAR,HGV,PUTW,WALK;2;2800;120;1;20;130;100;4;80;50;4;50;50;50;1,3;1;1,3;Primary: Major road under national administration, connects large cities, significant interurban traffic (e.g. 10.000 veh / day, "Bundesstraﬂe")
+322;30;Pr L2 V110;1;3;BIKE,BUS,MINIBUS,CAR,HGV,PUTW,WALK;2;2600;110;1;20;130;100;4;80;50;4;50;50;50;1,3;1;1,3;Primary: Major road under national administration, connects large cities, significant interurban traffic (e.g. 10.000 veh / day, "Bundesstraﬂe")
+323;30;Pr L2 V100;1;3;BIKE,BUS,MINIBUS,CAR,HGV,PUTW,WALK;2;2400;100;1;20;130;100;4;80;50;4;50;50;50;1,3;1;1,3;Primary: Major road under national administration, connects large cities, significant interurban traffic (e.g. 10.000 veh / day, "Bundesstraﬂe")
+324;30;Pr L2 V90;1;3;BIKE,BUS,MINIBUS,CAR,HGV,PUTW,WALK;2;2200;90;1;20;130;100;4;80;50;4;50;50;50;1,3;1;1,3;Primary: Major road under national administration, connects large cities, significant interurban traffic (e.g. 10.000 veh / day, "Bundesstraﬂe")
+325;30;Pr L2 V80;1;3;BIKE,BUS,MINIBUS,CAR,HGV,PUTW,WALK;2;2000;80;1;20;130;100;4;80;50;4;50;50;50;1,3;1;1,3;Primary: Major road under national administration, connects large cities, significant interurban traffic (e.g. 10.000 veh / day, "Bundesstraﬂe")
+326;30;Pr L2 V70;1;3;BIKE,BUS,MINIBUS,CAR,HGV,PUTW,WALK;2;1600;70;1;20;130;100;4;80;50;4;50;50;50;1,3;1;1,3;Primary: Major road under national administration, connects large cities, significant interurban traffic (e.g. 10.000 veh / day, "Bundesstraﬂe")
+327;30;Pr L2 V60;1;3;BIKE,BUS,MINIBUS,CAR,HGV,PUTW,WALK;2;1200;60;1;20;130;100;4;80;50;4;50;50;50;1,3;1;1,3;Primary: Major road under national administration, connects large cities, significant interurban traffic (e.g. 10.000 veh / day, "Bundesstraﬂe")
+328;30;Pr L2 V50;1;3;BIKE,BUS,MINIBUS,CAR,HGV,PUTW,WALK;2;800;50;1;20;130;100;4;80;50;4;50;50;50;1,3;1;1,3;Primary: Major road under national administration, connects large cities, significant interurban traffic (e.g. 10.000 veh / day, "Bundesstraﬂe")
+329;30;Pr L2 V40;1;3;BIKE,BUS,MINIBUS,CAR,HGV,PUTW,WALK;2;600;40;1;20;130;100;4;80;50;4;50;50;50;1,3;1;1,3;Primary: Major road under national administration, connects large cities, significant interurban traffic (e.g. 10.000 veh / day, "Bundesstraﬂe")
+330;30;free;1;1000;0;0;0;0;0;0;0;0;0;0;0;0;0;0;10;10;10
+331;30;free;1;1000;0;0;0;0;0;0;0;0;0;0;0;0;0;0;10;10;10
+332;30;free;1;1000;0;0;0;0;0;0;0;0;0;0;0;0;0;0;10;10;10
+333;30;free;1;1000;0;0;0;0;0;0;0;0;0;0;0;0;0;0;10;10;10
+334;30;free;1;1000;0;0;0;0;0;0;0;0;0;0;0;0;0;0;10;10;10
+335;30;free;1;1000;0;0;0;0;0;0;0;0;0;0;0;0;0;0;10;10;10
+336;30;free;1;1000;0;0;0;0;0;0;0;0;0;0;0;0;0;0;10;10;10
+337;30;free;1;1000;0;0;0;0;0;0;0;0;0;0;0;0;0;0;10;10;10
+338;30;free;1;1000;0;0;0;0;0;0;0;0;0;0;0;0;0;0;10;10;10
+339;30;free;1;1000;0;0;0;0;0;0;0;0;0;0;0;0;0;0;10;10;10
+340;30;Pr L1 V130;1;3;BIKE,BUS,MINIBUS,CAR,HGV,PUTW,WALK;1;1500;130;1;20;130;100;4;80;50;4;50;50;50;1,3;1;1,3;Primary: Major road under national administration, connects large cities, significant interurban traffic (e.g. 10.000 veh / day, "Bundesstraﬂe")
+341;30;Pr L1 V120;1;3;BIKE,BUS,MINIBUS,CAR,HGV,PUTW,WALK;1;1400;120;1;20;130;100;4;80;50;4;50;50;50;1,3;1;1,3;Primary: Major road under national administration, connects large cities, significant interurban traffic (e.g. 10.000 veh / day, "Bundesstraﬂe")
+342;30;Pr L1 V110;1;3;BIKE,BUS,MINIBUS,CAR,HGV,PUTW,WALK;1;1300;110;1;20;130;100;4;80;50;4;50;50;50;1,3;1;1,3;Primary: Major road under national administration, connects large cities, significant interurban traffic (e.g. 10.000 veh / day, "Bundesstraﬂe")
+343;30;Pr L1 V100;1;3;BIKE,BUS,MINIBUS,CAR,HGV,PUTW,WALK;1;1200;100;1;20;130;100;4;80;50;4;50;50;50;1,3;1;1,3;Primary: Major road under national administration, connects large cities, significant interurban traffic (e.g. 10.000 veh / day, "Bundesstraﬂe")
+344;30;Pr L1 V90;1;3;BIKE,BUS,MINIBUS,CAR,HGV,PUTW,WALK;1;1100;90;1;20;130;100;4;80;50;4;50;50;50;1,3;1;1,3;Primary: Major road under national administration, connects large cities, significant interurban traffic (e.g. 10.000 veh / day, "Bundesstraﬂe")
+345;30;Pr L1 V80;1;3;BIKE,BUS,MINIBUS,CAR,HGV,PUTW,WALK;1;1000;80;1;20;130;100;4;80;50;4;50;50;50;1,3;1;1,3;Primary: Major road under national administration, connects large cities, significant interurban traffic (e.g. 10.000 veh / day, "Bundesstraﬂe")
+346;30;Pr L1 V70;1;3;BIKE,BUS,MINIBUS,CAR,HGV,PUTW,WALK;1;800;70;1;20;130;100;4;80;50;4;50;50;50;1,3;1;1,3;Primary: Major road under national administration, connects large cities, significant interurban traffic (e.g. 10.000 veh / day, "Bundesstraﬂe")
+347;30;Pr L1 V60;1;3;BIKE,BUS,MINIBUS,CAR,HGV,PUTW,WALK;1;600;60;1;20;130;100;4;80;50;4;50;50;50;1,3;1;1,3;Primary: Major road under national administration, connects large cities, significant interurban traffic (e.g. 10.000 veh / day, "Bundesstraﬂe")
+348;30;Pr L1 V50;1;3;BIKE,BUS,MINIBUS,CAR,HGV,PUTW,WALK;1;400;50;1;20;130;100;4;80;50;4;50;50;50;1,3;1;1,3;Primary: Major road under national administration, connects large cities, significant interurban traffic (e.g. 10.000 veh / day, "Bundesstraﬂe")
+349;30;Pr L1 V40;1;3;BIKE,BUS,MINIBUS,CAR,HGV,PUTW,WALK;1;300;40;1;20;130;100;4;80;50;4;50;50;50;1,3;1;1,3;Primary: Major road under national administration, connects large cities, significant interurban traffic (e.g. 10.000 veh / day, "Bundesstraﬂe")
+350;30;free;1;1000;0;0;0;0;0;0;0;0;0;0;0;0;0;0;10;10;10
+351;30;free;1;1000;0;0;0;0;0;0;0;0;0;0;0;0;0;0;10;10;10
+352;30;free;1;1000;0;0;0;0;0;0;0;0;0;0;0;0;0;0;10;10;10
+353;30;free;1;1000;0;0;0;0;0;0;0;0;0;0;0;0;0;0;10;10;10
+354;30;free;1;1000;0;0;0;0;0;0;0;0;0;0;0;0;0;0;10;10;10
+355;30;free;1;1000;0;0;0;0;0;0;0;0;0;0;0;0;0;0;10;10;10
+356;30;free;1;1000;0;0;0;0;0;0;0;0;0;0;0;0;0;0;10;10;10
+357;30;free;1;1000;0;0;0;0;0;0;0;0;0;0;0;0;0;0;10;10;10
+358;30;free;1;1000;0;0;0;0;0;0;0;0;0;0;0;0;0;0;10;10;10
+359;30;free;1;1000;0;0;0;0;0;0;0;0;0;0;0;0;0;0;10;10;10
+360;30;Pr L2+1Bus V70;1;3;BIKE,BUS,MINIBUS,CAR,HGV,PUTW,WALK;2;1600;70;1;20;130;100;4;80;50;4;50;50;50;1,3;1;1,3;Primary: Major road under national administration, connects large cities, significant interurban traffic (e.g. 10.000 veh / day, "Bundesstraﬂe")
+361;30;Pr L2+1Bus V60;1;3;BIKE,BUS,MINIBUS,CAR,HGV,PUTW,WALK;2;1200;60;1;20;130;100;4;80;50;4;50;50;50;1,3;1;1,3;Primary: Major road under national administration, connects large cities, significant interurban traffic (e.g. 10.000 veh / day, "Bundesstraﬂe")
+362;30;Pr L2+1Bus V50;1;3;BIKE,BUS,MINIBUS,CAR,HGV,PUTW,WALK;2;800;50;1;20;130;100;4;80;50;4;50;50;50;1,3;1;1,3;Primary: Major road under national administration, connects large cities, significant interurban traffic (e.g. 10.000 veh / day, "Bundesstraﬂe")
+363;30;Pr L2+1Bus V40;1;3;BIKE,BUS,MINIBUS,CAR,HGV,PUTW,WALK;2;600;40;1;20;130;100;4;80;50;4;50;50;50;1,3;1;1,3;Primary: Major road under national administration, connects large cities, significant interurban traffic (e.g. 10.000 veh / day, "Bundesstraﬂe")
+364;30;free;1;1000;0;0;0;0;0;0;0;0;0;0;0;0;0;0;10;10;10
+365;30;free;1;1000;0;0;0;0;0;0;0;0;0;0;0;0;0;0;10;10;10
+366;30;free;1;1000;0;0;0;0;0;0;0;0;0;0;0;0;0;0;10;10;10
+367;30;free;1;1000;0;0;0;0;0;0;0;0;0;0;0;0;0;0;10;10;10
+368;30;free;1;1000;0;0;0;0;0;0;0;0;0;0;0;0;0;0;10;10;10
+369;30;free;1;1000;0;0;0;0;0;0;0;0;0;0;0;0;0;0;10;10;10
+370;30;Pr L1+1Bus V70;1;3;BIKE,BUS,MINIBUS,CAR,HGV,PUTW,WALK;1;800;70;1;20;130;100;4;80;50;4;50;50;50;1,3;1;1,3;Primary: Major road under national administration, connects large cities, significant interurban traffic (e.g. 10.000 veh / day, "Bundesstraﬂe")
+371;30;Pr L1+1Bus V60;1;3;BIKE,BUS,MINIBUS,CAR,HGV,PUTW,WALK;1;600;60;1;20;130;100;4;80;50;4;50;50;50;1,3;1;1,3;Primary: Major road under national administration, connects large cities, significant interurban traffic (e.g. 10.000 veh / day, "Bundesstraﬂe")
+372;30;Pr L1+1Bus V50;1;3;BIKE,BUS,MINIBUS,CAR,HGV,PUTW,WALK;1;400;50;1;20;130;100;4;80;50;4;50;50;50;1,3;1;1,3;Primary: Major road under national administration, connects large cities, significant interurban traffic (e.g. 10.000 veh / day, "Bundesstraﬂe")
+373;30;Pr L1+1Bus V40;1;3;BIKE,BUS,MINIBUS,CAR,HGV,PUTW,WALK;1;300;40;1;20;130;100;4;80;50;4;50;50;50;1,3;1;1,3;Primary: Major road under national administration, connects large cities, significant interurban traffic (e.g. 10.000 veh / day, "Bundesstraﬂe")
+374;30;free;1;1000;0;0;0;0;0;0;0;0;0;0;0;0;0;0;10;10;10
+375;30;free;1;1000;0;0;0;0;0;0;0;0;0;0;0;0;0;0;10;10;10
+376;30;free;1;1000;0;0;0;0;0;0;0;0;0;0;0;0;0;0;10;10;10
+377;30;free;1;1000;0;0;0;0;0;0;0;0;0;0;0;0;0;0;10;10;10
+378;30;free;1;1000;0;0;0;0;0;0;0;0;0;0;0;0;0;0;10;10;10
+379;30;free;1;1000;0;0;0;0;0;0;0;0;0;0;0;0;0;0;10;10;10
+380;30;Pr L1Bus V70;1;3;BUS,WALK,BIKE,PUTW;0;0;70;1;20;130;100;4;80;50;4;50;50;50;1,3;1;1,3;Primary: Major road under national administration, connects large cities, significant interurban traffic (e.g. 10.000 veh / day, "Bundesstraﬂe")
+381;30;Pr L1Bus V60;1;3;BUS,WALK,BIKE,PUTW;0;0;60;1;20;130;100;4;80;50;4;50;50;50;1,3;1;1,3;Primary: Major road under national administration, connects large cities, significant interurban traffic (e.g. 10.000 veh / day, "Bundesstraﬂe")
+382;30;Pr L1Bus V50;1;3;BUS,WALK,BIKE,PUTW;0;0;50;1;20;130;100;4;80;50;4;50;50;50;1,3;1;1,3;Primary: Major road under national administration, connects large cities, significant interurban traffic (e.g. 10.000 veh / day, "Bundesstraﬂe")
+383;30;Pr L1Bus V40;1;3;BUS,WALK,BIKE,PUTW;0;0;40;1;20;130;100;4;80;50;4;50;50;50;1,3;1;1,3;Primary: Major road under national administration, connects large cities, significant interurban traffic (e.g. 10.000 veh / day, "Bundesstraﬂe")
+384;30;free;1;1000;0;0;0;0;0;0;0;0;0;0;0;0;0;0;10;10;10
+385;30;free;1;1000;0;0;0;0;0;0;0;0;0;0;0;0;0;0;10;10;10
+386;30;free;1;1000;0;0;0;0;0;0;0;0;0;0;0;0;0;0;10;10;10
+387;30;free;1;1000;0;0;0;0;0;0;0;0;0;0;0;0;0;0;10;10;10
+388;30;free;1;1000;0;0;0;0;0;0;0;0;0;0;0;0;0;0;10;10;10
+389;30;free;1;1000;0;0;0;0;0;0;0;0;0;0;0;0;0;0;10;10;10
+390;30;free;1;1000;0;0;0;0;0;0;0;0;0;0;0;0;0;0;10;10;10
+391;30;free;1;1000;0;0;0;0;0;0;0;0;0;0;0;0;0;0;10;10;10
+392;30;free;1;1000;0;0;0;0;0;0;0;0;0;0;0;0;0;0;10;10;10
+393;30;free;1;1000;0;0;0;0;0;0;0;0;0;0;0;0;0;0;10;10;10
+394;30;free;1;1000;0;0;0;0;0;0;0;0;0;0;0;0;0;0;10;10;10
+395;30;free;1;1000;0;0;0;0;0;0;0;0;0;0;0;0;0;0;10;10;10
+396;30;free;1;1000;0;0;0;0;0;0;0;0;0;0;0;0;0;0;10;10;10
+397;30;free;1;1000;0;0;0;0;0;0;0;0;0;0;0;0;0;0;10;10;10
+398;30;free;1;1000;0;0;0;0;0;0;0;0;0;0;0;0;0;0;10;10;10
+399;30;free;1;1000;0;0;0;0;0;0;0;0;0;0;0;0;0;0;10;10;10
+400;40;Se L2 V100;1;4;BIKE,BUS,MINIBUS,CAR,HGV,PUTW,WALK;2;2400;100;1;20;130;100;4;80;50;4;50;50;50;1;1,2;1;Secondary: Important regional road, connects smaller towns and centers ("Landesstraﬂe")
+401;40;Se L2 V90;1;4;BIKE,BUS,MINIBUS,CAR,HGV,PUTW,WALK;2;2200;90;1;20;130;100;4;80;50;4;50;50;50;1;1,2;1;Secondary: Important regional road, connects smaller towns and centers ("Landesstraﬂe")
+402;40;Se L2 V80;1;4;BIKE,BUS,MINIBUS,CAR,HGV,PUTW,WALK;2;2000;80;1;20;130;100;4;80;50;4;50;50;50;1;1,2;1;Secondary: Important regional road, connects smaller towns and centers ("Landesstraﬂe")
+403;40;Se L2 V70;1;4;BIKE,BUS,MINIBUS,CAR,HGV,PUTW,WALK;2;1600;70;1;20;130;100;4;80;50;4;50;50;50;1;1,2;1;Secondary: Important regional road, connects smaller towns and centers ("Landesstraﬂe")
+404;40;Se L2 V60;1;4;BIKE,BUS,MINIBUS,CAR,HGV,PUTW,WALK;2;1200;60;1;20;130;100;4;80;50;4;50;50;50;1;1,2;1;Secondary: Important regional road, connects smaller towns and centers ("Landesstraﬂe")
+405;40;Se L2 V50;1;4;BIKE,BUS,MINIBUS,CAR,HGV,PUTW,WALK;2;800;50;1;20;130;100;4;80;50;4;50;50;50;1;1,2;1;Secondary: Important regional road, connects smaller towns and centers ("Landesstraﬂe")
+406;40;Se L2 V40;1;4;BIKE,BUS,MINIBUS,CAR,HGV,PUTW,WALK;2;600;40;1;20;130;100;4;80;50;4;50;50;50;1;1,2;1;Secondary: Important regional road, connects smaller towns and centers ("Landesstraﬂe")
+407;40;free;1;1000;0;0;0;0;0;0;0;0;0;0;0;0;0;0;10;10;10
+408;40;free;1;1000;0;0;0;0;0;0;0;0;0;0;0;0;0;0;10;10;10
+409;40;free;1;1000;0;0;0;0;0;0;0;0;0;0;0;0;0;0;10;10;10
+410;40;free;1;1000;0;0;0;0;0;0;0;0;0;0;0;0;0;0;10;10;10
+411;40;free;1;1000;0;0;0;0;0;0;0;0;0;0;0;0;0;0;10;10;10
+412;40;free;1;1000;0;0;0;0;0;0;0;0;0;0;0;0;0;0;10;10;10
+413;40;free;1;1000;0;0;0;0;0;0;0;0;0;0;0;0;0;0;10;10;10
+414;40;free;1;1000;0;0;0;0;0;0;0;0;0;0;0;0;0;0;10;10;10
+415;40;free;1;1000;0;0;0;0;0;0;0;0;0;0;0;0;0;0;10;10;10
+416;40;free;1;1000;0;0;0;0;0;0;0;0;0;0;0;0;0;0;10;10;10
+417;40;free;1;1000;0;0;0;0;0;0;0;0;0;0;0;0;0;0;10;10;10
+418;40;free;1;1000;0;0;0;0;0;0;0;0;0;0;0;0;0;0;10;10;10
+419;40;free;1;1000;0;0;0;0;0;0;0;0;0;0;0;0;0;0;10;10;10
+420;40;Se L1 V100;1;4;BIKE,BUS,MINIBUS,CAR,HGV,PUTW,WALK;1;1200;100;1;20;130;100;4;80;50;4;50;50;50;1;1,2;1;Secondary: Important regional road, connects smaller towns and centers ("Landesstraﬂe")
+421;40;Se L1 V90;1;4;BIKE,BUS,MINIBUS,CAR,HGV,PUTW,WALK;1;1100;90;1;20;130;100;4;80;50;4;50;50;50;1;1,2;1;Secondary: Important regional road, connects smaller towns and centers ("Landesstraﬂe")
+422;40;Se L1 V80;1;4;BIKE,BUS,MINIBUS,CAR,HGV,PUTW,WALK;1;1000;80;1;20;130;100;4;80;50;4;50;50;50;1;1,2;1;Secondary: Important regional road, connects smaller towns and centers ("Landesstraﬂe")
+423;40;Se L1 V70;1;4;BIKE,BUS,MINIBUS,CAR,HGV,PUTW,WALK;1;800;70;1;20;130;100;4;80;50;4;50;50;50;1;1,2;1;Secondary: Important regional road, connects smaller towns and centers ("Landesstraﬂe")
+424;40;Se L1 V60;1;4;BIKE,BUS,MINIBUS,CAR,HGV,PUTW,WALK;1;600;60;1;20;130;100;4;80;50;4;50;50;50;1;1,2;1;Secondary: Important regional road, connects smaller towns and centers ("Landesstraﬂe")
+425;40;Se L1 V50;1;4;BIKE,BUS,MINIBUS,CAR,HGV,PUTW,WALK;1;400;50;1;20;130;100;4;80;50;4;50;50;50;1;1,2;1;Secondary: Important regional road, connects smaller towns and centers ("Landesstraﬂe")
+426;40;Se L1 V40;1;4;BIKE,BUS,MINIBUS,CAR,HGV,PUTW,WALK;1;300;40;1;20;130;100;4;80;50;4;50;50;50;1;1,2;1;Secondary: Important regional road, connects smaller towns and centers ("Landesstraﬂe")
+427;40;free;1;1000;0;0;0;0;0;0;0;0;0;0;0;0;0;0;10;10;10
+428;40;free;1;1000;0;0;0;0;0;0;0;0;0;0;0;0;0;0;10;10;10
+429;40;free;1;1000;0;0;0;0;0;0;0;0;0;0;0;0;0;0;10;10;10
+430;40;free;1;1000;0;0;0;0;0;0;0;0;0;0;0;0;0;0;10;10;10
+431;40;free;1;1000;0;0;0;0;0;0;0;0;0;0;0;0;0;0;10;10;10
+432;40;free;1;1000;0;0;0;0;0;0;0;0;0;0;0;0;0;0;10;10;10
+433;40;free;1;1000;0;0;0;0;0;0;0;0;0;0;0;0;0;0;10;10;10
+434;40;free;1;1000;0;0;0;0;0;0;0;0;0;0;0;0;0;0;10;10;10
+435;40;free;1;1000;0;0;0;0;0;0;0;0;0;0;0;0;0;0;10;10;10
+436;40;free;1;1000;0;0;0;0;0;0;0;0;0;0;0;0;0;0;10;10;10
+437;40;free;1;1000;0;0;0;0;0;0;0;0;0;0;0;0;0;0;10;10;10
+438;40;Se L1+1Bus V70;1;4;BIKE,BUS,MINIBUS,CAR,HGV,PUTW,WALK;1;800;70;1;20;130;100;4;80;50;4;50;50;50;1;1,2;1;Secondary: Important regional road, connects smaller towns and centers ("Landesstraﬂe")
+439;40;Se L1+1Bus V60;1;4;BIKE,BUS,MINIBUS,CAR,HGV,PUTW,WALK;1;600;60;1;20;130;100;4;80;50;4;50;50;50;1;1,2;1;Secondary: Important regional road, connects smaller towns and centers ("Landesstraﬂe")
+440;40;Se L1+1Bus V50;1;4;BIKE,BUS,MINIBUS,CAR,HGV,PUTW,WALK;1;400;50;1;20;130;100;4;80;50;4;50;50;50;1;1,2;1;Secondary: Important regional road, connects smaller towns and centers ("Landesstraﬂe")
+441;40;Se L1+1Bus V40;1;4;BIKE,BUS,MINIBUS,CAR,HGV,PUTW,WALK;1;300;40;1;20;130;100;4;80;50;4;50;50;50;1;1,2;1;Secondary: Important regional road, connects smaller towns and centers ("Landesstraﬂe")
+442;40;free;1;1000;0;0;0;0;0;0;0;0;0;0;0;0;0;0;10;10;10
+443;40;free;1;1000;0;0;0;0;0;0;0;0;0;0;0;0;0;0;10;10;10
+444;40;free;1;1000;0;0;0;0;0;0;0;0;0;0;0;0;0;0;10;10;10
+445;40;free;1;1000;0;0;0;0;0;0;0;0;0;0;0;0;0;0;10;10;10
+446;40;free;1;1000;0;0;0;0;0;0;0;0;0;0;0;0;0;0;10;10;10
+447;40;free;1;1000;0;0;0;0;0;0;0;0;0;0;0;0;0;0;10;10;10
+448;40;Se L1Bus V70;1;4;BUS,WALK,BIKE,PUTW;0;0;70;1;20;130;100;4;80;50;4;50;50;50;1;1,2;1;Secondary: Important regional road, connects smaller towns and centers ("Landesstraﬂe")
+449;40;Se L1Bus V60;1;4;BUS,WALK,BIKE,PUTW;0;0;60;1;20;130;100;4;80;50;4;50;50;50;1;1,2;1;Secondary: Important regional road, connects smaller towns and centers ("Landesstraﬂe")
+450;40;Se L1Bus V50;1;4;BUS,WALK,BIKE,PUTW;0;0;50;1;20;130;100;4;80;50;4;50;50;50;1;1,2;1;Secondary: Important regional road, connects smaller towns and centers ("Landesstraﬂe")
+451;40;Se L1Bus V40;1;4;BUS,WALK,BIKE,PUTW;0;0;40;1;20;130;100;4;80;50;4;50;50;50;1;1,2;1;Secondary: Important regional road, connects smaller towns and centers ("Landesstraﬂe")
+452;40;free;1;1000;0;0;0;0;0;0;0;0;0;0;0;0;0;0;10;10;10
+453;40;free;1;1000;0;0;0;0;0;0;0;0;0;0;0;0;0;0;10;10;10
+454;40;free;1;1000;0;0;0;0;0;0;0;0;0;0;0;0;0;0;10;10;10
+455;40;free;1;1000;0;0;0;0;0;0;0;0;0;0;0;0;0;0;10;10;10
+456;40;free;1;1000;0;0;0;0;0;0;0;0;0;0;0;0;0;0;10;10;10
+457;40;free;1;1000;0;0;0;0;0;0;0;0;0;0;0;0;0;0;10;10;10
+458;40;free;1;1000;0;0;0;0;0;0;0;0;0;0;0;0;0;0;10;10;10
+459;40;free;1;1000;0;0;0;0;0;0;0;0;0;0;0;0;0;0;10;10;10
+460;40;free;1;1000;0;0;0;0;0;0;0;0;0;0;0;0;0;0;10;10;10
+461;40;free;1;1000;0;0;0;0;0;0;0;0;0;0;0;0;0;0;10;10;10
+462;40;free;1;1000;0;0;0;0;0;0;0;0;0;0;0;0;0;0;10;10;10
+463;40;free;1;1000;0;0;0;0;0;0;0;0;0;0;0;0;0;0;10;10;10
+464;40;free;1;1000;0;0;0;0;0;0;0;0;0;0;0;0;0;0;10;10;10
+465;40;free;1;1000;0;0;0;0;0;0;0;0;0;0;0;0;0;0;10;10;10
+466;40;free;1;1000;0;0;0;0;0;0;0;0;0;0;0;0;0;0;10;10;10
+467;40;free;1;1000;0;0;0;0;0;0;0;0;0;0;0;0;0;0;10;10;10
+468;40;free;1;1000;0;0;0;0;0;0;0;0;0;0;0;0;0;0;10;10;10
+469;40;free;1;1000;0;0;0;0;0;0;0;0;0;0;0;0;0;0;10;10;10
+470;40;free;1;1000;0;0;0;0;0;0;0;0;0;0;0;0;0;0;10;10;10
+471;40;free;1;1000;0;0;0;0;0;0;0;0;0;0;0;0;0;0;10;10;10
+472;40;free;1;1000;0;0;0;0;0;0;0;0;0;0;0;0;0;0;10;10;10
+473;40;free;1;1000;0;0;0;0;0;0;0;0;0;0;0;0;0;0;10;10;10
+474;40;free;1;1000;0;0;0;0;0;0;0;0;0;0;0;0;0;0;10;10;10
+475;40;free;1;1000;0;0;0;0;0;0;0;0;0;0;0;0;0;0;10;10;10
+476;40;free;1;1000;0;0;0;0;0;0;0;0;0;0;0;0;0;0;10;10;10
+477;40;free;1;1000;0;0;0;0;0;0;0;0;0;0;0;0;0;0;10;10;10
+478;40;free;1;1000;0;0;0;0;0;0;0;0;0;0;0;0;0;0;10;10;10
+479;40;free;1;1000;0;0;0;0;0;0;0;0;0;0;0;0;0;0;10;10;10
+480;40;free;1;1000;0;0;0;0;0;0;0;0;0;0;0;0;0;0;10;10;10
+481;40;free;1;1000;0;0;0;0;0;0;0;0;0;0;0;0;0;0;10;10;10
+482;40;free;1;1000;0;0;0;0;0;0;0;0;0;0;0;0;0;0;10;10;10
+483;40;free;1;1000;0;0;0;0;0;0;0;0;0;0;0;0;0;0;10;10;10
+484;40;free;1;1000;0;0;0;0;0;0;0;0;0;0;0;0;0;0;10;10;10
+485;40;free;1;1000;0;0;0;0;0;0;0;0;0;0;0;0;0;0;10;10;10
+486;40;free;1;1000;0;0;0;0;0;0;0;0;0;0;0;0;0;0;10;10;10
+487;40;free;1;1000;0;0;0;0;0;0;0;0;0;0;0;0;0;0;10;10;10
+488;40;free;1;1000;0;0;0;0;0;0;0;0;0;0;0;0;0;0;10;10;10
+489;40;free;1;1000;0;0;0;0;0;0;0;0;0;0;0;0;0;0;10;10;10
+490;40;free;1;1000;0;0;0;0;0;0;0;0;0;0;0;0;0;0;10;10;10
+491;40;free;1;1000;0;0;0;0;0;0;0;0;0;0;0;0;0;0;10;10;10
+492;40;free;1;1000;0;0;0;0;0;0;0;0;0;0;0;0;0;0;10;10;10
+493;40;free;1;1000;0;0;0;0;0;0;0;0;0;0;0;0;0;0;10;10;10
+494;40;free;1;1000;0;0;0;0;0;0;0;0;0;0;0;0;0;0;10;10;10
+495;40;free;1;1000;0;0;0;0;0;0;0;0;0;0;0;0;0;0;10;10;10
+496;40;free;1;1000;0;0;0;0;0;0;0;0;0;0;0;0;0;0;10;10;10
+497;40;free;1;1000;0;0;0;0;0;0;0;0;0;0;0;0;0;0;10;10;10
+498;40;free;1;1000;0;0;0;0;0;0;0;0;0;0;0;0;0;0;10;10;10
+499;40;free;1;1000;0;0;0;0;0;0;0;0;0;0;0;0;0;0;10;10;10
+500;50;Te L2 V100;1;5;BIKE,BUS,MINIBUS,CAR,HGV,PUTW,WALK;2;2400;100;1;20;130;100;4;80;50;4;50;50;50;1;1,2;1;Tertiary: Connects villages or serves as a major street within towns ("Kreisstraﬂe")
+501;50;Te L2 V90;1;5;BIKE,BUS,MINIBUS,CAR,HGV,PUTW,WALK;2;2200;90;1;20;130;100;4;80;50;4;50;50;50;1;1,2;1;Tertiary: Connects villages or serves as a major street within towns ("Kreisstraﬂe")
+502;50;Te L2 V80;1;5;BIKE,BUS,MINIBUS,CAR,HGV,PUTW,WALK;2;2000;80;1;20;130;100;4;80;50;4;50;50;50;1;1,2;1;Tertiary: Connects villages or serves as a major street within towns ("Kreisstraﬂe")
+503;50;Te L2 V70;1;5;BIKE,BUS,MINIBUS,CAR,HGV,PUTW,WALK;2;1600;70;1;20;130;100;4;80;50;4;50;50;50;1;1,2;1;Tertiary: Connects villages or serves as a major street within towns ("Kreisstraﬂe")
+504;50;Te L2 V60;1;5;BIKE,BUS,MINIBUS,CAR,HGV,PUTW,WALK;2;1200;60;1;20;130;100;4;80;50;4;50;50;50;1;1,2;1;Tertiary: Connects villages or serves as a major street within towns ("Kreisstraﬂe")
+505;50;Te L2 V50;1;5;BIKE,BUS,MINIBUS,CAR,HGV,PUTW,WALK;2;800;50;1;20;130;100;4;80;50;4;50;50;50;1;1,2;1;Tertiary: Connects villages or serves as a major street within towns ("Kreisstraﬂe")
+506;50;Te L2 V40;1;5;BIKE,BUS,MINIBUS,CAR,HGV,PUTW,WALK;2;600;40;1;20;130;100;4;80;50;4;50;50;50;1;1,2;1;Tertiary: Connects villages or serves as a major street within towns ("Kreisstraﬂe")
+507;50;free;1;1000;0;0;0;0;0;0;0;0;0;0;0;0;0;0;10;10;10
+508;50;free;1;1000;0;0;0;0;0;0;0;0;0;0;0;0;0;0;10;10;10
+509;50;free;1;1000;0;0;0;0;0;0;0;0;0;0;0;0;0;0;10;10;10
+510;50;free;1;1000;0;0;0;0;0;0;0;0;0;0;0;0;0;0;10;10;10
+511;50;free;1;1000;0;0;0;0;0;0;0;0;0;0;0;0;0;0;10;10;10
+512;50;free;1;1000;0;0;0;0;0;0;0;0;0;0;0;0;0;0;10;10;10
+513;50;free;1;1000;0;0;0;0;0;0;0;0;0;0;0;0;0;0;10;10;10
+514;50;free;1;1000;0;0;0;0;0;0;0;0;0;0;0;0;0;0;10;10;10
+515;50;free;1;1000;0;0;0;0;0;0;0;0;0;0;0;0;0;0;10;10;10
+516;50;free;1;1000;0;0;0;0;0;0;0;0;0;0;0;0;0;0;10;10;10
+517;50;free;1;1000;0;0;0;0;0;0;0;0;0;0;0;0;0;0;10;10;10
+518;50;free;1;1000;0;0;0;0;0;0;0;0;0;0;0;0;0;0;10;10;10
+519;50;free;1;1000;0;0;0;0;0;0;0;0;0;0;0;0;0;0;10;10;10
+520;50;Te L1 V100;1;5;BIKE,BUS,MINIBUS,CAR,HGV,PUTW,WALK;1;1200;100;1;20;130;100;4;80;50;4;50;50;50;1;1,2;1;Tertiary: Connects villages or serves as a major street within towns ("Kreisstraﬂe")
+521;50;Te L1 V90;1;5;BIKE,BUS,MINIBUS,CAR,HGV,PUTW,WALK;1;1100;90;1;20;130;100;4;80;50;4;50;50;50;1;1,2;1;Tertiary: Connects villages or serves as a major street within towns ("Kreisstraﬂe")
+522;50;Te L1 V80;1;5;BIKE,BUS,MINIBUS,CAR,HGV,PUTW,WALK;1;1000;80;1;20;130;100;4;80;50;4;50;50;50;1;1,2;1;Tertiary: Connects villages or serves as a major street within towns ("Kreisstraﬂe")
+523;50;Te L1 V70;1;5;BIKE,BUS,MINIBUS,CAR,HGV,PUTW,WALK;1;800;70;1;20;130;100;4;80;50;4;50;50;50;1;1,2;1;Tertiary: Connects villages or serves as a major street within towns ("Kreisstraﬂe")
+524;50;Te L1 V60;1;5;BIKE,BUS,MINIBUS,CAR,HGV,PUTW,WALK;1;600;60;1;20;130;100;4;80;50;4;50;50;50;1;1,2;1;Tertiary: Connects villages or serves as a major street within towns ("Kreisstraﬂe")
+525;50;Te L1 V50;1;5;BIKE,BUS,MINIBUS,CAR,HGV,PUTW,WALK;1;400;50;1;20;130;100;4;80;50;4;50;50;50;1;1,2;1;Tertiary: Connects villages or serves as a major street within towns ("Kreisstraﬂe")
+526;50;Te L1 V40;1;5;BIKE,BUS,MINIBUS,CAR,HGV,PUTW,WALK;1;300;40;1;20;130;100;4;80;50;4;50;50;50;1;1,2;1;Tertiary: Connects villages or serves as a major street within towns ("Kreisstraﬂe")
+527;50;free;1;1000;0;0;0;0;0;0;0;0;0;0;0;0;0;0;10;10;10
+528;50;free;1;1000;0;0;0;0;0;0;0;0;0;0;0;0;0;0;10;10;10
+529;50;free;1;1000;0;0;0;0;0;0;0;0;0;0;0;0;0;0;10;10;10
+530;50;free;1;1000;0;0;0;0;0;0;0;0;0;0;0;0;0;0;10;10;10
+531;50;free;1;1000;0;0;0;0;0;0;0;0;0;0;0;0;0;0;10;10;10
+532;50;free;1;1000;0;0;0;0;0;0;0;0;0;0;0;0;0;0;10;10;10
+533;50;free;1;1000;0;0;0;0;0;0;0;0;0;0;0;0;0;0;10;10;10
+534;50;free;1;1000;0;0;0;0;0;0;0;0;0;0;0;0;0;0;10;10;10
+535;50;free;1;1000;0;0;0;0;0;0;0;0;0;0;0;0;0;0;10;10;10
+536;50;free;1;1000;0;0;0;0;0;0;0;0;0;0;0;0;0;0;10;10;10
+537;50;free;1;1000;0;0;0;0;0;0;0;0;0;0;0;0;0;0;10;10;10
+538;50;free;1;1000;0;0;0;0;0;0;0;0;0;0;0;0;0;0;10;10;10
+539;50;free;1;1000;0;0;0;0;0;0;0;0;0;0;0;0;0;0;10;10;10
+540;50;Te L1+1Bus V70;1;5;BIKE,BUS,MINIBUS,CAR,HGV,PUTW,WALK;1;800;70;1;20;130;100;4;80;50;4;50;50;50;1;1,2;1;Tertiary: Connects villages or serves as a major street within towns ("Kreisstraﬂe")
+541;50;Te L1+1Bus V60;1;5;BIKE,BUS,MINIBUS,CAR,HGV,PUTW,WALK;1;600;60;1;20;130;100;4;80;50;4;50;50;50;1;1,2;1;Tertiary: Connects villages or serves as a major street within towns ("Kreisstraﬂe")
+542;50;Te L1+1Bus V50;1;5;BIKE,BUS,MINIBUS,CAR,HGV,PUTW,WALK;1;400;50;1;20;130;100;4;80;50;4;50;50;50;1;1,2;1;Tertiary: Connects villages or serves as a major street within towns ("Kreisstraﬂe")
+543;50;Te L1+1Bus V40;1;5;BIKE,BUS,MINIBUS,CAR,HGV,PUTW,WALK;1;300;40;1;20;130;100;4;80;50;4;50;50;50;1;1,2;1;Tertiary: Connects villages or serves as a major street within towns ("Kreisstraﬂe")
+544;50;free;1;1000;0;0;0;0;0;0;0;0;0;0;0;0;0;0;10;10;10
+545;50;free;1;1000;0;0;0;0;0;0;0;0;0;0;0;0;0;0;10;10;10
+546;50;free;1;1000;0;0;0;0;0;0;0;0;0;0;0;0;0;0;10;10;10
+547;50;free;1;1000;0;0;0;0;0;0;0;0;0;0;0;0;0;0;10;10;10
+548;50;free;1;1000;0;0;0;0;0;0;0;0;0;0;0;0;0;0;10;10;10
+549;50;free;1;1000;0;0;0;0;0;0;0;0;0;0;0;0;0;0;10;10;10
+550;50;Te L1Bus V70;1;5;BUS,WALK,BIKE,PUTW;0;0;70;1;20;130;100;4;80;50;4;50;50;50;1;1,2;1;Tertiary: Connects villages or serves as a major street within towns ("Kreisstraﬂe")
+551;50;Te L1Bus V60;1;5;BUS,WALK,BIKE,PUTW;0;0;60;1;20;130;100;4;80;50;4;50;50;50;1;1,2;1;Tertiary: Connects villages or serves as a major street within towns ("Kreisstraﬂe")
+552;50;Te L1Bus V50;1;5;BUS,WALK,BIKE,PUTW;0;0;50;1;20;130;100;4;80;50;4;50;50;50;1;1,2;1;Tertiary: Connects villages or serves as a major street within towns ("Kreisstraﬂe")
+553;50;Te L1Bus V40;1;5;BUS,WALK,BIKE,PUTW;0;0;40;1;20;130;100;4;80;50;4;50;50;50;1;1,2;1;Tertiary: Connects villages or serves as a major street within towns ("Kreisstraﬂe")
+554;50;free;1;1000;0;0;0;0;0;0;0;0;0;0;0;0;0;0;10;10;10
+555;50;free;1;1000;0;0;0;0;0;0;0;0;0;0;0;0;0;0;10;10;10
+556;50;free;1;1000;0;0;0;0;0;0;0;0;0;0;0;0;0;0;10;10;10
+557;50;free;1;1000;0;0;0;0;0;0;0;0;0;0;0;0;0;0;10;10;10
+558;50;free;1;1000;0;0;0;0;0;0;0;0;0;0;0;0;0;0;10;10;10
+559;50;free;1;1000;0;0;0;0;0;0;0;0;0;0;0;0;0;0;10;10;10
+560;50;free;1;1000;0;0;0;0;0;0;0;0;0;0;0;0;0;0;10;10;10
+561;50;free;1;1000;0;0;0;0;0;0;0;0;0;0;0;0;0;0;10;10;10
+562;50;free;1;1000;0;0;0;0;0;0;0;0;0;0;0;0;0;0;10;10;10
+563;50;free;1;1000;0;0;0;0;0;0;0;0;0;0;0;0;0;0;10;10;10
+564;50;free;1;1000;0;0;0;0;0;0;0;0;0;0;0;0;0;0;10;10;10
+565;50;free;1;1000;0;0;0;0;0;0;0;0;0;0;0;0;0;0;10;10;10
+566;50;free;1;1000;0;0;0;0;0;0;0;0;0;0;0;0;0;0;10;10;10
+567;50;free;1;1000;0;0;0;0;0;0;0;0;0;0;0;0;0;0;10;10;10
+568;50;free;1;1000;0;0;0;0;0;0;0;0;0;0;0;0;0;0;10;10;10
+569;50;free;1;1000;0;0;0;0;0;0;0;0;0;0;0;0;0;0;10;10;10
+570;50;free;1;1000;0;0;0;0;0;0;0;0;0;0;0;0;0;0;10;10;10
+571;50;free;1;1000;0;0;0;0;0;0;0;0;0;0;0;0;0;0;10;10;10
+572;50;free;1;1000;0;0;0;0;0;0;0;0;0;0;0;0;0;0;10;10;10
+573;50;free;1;1000;0;0;0;0;0;0;0;0;0;0;0;0;0;0;10;10;10
+574;50;free;1;1000;0;0;0;0;0;0;0;0;0;0;0;0;0;0;10;10;10
+575;50;free;1;1000;0;0;0;0;0;0;0;0;0;0;0;0;0;0;10;10;10
+576;50;free;1;1000;0;0;0;0;0;0;0;0;0;0;0;0;0;0;10;10;10
+577;50;free;1;1000;0;0;0;0;0;0;0;0;0;0;0;0;0;0;10;10;10
+578;50;free;1;1000;0;0;0;0;0;0;0;0;0;0;0;0;0;0;10;10;10
+579;50;free;1;1000;0;0;0;0;0;0;0;0;0;0;0;0;0;0;10;10;10
+580;50;free;1;1000;0;0;0;0;0;0;0;0;0;0;0;0;0;0;10;10;10
+581;50;free;1;1000;0;0;0;0;0;0;0;0;0;0;0;0;0;0;10;10;10
+582;50;free;1;1000;0;0;0;0;0;0;0;0;0;0;0;0;0;0;10;10;10
+583;50;free;1;1000;0;0;0;0;0;0;0;0;0;0;0;0;0;0;10;10;10
+584;50;free;1;1000;0;0;0;0;0;0;0;0;0;0;0;0;0;0;10;10;10
+585;50;free;1;1000;0;0;0;0;0;0;0;0;0;0;0;0;0;0;10;10;10
+586;50;free;1;1000;0;0;0;0;0;0;0;0;0;0;0;0;0;0;10;10;10
+587;50;free;1;1000;0;0;0;0;0;0;0;0;0;0;0;0;0;0;10;10;10
+588;50;free;1;1000;0;0;0;0;0;0;0;0;0;0;0;0;0;0;10;10;10
+589;50;free;1;1000;0;0;0;0;0;0;0;0;0;0;0;0;0;0;10;10;10
+590;50;free;1;1000;0;0;0;0;0;0;0;0;0;0;0;0;0;0;10;10;10
+591;50;free;1;1000;0;0;0;0;0;0;0;0;0;0;0;0;0;0;10;10;10
+592;50;free;1;1000;0;0;0;0;0;0;0;0;0;0;0;0;0;0;10;10;10
+593;50;free;1;1000;0;0;0;0;0;0;0;0;0;0;0;0;0;0;10;10;10
+594;50;free;1;1000;0;0;0;0;0;0;0;0;0;0;0;0;0;0;10;10;10
+595;50;free;1;1000;0;0;0;0;0;0;0;0;0;0;0;0;0;0;10;10;10
+596;50;free;1;1000;0;0;0;0;0;0;0;0;0;0;0;0;0;0;10;10;10
+597;50;free;1;1000;0;0;0;0;0;0;0;0;0;0;0;0;0;0;10;10;10
+598;50;free;1;1000;0;0;0;0;0;0;0;0;0;0;0;0;0;0;10;10;10
+599;50;free;1;1000;0;0;0;0;0;0;0;0;0;0;0;0;0;0;10;10;10
+600;60;Un L1 V100;1;6;BIKE,BUS,MINIBUS,CAR,HGV,PUTW,WALK;1;1200;100;1;20;130;100;4;80;50;4;50;50;50;1;1,2;1;Unclassified: Minor public road, often rural, lowest standard, typically no center line ("Gemeindestraﬂe")
+601;60;Un L1 V90;1;6;BIKE,BUS,MINIBUS,CAR,HGV,PUTW,WALK;1;1100;90;1;20;130;100;4;80;50;4;50;50;50;1;1,2;1;Unclassified: Minor public road, often rural, lowest standard, typically no center line ("Gemeindestraﬂe")
+602;60;Un L1 V80;1;6;BIKE,BUS,MINIBUS,CAR,HGV,PUTW,WALK;1;1000;80;1;20;130;100;4;80;50;4;50;50;50;1;1,2;1;Unclassified: Minor public road, often rural, lowest standard, typically no center line ("Gemeindestraﬂe")
+603;60;Un L1 V70;1;6;BIKE,BUS,MINIBUS,CAR,HGV,PUTW,WALK;1;800;70;1;20;130;100;4;80;50;4;50;50;50;1;1,2;1;Unclassified: Minor public road, often rural, lowest standard, typically no center line ("Gemeindestraﬂe")
+604;60;Un L1 V60;1;6;BIKE,BUS,MINIBUS,CAR,HGV,PUTW,WALK;1;600;60;1;20;130;100;4;80;50;4;50;50;50;1;1,2;1;Unclassified: Minor public road, often rural, lowest standard, typically no center line ("Gemeindestraﬂe")
+605;60;Un L1 V50;1;6;BIKE,BUS,MINIBUS,CAR,HGV,PUTW,WALK;1;400;50;1;20;130;100;4;80;50;4;50;50;50;1;1,2;1;Unclassified: Minor public road, often rural, lowest standard, typically no center line ("Gemeindestraﬂe")
+606;60;Un L1 V40;1;6;BIKE,BUS,MINIBUS,CAR,HGV,PUTW,WALK;1;300;40;1;20;130;100;4;80;50;4;50;50;50;1;1,2;1;Unclassified: Minor public road, often rural, lowest standard, typically no center line ("Gemeindestraﬂe")
+607;60;Un L1 V30;1;6;BIKE,BUS,MINIBUS,CAR,HGV,PUTW,WALK;1;200;30;1;20;130;100;4;80;50;4;50;50;50;1;1,2;1;Unclassified: Minor public road, often rural, lowest standard, typically no center line ("Gemeindestraﬂe")
+608;60;free;1;1000;0;0;0;0;0;0;0;0;0;0;0;0;0;0;10;10;10
+609;60;free;1;1000;0;0;0;0;0;0;0;0;0;0;0;0;0;0;10;10;10
+610;60;free;1;1000;0;0;0;0;0;0;0;0;0;0;0;0;0;0;10;10;10
+611;60;free;1;1000;0;0;0;0;0;0;0;0;0;0;0;0;0;0;10;10;10
+612;60;free;1;1000;0;0;0;0;0;0;0;0;0;0;0;0;0;0;10;10;10
+613;60;free;1;1000;0;0;0;0;0;0;0;0;0;0;0;0;0;0;10;10;10
+614;60;free;1;1000;0;0;0;0;0;0;0;0;0;0;0;0;0;0;10;10;10
+615;60;free;1;1000;0;0;0;0;0;0;0;0;0;0;0;0;0;0;10;10;10
+616;60;free;1;1000;0;0;0;0;0;0;0;0;0;0;0;0;0;0;10;10;10
+617;60;free;1;1000;0;0;0;0;0;0;0;0;0;0;0;0;0;0;10;10;10
+618;60;free;1;1000;0;0;0;0;0;0;0;0;0;0;0;0;0;0;10;10;10
+619;60;free;1;1000;0;0;0;0;0;0;0;0;0;0;0;0;0;0;10;10;10
+620;60;Un L1Bus V70;1;6;BUS,WALK,BIKE,PUTW;0;0;70;1;20;130;100;4;80;50;4;50;50;50;1;1,2;1;Unclassified: Minor public road, often rural, lowest standard, typically no center line ("Gemeindestraﬂe")
+621;60;Un L1Bus V60;1;6;BUS,WALK,BIKE,PUTW;0;0;60;1;20;130;100;4;80;50;4;50;50;50;1;1,2;1;Unclassified: Minor public road, often rural, lowest standard, typically no center line ("Gemeindestraﬂe")
+622;60;Un L1Bus V50;1;6;BUS,WALK,BIKE,PUTW;0;0;50;1;20;130;100;4;80;50;4;50;50;50;1;1,2;1;Unclassified: Minor public road, often rural, lowest standard, typically no center line ("Gemeindestraﬂe")
+623;60;Un L1Bus V40;1;6;BUS,WALK,BIKE,PUTW;0;0;40;1;20;130;100;4;80;50;4;50;50;50;1;1,2;1;Unclassified: Minor public road, often rural, lowest standard, typically no center line ("Gemeindestraﬂe")
+624;60;Un L1Bus V30;1;6;BUS,WALK,BIKE,PUTW;0;0;30;1;20;130;100;4;80;50;4;50;50;50;1;1,2;1;Unclassified: Minor public road, often rural, lowest standard, typically no center line ("Gemeindestraﬂe")
+625;60;free;1;1000;0;0;0;0;0;0;0;0;0;0;0;0;0;0;10;10;10
+626;60;free;1;1000;0;0;0;0;0;0;0;0;0;0;0;0;0;0;10;10;10
+627;60;free;1;1000;0;0;0;0;0;0;0;0;0;0;0;0;0;0;10;10;10
+628;60;free;1;1000;0;0;0;0;0;0;0;0;0;0;0;0;0;0;10;10;10
+629;60;free;1;1000;0;0;0;0;0;0;0;0;0;0;0;0;0;0;10;10;10
+630;60;free;1;1000;0;0;0;0;0;0;0;0;0;0;0;0;0;0;10;10;10
+631;60;free;1;1000;0;0;0;0;0;0;0;0;0;0;0;0;0;0;10;10;10
+632;60;free;1;1000;0;0;0;0;0;0;0;0;0;0;0;0;0;0;10;10;10
+633;60;free;1;1000;0;0;0;0;0;0;0;0;0;0;0;0;0;0;10;10;10
+634;60;free;1;1000;0;0;0;0;0;0;0;0;0;0;0;0;0;0;10;10;10
+635;60;free;1;1000;0;0;0;0;0;0;0;0;0;0;0;0;0;0;10;10;10
+636;60;free;1;1000;0;0;0;0;0;0;0;0;0;0;0;0;0;0;10;10;10
+637;60;free;1;1000;0;0;0;0;0;0;0;0;0;0;0;0;0;0;10;10;10
+638;60;free;1;1000;0;0;0;0;0;0;0;0;0;0;0;0;0;0;10;10;10
+639;60;free;1;1000;0;0;0;0;0;0;0;0;0;0;0;0;0;0;10;10;10
+640;60;free;1;1000;0;0;0;0;0;0;0;0;0;0;0;0;0;0;10;10;10
+641;60;free;1;1000;0;0;0;0;0;0;0;0;0;0;0;0;0;0;10;10;10
+642;60;free;1;1000;0;0;0;0;0;0;0;0;0;0;0;0;0;0;10;10;10
+643;60;free;1;1000;0;0;0;0;0;0;0;0;0;0;0;0;0;0;10;10;10
+644;60;free;1;1000;0;0;0;0;0;0;0;0;0;0;0;0;0;0;10;10;10
+645;60;free;1;1000;0;0;0;0;0;0;0;0;0;0;0;0;0;0;10;10;10
+646;60;free;1;1000;0;0;0;0;0;0;0;0;0;0;0;0;0;0;10;10;10
+647;60;free;1;1000;0;0;0;0;0;0;0;0;0;0;0;0;0;0;10;10;10
+648;60;free;1;1000;0;0;0;0;0;0;0;0;0;0;0;0;0;0;10;10;10
+649;60;free;1;1000;0;0;0;0;0;0;0;0;0;0;0;0;0;0;10;10;10
+650;60;free;1;1000;0;0;0;0;0;0;0;0;0;0;0;0;0;0;10;10;10
+651;60;free;1;1000;0;0;0;0;0;0;0;0;0;0;0;0;0;0;10;10;10
+652;60;free;1;1000;0;0;0;0;0;0;0;0;0;0;0;0;0;0;10;10;10
+653;60;free;1;1000;0;0;0;0;0;0;0;0;0;0;0;0;0;0;10;10;10
+654;60;free;1;1000;0;0;0;0;0;0;0;0;0;0;0;0;0;0;10;10;10
+655;60;free;1;1000;0;0;0;0;0;0;0;0;0;0;0;0;0;0;10;10;10
+656;60;free;1;1000;0;0;0;0;0;0;0;0;0;0;0;0;0;0;10;10;10
+657;60;free;1;1000;0;0;0;0;0;0;0;0;0;0;0;0;0;0;10;10;10
+658;60;free;1;1000;0;0;0;0;0;0;0;0;0;0;0;0;0;0;10;10;10
+659;60;free;1;1000;0;0;0;0;0;0;0;0;0;0;0;0;0;0;10;10;10
+660;60;free;1;1000;0;0;0;0;0;0;0;0;0;0;0;0;0;0;10;10;10
+661;60;free;1;1000;0;0;0;0;0;0;0;0;0;0;0;0;0;0;10;10;10
+662;60;free;1;1000;0;0;0;0;0;0;0;0;0;0;0;0;0;0;10;10;10
+663;60;free;1;1000;0;0;0;0;0;0;0;0;0;0;0;0;0;0;10;10;10
+664;60;free;1;1000;0;0;0;0;0;0;0;0;0;0;0;0;0;0;10;10;10
+665;60;free;1;1000;0;0;0;0;0;0;0;0;0;0;0;0;0;0;10;10;10
+666;60;free;1;1000;0;0;0;0;0;0;0;0;0;0;0;0;0;0;10;10;10
+667;60;free;1;1000;0;0;0;0;0;0;0;0;0;0;0;0;0;0;10;10;10
+668;60;free;1;1000;0;0;0;0;0;0;0;0;0;0;0;0;0;0;10;10;10
+669;60;free;1;1000;0;0;0;0;0;0;0;0;0;0;0;0;0;0;10;10;10
+670;60;free;1;1000;0;0;0;0;0;0;0;0;0;0;0;0;0;0;10;10;10
+671;60;free;1;1000;0;0;0;0;0;0;0;0;0;0;0;0;0;0;10;10;10
+672;60;free;1;1000;0;0;0;0;0;0;0;0;0;0;0;0;0;0;10;10;10
+673;60;free;1;1000;0;0;0;0;0;0;0;0;0;0;0;0;0;0;10;10;10
+674;60;free;1;1000;0;0;0;0;0;0;0;0;0;0;0;0;0;0;10;10;10
+675;60;free;1;1000;0;0;0;0;0;0;0;0;0;0;0;0;0;0;10;10;10
+676;60;free;1;1000;0;0;0;0;0;0;0;0;0;0;0;0;0;0;10;10;10
+677;60;free;1;1000;0;0;0;0;0;0;0;0;0;0;0;0;0;0;10;10;10
+678;60;free;1;1000;0;0;0;0;0;0;0;0;0;0;0;0;0;0;10;10;10
+679;60;free;1;1000;0;0;0;0;0;0;0;0;0;0;0;0;0;0;10;10;10
+680;60;free;1;1000;0;0;0;0;0;0;0;0;0;0;0;0;0;0;10;10;10
+681;60;free;1;1000;0;0;0;0;0;0;0;0;0;0;0;0;0;0;10;10;10
+682;60;free;1;1000;0;0;0;0;0;0;0;0;0;0;0;0;0;0;10;10;10
+683;60;free;1;1000;0;0;0;0;0;0;0;0;0;0;0;0;0;0;10;10;10
+684;60;free;1;1000;0;0;0;0;0;0;0;0;0;0;0;0;0;0;10;10;10
+685;60;free;1;1000;0;0;0;0;0;0;0;0;0;0;0;0;0;0;10;10;10
+686;60;free;1;1000;0;0;0;0;0;0;0;0;0;0;0;0;0;0;10;10;10
+687;60;free;1;1000;0;0;0;0;0;0;0;0;0;0;0;0;0;0;10;10;10
+688;60;free;1;1000;0;0;0;0;0;0;0;0;0;0;0;0;0;0;10;10;10
+689;60;free;1;1000;0;0;0;0;0;0;0;0;0;0;0;0;0;0;10;10;10
+690;60;free;1;1000;0;0;0;0;0;0;0;0;0;0;0;0;0;0;10;10;10
+691;60;free;1;1000;0;0;0;0;0;0;0;0;0;0;0;0;0;0;10;10;10
+692;60;free;1;1000;0;0;0;0;0;0;0;0;0;0;0;0;0;0;10;10;10
+693;60;free;1;1000;0;0;0;0;0;0;0;0;0;0;0;0;0;0;10;10;10
+694;60;free;1;1000;0;0;0;0;0;0;0;0;0;0;0;0;0;0;10;10;10
+695;60;free;1;1000;0;0;0;0;0;0;0;0;0;0;0;0;0;0;10;10;10
+696;60;free;1;1000;0;0;0;0;0;0;0;0;0;0;0;0;0;0;10;10;10
+697;60;free;1;1000;0;0;0;0;0;0;0;0;0;0;0;0;0;0;10;10;10
+698;60;free;1;1000;0;0;0;0;0;0;0;0;0;0;0;0;0;0;10;10;10
+699;60;free;1;1000;0;0;0;0;0;0;0;0;0;0;0;0;0;0;10;10;10
+700;70;Re L1 V50;1;7;BIKE,BUS,MINIBUS,CAR,HGV,PUTW,WALK;1;400;50;1;20;130;100;4;80;50;4;50;50;50;1;1,4;1;Residential: Street in residential areas, mainly for local access
+701;70;Re L1 V40;1;7;BIKE,BUS,MINIBUS,CAR,HGV,PUTW,WALK;1;300;40;1;20;130;100;4;80;50;4;50;50;50;1;1,4;1;Residential: Street in residential areas, mainly for local access
+702;70;Re L1 V30;1;7;BIKE,BUS,MINIBUS,CAR,HGV,PUTW,WALK;1;200;30;1;20;130;100;4;80;50;4;50;50;50;1;1,4;1;Residential: Street in residential areas, mainly for local access
+703;70;Re L1 V20;1;7;BIKE,BUS,MINIBUS,CAR,HGV,PUTW,WALK;1;100;20;1;20;130;100;4;80;50;4;50;50;50;1;1,4;1;Residential: Street in residential areas, mainly for local access
+704;70;free;1;1000;0;0;0;0;0;0;0;0;0;0;0;0;0;0;10;10;10
+705;70;free;1;1000;0;0;0;0;0;0;0;0;0;0;0;0;0;0;10;10;10
+706;70;free;1;1000;0;0;0;0;0;0;0;0;0;0;0;0;0;0;10;10;10
+707;70;free;1;1000;0;0;0;0;0;0;0;0;0;0;0;0;0;0;10;10;10
+708;70;free;1;1000;0;0;0;0;0;0;0;0;0;0;0;0;0;0;10;10;10
+709;70;free;1;1000;0;0;0;0;0;0;0;0;0;0;0;0;0;0;10;10;10
+710;70;free;1;1000;0;0;0;0;0;0;0;0;0;0;0;0;0;0;10;10;10
+711;70;free;1;1000;0;0;0;0;0;0;0;0;0;0;0;0;0;0;10;10;10
+712;70;free;1;1000;0;0;0;0;0;0;0;0;0;0;0;0;0;0;10;10;10
+713;70;free;1;1000;0;0;0;0;0;0;0;0;0;0;0;0;0;0;10;10;10
+714;70;free;1;1000;0;0;0;0;0;0;0;0;0;0;0;0;0;0;10;10;10
+715;70;free;1;1000;0;0;0;0;0;0;0;0;0;0;0;0;0;0;10;10;10
+716;70;free;1;1000;0;0;0;0;0;0;0;0;0;0;0;0;0;0;10;10;10
+717;70;free;1;1000;0;0;0;0;0;0;0;0;0;0;0;0;0;0;10;10;10
+718;70;free;1;1000;0;0;0;0;0;0;0;0;0;0;0;0;0;0;10;10;10
+719;70;free;1;1000;0;0;0;0;0;0;0;0;0;0;0;0;0;0;10;10;10
+720;70;free;1;1000;0;0;0;0;0;0;0;0;0;0;0;0;0;0;10;10;10
+721;70;free;1;1000;0;0;0;0;0;0;0;0;0;0;0;0;0;0;10;10;10
+722;70;free;1;1000;0;0;0;0;0;0;0;0;0;0;0;0;0;0;10;10;10
+723;70;free;1;1000;0;0;0;0;0;0;0;0;0;0;0;0;0;0;10;10;10
+724;70;free;1;1000;0;0;0;0;0;0;0;0;0;0;0;0;0;0;10;10;10
+725;70;free;1;1000;0;0;0;0;0;0;0;0;0;0;0;0;0;0;10;10;10
+726;70;free;1;1000;0;0;0;0;0;0;0;0;0;0;0;0;0;0;10;10;10
+727;70;free;1;1000;0;0;0;0;0;0;0;0;0;0;0;0;0;0;10;10;10
+728;70;free;1;1000;0;0;0;0;0;0;0;0;0;0;0;0;0;0;10;10;10
+729;70;free;1;1000;0;0;0;0;0;0;0;0;0;0;0;0;0;0;10;10;10
+730;70;free;1;1000;0;0;0;0;0;0;0;0;0;0;0;0;0;0;10;10;10
+731;70;free;1;1000;0;0;0;0;0;0;0;0;0;0;0;0;0;0;10;10;10
+732;70;free;1;1000;0;0;0;0;0;0;0;0;0;0;0;0;0;0;10;10;10
+733;70;free;1;1000;0;0;0;0;0;0;0;0;0;0;0;0;0;0;10;10;10
+734;70;free;1;1000;0;0;0;0;0;0;0;0;0;0;0;0;0;0;10;10;10
+735;70;free;1;1000;0;0;0;0;0;0;0;0;0;0;0;0;0;0;10;10;10
+736;70;free;1;1000;0;0;0;0;0;0;0;0;0;0;0;0;0;0;10;10;10
+737;70;free;1;1000;0;0;0;0;0;0;0;0;0;0;0;0;0;0;10;10;10
+738;70;free;1;1000;0;0;0;0;0;0;0;0;0;0;0;0;0;0;10;10;10
+739;70;free;1;1000;0;0;0;0;0;0;0;0;0;0;0;0;0;0;10;10;10
+740;70;free;1;1000;0;0;0;0;0;0;0;0;0;0;0;0;0;0;10;10;10
+741;70;free;1;1000;0;0;0;0;0;0;0;0;0;0;0;0;0;0;10;10;10
+742;70;free;1;1000;0;0;0;0;0;0;0;0;0;0;0;0;0;0;10;10;10
+743;70;free;1;1000;0;0;0;0;0;0;0;0;0;0;0;0;0;0;10;10;10
+744;70;free;1;1000;0;0;0;0;0;0;0;0;0;0;0;0;0;0;10;10;10
+745;70;free;1;1000;0;0;0;0;0;0;0;0;0;0;0;0;0;0;10;10;10
+746;70;free;1;1000;0;0;0;0;0;0;0;0;0;0;0;0;0;0;10;10;10
+747;70;free;1;1000;0;0;0;0;0;0;0;0;0;0;0;0;0;0;10;10;10
+748;70;free;1;1000;0;0;0;0;0;0;0;0;0;0;0;0;0;0;10;10;10
+749;70;free;1;1000;0;0;0;0;0;0;0;0;0;0;0;0;0;0;10;10;10
+750;70;free;1;1000;0;0;0;0;0;0;0;0;0;0;0;0;0;0;10;10;10
+751;70;free;1;1000;0;0;0;0;0;0;0;0;0;0;0;0;0;0;10;10;10
+752;70;free;1;1000;0;0;0;0;0;0;0;0;0;0;0;0;0;0;10;10;10
+753;70;free;1;1000;0;0;0;0;0;0;0;0;0;0;0;0;0;0;10;10;10
+754;70;free;1;1000;0;0;0;0;0;0;0;0;0;0;0;0;0;0;10;10;10
+755;70;free;1;1000;0;0;0;0;0;0;0;0;0;0;0;0;0;0;10;10;10
+756;70;free;1;1000;0;0;0;0;0;0;0;0;0;0;0;0;0;0;10;10;10
+757;70;free;1;1000;0;0;0;0;0;0;0;0;0;0;0;0;0;0;10;10;10
+758;70;free;1;1000;0;0;0;0;0;0;0;0;0;0;0;0;0;0;10;10;10
+759;70;free;1;1000;0;0;0;0;0;0;0;0;0;0;0;0;0;0;10;10;10
+760;70;free;1;1000;0;0;0;0;0;0;0;0;0;0;0;0;0;0;10;10;10
+761;70;free;1;1000;0;0;0;0;0;0;0;0;0;0;0;0;0;0;10;10;10
+762;70;free;1;1000;0;0;0;0;0;0;0;0;0;0;0;0;0;0;10;10;10
+763;70;free;1;1000;0;0;0;0;0;0;0;0;0;0;0;0;0;0;10;10;10
+764;70;free;1;1000;0;0;0;0;0;0;0;0;0;0;0;0;0;0;10;10;10
+765;70;free;1;1000;0;0;0;0;0;0;0;0;0;0;0;0;0;0;10;10;10
+766;70;free;1;1000;0;0;0;0;0;0;0;0;0;0;0;0;0;0;10;10;10
+767;70;free;1;1000;0;0;0;0;0;0;0;0;0;0;0;0;0;0;10;10;10
+768;70;free;1;1000;0;0;0;0;0;0;0;0;0;0;0;0;0;0;10;10;10
+769;70;free;1;1000;0;0;0;0;0;0;0;0;0;0;0;0;0;0;10;10;10
+770;70;free;1;1000;0;0;0;0;0;0;0;0;0;0;0;0;0;0;10;10;10
+771;70;free;1;1000;0;0;0;0;0;0;0;0;0;0;0;0;0;0;10;10;10
+772;70;free;1;1000;0;0;0;0;0;0;0;0;0;0;0;0;0;0;10;10;10
+773;70;free;1;1000;0;0;0;0;0;0;0;0;0;0;0;0;0;0;10;10;10
+774;70;free;1;1000;0;0;0;0;0;0;0;0;0;0;0;0;0;0;10;10;10
+775;70;free;1;1000;0;0;0;0;0;0;0;0;0;0;0;0;0;0;10;10;10
+776;70;free;1;1000;0;0;0;0;0;0;0;0;0;0;0;0;0;0;10;10;10
+777;70;free;1;1000;0;0;0;0;0;0;0;0;0;0;0;0;0;0;10;10;10
+778;70;free;1;1000;0;0;0;0;0;0;0;0;0;0;0;0;0;0;10;10;10
+779;70;free;1;1000;0;0;0;0;0;0;0;0;0;0;0;0;0;0;10;10;10
+780;70;free;1;1000;0;0;0;0;0;0;0;0;0;0;0;0;0;0;10;10;10
+781;70;free;1;1000;0;0;0;0;0;0;0;0;0;0;0;0;0;0;10;10;10
+782;70;free;1;1000;0;0;0;0;0;0;0;0;0;0;0;0;0;0;10;10;10
+783;70;free;1;1000;0;0;0;0;0;0;0;0;0;0;0;0;0;0;10;10;10
+784;70;free;1;1000;0;0;0;0;0;0;0;0;0;0;0;0;0;0;10;10;10
+785;70;free;1;1000;0;0;0;0;0;0;0;0;0;0;0;0;0;0;10;10;10
+786;70;free;1;1000;0;0;0;0;0;0;0;0;0;0;0;0;0;0;10;10;10
+787;70;free;1;1000;0;0;0;0;0;0;0;0;0;0;0;0;0;0;10;10;10
+788;70;free;1;1000;0;0;0;0;0;0;0;0;0;0;0;0;0;0;10;10;10
+789;70;free;1;1000;0;0;0;0;0;0;0;0;0;0;0;0;0;0;10;10;10
+790;70;free;1;1000;0;0;0;0;0;0;0;0;0;0;0;0;0;0;10;10;10
+791;70;free;1;1000;0;0;0;0;0;0;0;0;0;0;0;0;0;0;10;10;10
+792;70;free;1;1000;0;0;0;0;0;0;0;0;0;0;0;0;0;0;10;10;10
+793;70;free;1;1000;0;0;0;0;0;0;0;0;0;0;0;0;0;0;10;10;10
+794;70;free;1;1000;0;0;0;0;0;0;0;0;0;0;0;0;0;0;10;10;10
+795;70;free;1;1000;0;0;0;0;0;0;0;0;0;0;0;0;0;0;10;10;10
+796;70;free;1;1000;0;0;0;0;0;0;0;0;0;0;0;0;0;0;10;10;10
+797;70;free;1;1000;0;0;0;0;0;0;0;0;0;0;0;0;0;0;10;10;10
+798;70;free;1;1000;0;0;0;0;0;0;0;0;0;0;0;0;0;0;10;10;10
+799;70;free;1;1000;0;0;0;0;0;0;0;0;0;0;0;0;0;0;10;10;10
+800;11;Link Mo L3 V80;1;1;BUS,CAR,HGV;3;3000;80;1;20;130;100;4;80;50;4;50;50;50;10;0,8;10;Motorway Link: Slip road (ramp) connecting to a motorway ("Autobahn")
+801;11;Link Mo L2 V80;1;1;BUS,CAR,HGV;2;2000;80;1;20;130;100;4;80;50;4;50;50;50;10;0,8;10;Motorway Link: Slip road (ramp) connecting to a motorway ("Autobahn")
+802;11;Link Mo L1 V80;1;1;BUS,CAR,HGV;1;1000;80;1;20;130;100;4;80;50;4;50;50;50;10;0,8;10;Motorway Link: Slip road (ramp) connecting to a motorway ("Autobahn")
+803;11;free;1;1000;0;0;0;0;0;0;0;0;0;0;0;0;0;0;10;10;10
+804;11;free;1;1000;0;0;0;0;0;0;0;0;0;0;0;0;0;0;10;10;10
+805;11;Link Mo L3 V40;1;1;BUS,CAR,HGV;3;900;40;1;20;130;100;4;80;50;4;50;50;50;10;0,8;10;Motorway Link: Slip road (ramp) connecting to a motorway ("Autobahn")
+806;11;Link Mo L2 V40;1;1;BUS,CAR,HGV;2;600;40;1;20;130;100;4;80;50;4;50;50;50;10;0,8;10;Motorway Link: Slip road (ramp) connecting to a motorway ("Autobahn")
+807;11;Link Mo L1 V40;1;1;BUS,CAR,HGV;1;300;40;1;20;130;100;4;80;50;4;50;50;50;10;0,8;10;Motorway Link: Slip road (ramp) connecting to a motorway ("Autobahn")
+808;11;free;1;1000;0;0;0;0;0;0;0;0;0;0;0;0;0;0;10;10;10
+809;11;free;1;1000;0;0;0;0;0;0;0;0;0;0;0;0;0;0;10;10;10
+810;21;Link Tr L3 V80;1;2;BUS,CAR,HGV;3;3000;80;1;20;130;100;4;80;50;4;50;50;50;10;0,8;10;Trunk Link: Slip road (ramp) connecting to a trunk road ("Kraftfahrstraﬂe")
+811;21;Link Tr L2 V80;1;2;BUS,CAR,HGV;2;2000;80;1;20;130;100;4;80;50;4;50;50;50;10;0,8;10;Trunk Link: Slip road (ramp) connecting to a trunk road ("Kraftfahrstraﬂe")
+812;21;Link Tr L1 V80;1;2;BUS,CAR,HGV;1;1000;80;1;20;130;100;4;80;50;4;50;50;50;10;0,8;10;Trunk Link: Slip road (ramp) connecting to a trunk road ("Kraftfahrstraﬂe")
+813;21;free;1;1000;0;0;0;0;0;0;0;0;0;0;0;0;0;0;10;10;10
+814;21;free;1;1000;0;0;0;0;0;0;0;0;0;0;0;0;0;0;10;10;10
+815;21;Link Tr L3 V40;1;2;BUS,CAR,HGV;3;900;40;1;20;130;100;4;80;50;4;50;50;50;10;0,8;10;Trunk Link: Slip road (ramp) connecting to a trunk road ("Kraftfahrstraﬂe")
+816;21;Link Tr L2 V40;1;2;BUS,CAR,HGV;2;600;40;1;20;130;100;4;80;50;4;50;50;50;10;0,8;10;Trunk Link: Slip road (ramp) connecting to a trunk road ("Kraftfahrstraﬂe")
+817;21;Link Tr L1 V40;1;2;BUS,CAR,HGV;1;300;40;1;20;130;100;4;80;50;4;50;50;50;10;0,8;10;Trunk Link: Slip road (ramp) connecting to a trunk road ("Kraftfahrstraﬂe")
+818;21;free;1;1000;0;0;0;0;0;0;0;0;0;0;0;0;0;0;10;10;10
+819;21;free;1;1000;0;0;0;0;0;0;0;0;0;0;0;0;0;0;10;10;10
+820;31;Link Pr L3 V80;1;3;BIKE,BUS,MINIBUS,CAR,HGV,PUTW,WALK;3;3000;80;1;20;130;100;4;80;50;4;50;50;50;1,3;1;1,3;Primary Link: Slip road (ramp) connecting to a primary road ("Bundesstaﬂe")
+821;31;Link Pr L2 V80;1;3;BIKE,BUS,MINIBUS,CAR,HGV,PUTW,WALK;2;2000;80;1;20;130;100;4;80;50;4;50;50;50;1,3;1;1,3;Primary Link: Slip road (ramp) connecting to a primary road ("Bundesstaﬂe")
+822;31;Link Pr L1 V80;1;3;BIKE,BUS,MINIBUS,CAR,HGV,PUTW,WALK;1;1000;80;1;20;130;100;4;80;50;4;50;50;50;1,3;1;1,3;Primary Link: Slip road (ramp) connecting to a primary road ("Bundesstaﬂe")
+823;31;free;1;1000;0;0;0;0;0;0;0;0;0;0;0;0;0;0;10;10;10
+824;31;free;1;1000;0;0;0;0;0;0;0;0;0;0;0;0;0;0;10;10;10
+825;31;Link Pr L3 V40;1;3;BIKE,BUS,MINIBUS,CAR,HGV,PUTW,WALK;3;900;40;1;20;130;100;4;80;50;4;50;50;50;1,3;1;1,3;Primary Link: Slip road (ramp) connecting to a primary road ("Bundesstaﬂe")
+826;31;Link Pr L2 V40;1;3;BIKE,BUS,MINIBUS,CAR,HGV,PUTW,WALK;2;600;40;1;20;130;100;4;80;50;4;50;50;50;1,3;1;1,3;Primary Link: Slip road (ramp) connecting to a primary road ("Bundesstaﬂe")
+827;31;Link Pr L1 V40;1;3;BIKE,BUS,MINIBUS,CAR,HGV,PUTW,WALK;1;300;40;1;20;130;100;4;80;50;4;50;50;50;1,3;1;1,3;Primary Link: Slip road (ramp) connecting to a primary road ("Bundesstaﬂe")
+828;31;free;1;1000;0;0;0;0;0;0;0;0;0;0;0;0;0;0;10;10;10
+829;31;free;1;1000;0;0;0;0;0;0;0;0;0;0;0;0;0;0;10;10;10
+830;41;Link Se L2 V80;1;4;BIKE,BUS,MINIBUS,CAR,HGV,PUTW,WALK;2;2000;80;1;20;130;100;4;80;50;4;50;50;50;1;1,2;1;Secondary Link: Slip road (ramp) connecting to a secondary road ("Landesstraﬂe")
+831;41;Link Se L1 V80;1;4;BIKE,BUS,MINIBUS,CAR,HGV,PUTW,WALK;1;1000;80;1;20;130;100;4;80;50;4;50;50;50;1;1,2;1;Secondary Link: Slip road (ramp) connecting to a secondary road ("Landesstraﬂe")
+832;41;free;1;1000;0;0;0;0;0;0;0;0;0;0;0;0;0;0;10;10;10
+833;41;free;1;1000;0;0;0;0;0;0;0;0;0;0;0;0;0;0;10;10;10
+834;41;free;1;1000;0;0;0;0;0;0;0;0;0;0;0;0;0;0;10;10;10
+835;41;Link Se L2 V40;1;4;BIKE,BUS,MINIBUS,CAR,HGV,PUTW,WALK;2;600;40;1;20;130;100;4;80;50;4;50;50;50;1;1,2;1;Secondary Link: Slip road (ramp) connecting to a secondary road ("Landesstraﬂe")
+836;41;Link Se L1 V40;1;4;BIKE,BUS,MINIBUS,CAR,HGV,PUTW,WALK;1;300;40;1;20;130;100;4;80;50;4;50;50;50;1;1,2;1;Secondary Link: Slip road (ramp) connecting to a secondary road ("Landesstraﬂe")
+837;41;free;1;1000;0;0;0;0;0;0;0;0;0;0;0;0;0;0;10;10;10
+838;41;free;1;1000;0;0;0;0;0;0;0;0;0;0;0;0;0;0;10;10;10
+839;41;free;1;1000;0;0;0;0;0;0;0;0;0;0;0;0;0;0;10;10;10
+840;51;Link Te L2 V80;1;5;BIKE,BUS,MINIBUS,CAR,HGV,PUTW,WALK;2;2000;80;1;20;130;100;4;80;50;4;50;50;50;1;1,2;1;Tertiary Link: Slip road (ramp) connecting to a tertiary road ("Kreisstraﬂe")
+841;51;Link Te L1 V80;1;5;BIKE,BUS,MINIBUS,CAR,HGV,PUTW,WALK;1;1000;80;1;20;130;100;4;80;50;4;50;50;50;1;1,2;1;Tertiary Link: Slip road (ramp) connecting to a tertiary road ("Kreisstraﬂe")
+842;51;free;1;1000;0;0;0;0;0;0;0;0;0;0;0;0;0;0;10;10;10
+843;51;free;1;1000;0;0;0;0;0;0;0;0;0;0;0;0;0;0;10;10;10
+844;51;free;1;1000;0;0;0;0;0;0;0;0;0;0;0;0;0;0;10;10;10
+845;51;Link Te L2 V40;1;5;BIKE,BUS,MINIBUS,CAR,HGV,PUTW,WALK;2;600;40;1;20;130;100;4;80;50;4;50;50;50;1;1,2;1;Tertiary Link: Slip road (ramp) connecting to a tertiary road ("Kreisstraﬂe")
+846;51;Link Te L1 V40;1;5;BIKE,BUS,MINIBUS,CAR,HGV,PUTW,WALK;1;300;40;1;20;130;100;4;80;50;4;50;50;50;1;1,2;1;Tertiary Link: Slip road (ramp) connecting to a tertiary road ("Kreisstraﬂe")
+847;51;free;1;1000;0;0;0;0;0;0;0;0;0;0;0;0;0;0;10;10;10
+848;51;free;1;1000;0;0;0;0;0;0;0;0;0;0;0;0;0;0;10;10;10
+849;51;free;1;1000;0;0;0;0;0;0;0;0;0;0;0;0;0;0;10;10;10
+850;80;free;1;1000;0;0;0;0;0;0;0;0;0;0;0;0;0;0;10;10;10
+851;80;free;1;1000;0;0;0;0;0;0;0;0;0;0;0;0;0;0;10;10;10
+852;80;free;1;1000;0;0;0;0;0;0;0;0;0;0;0;0;0;0;10;10;10
+853;80;free;1;1000;0;0;0;0;0;0;0;0;0;0;0;0;0;0;10;10;10
+854;80;free;1;1000;0;0;0;0;0;0;0;0;0;0;0;0;0;0;10;10;10
+855;80;free;1;1000;0;0;0;0;0;0;0;0;0;0;0;0;0;0;10;10;10
+856;80;free;1;1000;0;0;0;0;0;0;0;0;0;0;0;0;0;0;10;10;10
+857;80;free;1;1000;0;0;0;0;0;0;0;0;0;0;0;0;0;0;10;10;10
+858;80;free;1;1000;0;0;0;0;0;0;0;0;0;0;0;0;0;0;10;10;10
+859;80;free;1;1000;0;0;0;0;0;0;0;0;0;0;0;0;0;0;10;10;10
+860;80;free;1;1000;0;0;0;0;0;0;0;0;0;0;0;0;0;0;10;10;10
+861;80;free;1;1000;0;0;0;0;0;0;0;0;0;0;0;0;0;0;10;10;10
+862;80;free;1;1000;0;0;0;0;0;0;0;0;0;0;0;0;0;0;10;10;10
+863;80;free;1;1000;0;0;0;0;0;0;0;0;0;0;0;0;0;0;10;10;10
+864;80;free;1;1000;0;0;0;0;0;0;0;0;0;0;0;0;0;0;10;10;10
+865;80;free;1;1000;0;0;0;0;0;0;0;0;0;0;0;0;0;0;10;10;10
+866;80;free;1;1000;0;0;0;0;0;0;0;0;0;0;0;0;0;0;10;10;10
+867;80;free;1;1000;0;0;0;0;0;0;0;0;0;0;0;0;0;0;10;10;10
+868;80;free;1;1000;0;0;0;0;0;0;0;0;0;0;0;0;0;0;10;10;10
+869;80;free;1;1000;0;0;0;0;0;0;0;0;0;0;0;0;0;0;10;10;10
+870;80;free;1;1000;0;0;0;0;0;0;0;0;0;0;0;0;0;0;10;10;10
+871;80;free;1;1000;0;0;0;0;0;0;0;0;0;0;0;0;0;0;10;10;10
+872;80;free;1;1000;0;0;0;0;0;0;0;0;0;0;0;0;0;0;10;10;10
+873;80;free;1;1000;0;0;0;0;0;0;0;0;0;0;0;0;0;0;10;10;10
+874;80;free;1;1000;0;0;0;0;0;0;0;0;0;0;0;0;0;0;10;10;10
+875;80;free;1;1000;0;0;0;0;0;0;0;0;0;0;0;0;0;0;10;10;10
+876;80;free;1;1000;0;0;0;0;0;0;0;0;0;0;0;0;0;0;10;10;10
+877;80;free;1;1000;0;0;0;0;0;0;0;0;0;0;0;0;0;0;10;10;10
+878;80;free;1;1000;0;0;0;0;0;0;0;0;0;0;0;0;0;0;10;10;10
+879;80;free;1;1000;0;0;0;0;0;0;0;0;0;0;0;0;0;0;10;10;10
+880;80;free;1;1000;0;0;0;0;0;0;0;0;0;0;0;0;0;0;10;10;10
+881;80;free;1;1000;0;0;0;0;0;0;0;0;0;0;0;0;0;0;10;10;10
+882;80;free;1;1000;0;0;0;0;0;0;0;0;0;0;0;0;0;0;10;10;10
+883;80;free;1;1000;0;0;0;0;0;0;0;0;0;0;0;0;0;0;10;10;10
+884;80;free;1;1000;0;0;0;0;0;0;0;0;0;0;0;0;0;0;10;10;10
+885;80;free;1;1000;0;0;0;0;0;0;0;0;0;0;0;0;0;0;10;10;10
+886;80;free;1;1000;0;0;0;0;0;0;0;0;0;0;0;0;0;0;10;10;10
+887;80;free;1;1000;0;0;0;0;0;0;0;0;0;0;0;0;0;0;10;10;10
+888;80;free;1;1000;0;0;0;0;0;0;0;0;0;0;0;0;0;0;10;10;10
+889;80;free;1;1000;0;0;0;0;0;0;0;0;0;0;0;0;0;0;10;10;10
+890;80;free;1;1000;0;0;0;0;0;0;0;0;0;0;0;0;0;0;10;10;10
+891;80;free;1;1000;0;0;0;0;0;0;0;0;0;0;0;0;0;0;10;10;10
+892;80;free;1;1000;0;0;0;0;0;0;0;0;0;0;0;0;0;0;10;10;10
+893;80;free;1;1000;0;0;0;0;0;0;0;0;0;0;0;0;0;0;10;10;10
+894;80;free;1;1000;0;0;0;0;0;0;0;0;0;0;0;0;0;0;10;10;10
+895;80;free;1;1000;0;0;0;0;0;0;0;0;0;0;0;0;0;0;10;10;10
+896;80;free;1;1000;0;0;0;0;0;0;0;0;0;0;0;0;0;0;10;10;10
+897;80;free;1;1000;0;0;0;0;0;0;0;0;0;0;0;0;0;0;10;10;10
+898;80;free;1;1000;0;0;0;0;0;0;0;0;0;0;0;0;0;0;10;10;10
+899;90;free;1;1000;0;0;0;0;0;0;0;0;0;0;0;0;0;0;10;10;10
+900;0;Blocked Oneway;1;999;BIKE,PUTW,WALK;1;0;4;1;20;130;100;4;80;50;4;50;50;50;1;10;1;Blocked opposite direction
+901;0;Construction;1;999;PUTW,WALK;1;0;4;1;20;130;100;4;80;50;4;50;50;50;10;10;10;Road under construction
+902;0;free;1;1000;0;0;0;0;0;0;0;0;0;0;0;0;0;0;10;10;10
+903;0;free;1;1000;0;0;0;0;0;0;0;0;0;0;0;0;0;0;10;10;10
+904;0;free;1;1000;0;0;0;0;0;0;0;0;0;0;0;0;0;0;10;10;10
+905;0;free;1;1000;0;0;0;0;0;0;0;0;0;0;0;0;0;0;10;10;10
+906;0;free;1;1000;0;0;0;0;0;0;0;0;0;0;0;0;0;0;10;10;10
+907;0;free;1;1000;0;0;0;0;0;0;0;0;0;0;0;0;0;0;10;10;10
+908;0;free;1;1000;0;0;0;0;0;0;0;0;0;0;0;0;0;0;10;10;10
+909;1;Road;1;999;BIKE,BUS,MINIBUS,CAR,HGV,PUTW,WALK;1;200;30;1;20;130;100;4;80;50;4;50;50;50;1;1,4;1;Classification not determined
+910;1;Living_Street;1;999;BIKE,BUS,MINIBUS,CAR,HGV,PUTW,WALK;1;200;30;1;20;130;100;4;80;50;4;50;50;50;1;1,4;1;Street with pedestrian priority, traffic-calmed, very low speed ("Verkehrsberuhigter Bereich")
+911;1;Service;1;999;BIKE,PUTW,WALK;1;200;30;1;20;130;100;4;80;50;4;50;50;50;1,3;1,5;1;Minor road for access to properties, parking, or industrial sites ("Erschlieﬂungsweg")
+912;1;free;1;1000;0;0;0;0;0;0;0;0;0;0;0;0;0;0;10;10;10
+913;1;free;1;1000;0;0;0;0;0;0;0;0;0;0;0;0;0;0;10;10;10
+914;1;free;1;1000;0;0;0;0;0;0;0;0;0;0;0;0;0;0;10;10;10
+915;1;free;1;1000;0;0;0;0;0;0;0;0;0;0;0;0;0;0;10;10;10
+916;1;free;1;1000;0;0;0;0;0;0;0;0;0;0;0;0;0;0;10;10;10
+917;1;free;1;1000;0;0;0;0;0;0;0;0;0;0;0;0;0;0;10;10;10
+918;1;free;1;1000;0;0;0;0;0;0;0;0;0;0;0;0;0;0;10;10;10
+919;2;Footway/Pedestrian;1;999;BIKE,PUTW,WALK;1;9999;4;1;20;130;100;4;80;50;4;50;50;50;1,3;10;1;Path designated for pedestrians only
+920;2;Steps;1;999;BIKE,PUTW,WALK;1;9999;4;1;20;130;100;4;80;50;4;50;50;50;10;10;1;Staircase for pedestrians
+921;2;Path;1;999;BIKE,PUTW,WALK;1;9999;4;1;20;130;100;4;80;50;4;50;50;50;1;10;1;Generic path for non-motorized use
+922;2;Cycleway;1;999;BIKE,PUTW,WALK;1;9999;20;1;20;130;100;4;80;50;4;50;50;50;1;10;1,3;Path designated for bicycles
+923;2;Track;1;999;BIKE,PUTW,WALK;1;9999;20;1;20;130;100;4;80;50;4;50;50;50;1,3;10;1;Road for agricultural or forestry use
+924;2;free;0;1000;0;0;0;0;0;0;0;0;0;0;0;0;0;0;10;10;10
+925;2;free;0;1000;0;0;0;0;0;0;0;0;0;0;0;0;0;0;10;10;10
+926;2;free;0;1000;0;0;0;0;0;0;0;0;0;0;0;0;0;0;10;10;10
+927;2;free;0;1000;0;0;0;0;0;0;0;0;0;0;0;0;0;0;10;10;10
+928;2;free;0;1000;0;0;0;0;0;0;0;0;0;0;0;0;0;0;10;10;10
+929;3;General rail;1;999;LRT,SUBWAY,TRAIN,TRAM;1;0;20;1;20;130;100;4;80;50;4;50;50;50;10;10;10;General railway line
+930;3;Rail;1;999;LRT,TRAIN;1;0;20;1;20;130;100;4;80;50;4;50;50;50;10;10;10;Railway line, type not specified
+931;3;Light rail;1;999;LRT,TRAM;1;0;20;1;20;130;100;4;80;50;4;50;50;50;10;10;10;LRT, urban rail
+932;3;Subway;1;999;SUBWAY;1;0;20;1;20;130;100;4;80;50;4;50;50;50;10;10;10;SUBWAY, underground urban railway
+933;3;Tram;1;999;TRAM;1;0;20;1;20;130;100;4;80;50;4;50;50;50;10;10;10;Tram, street-level urban rail
+934;3;free;0;1000;0;0;0;0;0;0;0;0;0;0;0;0;0;0;10;10;10
+935;3;free;0;1000;0;0;0;0;0;0;0;0;0;0;0;0;0;0;10;10;10
+936;3;free;0;1000;0;0;0;0;0;0;0;0;0;0;0;0;0;0;10;10;10
+937;3;free;0;1000;0;0;0;0;0;0;0;0;0;0;0;0;0;0;10;10;10
+938;3;free;0;1000;0;0;0;0;0;0;0;0;0;0;0;0;0;0;10;10;10
+939;100;Ferry;1;999;BIKE,BUS,CAR,HGV,PUTW,WALK;1;1000;20;20;20;130;100;20;80;50;20;50;50;50;1,3;1,3;1,3;Route for vehicles or pedestrians using a boat or ferry service
+940;100;Ferry_Access;1;999;BIKE,BUS,CAR,HGV,PUTW,WALK;1;1000;20;20;20;130;100;20;80;50;20;50;50;50;1,3;1,3;1,3;Access to a boat or ferry service. v0 = 1km/h necessary for connectors
+941;100;free;1;1000;0;0;0;0;0;0;0;0;0;0;0;0;0;0;10;10;10
+942;100;free;1;1000;0;0;0;0;0;0;0;0;0;0;0;0;0;0;10;10;10
+943;100;free;1;1000;0;0;0;0;0;0;0;0;0;0;0;0;0;0;10;10;10
+944;100;free;1;1000;0;0;0;0;0;0;0;0;0;0;0;0;0;0;10;10;10
+945;100;free;1;1000;0;0;0;0;0;0;0;0;0;0;0;0;0;0;10;10;10
+946;100;free;1;1000;0;0;0;0;0;0;0;0;0;0;0;0;0;0;10;10;10
+947;100;free;1;1000;0;0;0;0;0;0;0;0;0;0;0;0;0;0;10;10;10
+948;100;free;1;1000;0;0;0;0;0;0;0;0;0;0;0;0;0;0;10;10;10
+949;100;free;1;1000;0;0;0;0;0;0;0;0;0;0;0;0;0;0;10;10;10
+950;5;free;1;1000;0;0;0;0;0;0;0;0;0;0;0;0;0;0;10;10;10
+951;5;free;1;1000;0;0;0;0;0;0;0;0;0;0;0;0;0;0;10;10;10
+952;5;free;1;1000;0;0;0;0;0;0;0;0;0;0;0;0;0;0;10;10;10
+953;5;free;1;1000;0;0;0;0;0;0;0;0;0;0;0;0;0;0;10;10;10
+954;5;free;1;1000;0;0;0;0;0;0;0;0;0;0;0;0;0;0;10;10;10
+955;5;free;1;1000;0;0;0;0;0;0;0;0;0;0;0;0;0;0;10;10;10
+956;5;free;1;1000;0;0;0;0;0;0;0;0;0;0;0;0;0;0;10;10;10
+957;5;free;1;1000;0;0;0;0;0;0;0;0;0;0;0;0;0;0;10;10;10
+958;5;free;1;1000;0;0;0;0;0;0;0;0;0;0;0;0;0;0;10;10;10
+959;5;free;1;1000;0;0;0;0;0;0;0;0;0;0;0;0;0;0;10;10;10
+960;5;free;1;1000;0;0;0;0;0;0;0;0;0;0;0;0;0;0;10;10;10
+961;5;free;1;1000;0;0;0;0;0;0;0;0;0;0;0;0;0;0;10;10;10
+962;5;free;1;1000;0;0;0;0;0;0;0;0;0;0;0;0;0;0;10;10;10
+963;5;free;1;1000;0;0;0;0;0;0;0;0;0;0;0;0;0;0;10;10;10
+964;5;free;1;1000;0;0;0;0;0;0;0;0;0;0;0;0;0;0;10;10;10
+965;5;free;1;1000;0;0;0;0;0;0;0;0;0;0;0;0;0;0;10;10;10
+966;5;free;1;1000;0;0;0;0;0;0;0;0;0;0;0;0;0;0;10;10;10
+967;5;free;1;1000;0;0;0;0;0;0;0;0;0;0;0;0;0;0;10;10;10
+968;5;free;1;1000;0;0;0;0;0;0;0;0;0;0;0;0;0;0;10;10;10
+969;5;free;1;1000;0;0;0;0;0;0;0;0;0;0;0;0;0;0;10;10;10
+970;5;free;1;1000;0;0;0;0;0;0;0;0;0;0;0;0;0;0;10;10;10
+971;5;free;1;1000;0;0;0;0;0;0;0;0;0;0;0;0;0;0;10;10;10
+972;5;free;1;1000;0;0;0;0;0;0;0;0;0;0;0;0;0;0;10;10;10
+973;5;free;1;1000;0;0;0;0;0;0;0;0;0;0;0;0;0;0;10;10;10
+974;5;free;1;1000;0;0;0;0;0;0;0;0;0;0;0;0;0;0;10;10;10
+975;5;free;1;1000;0;0;0;0;0;0;0;0;0;0;0;0;0;0;10;10;10
+976;5;free;1;1000;0;0;0;0;0;0;0;0;0;0;0;0;0;0;10;10;10
+977;5;free;1;1000;0;0;0;0;0;0;0;0;0;0;0;0;0;0;10;10;10
+978;5;free;1;1000;0;0;0;0;0;0;0;0;0;0;0;0;0;0;10;10;10
+979;5;free;1;1000;0;0;0;0;0;0;0;0;0;0;0;0;0;0;10;10;10
+980;5;free;1;1000;0;0;0;0;0;0;0;0;0;0;0;0;0;0;10;10;10
+981;5;free;1;1000;0;0;0;0;0;0;0;0;0;0;0;0;0;0;10;10;10
+982;5;free;1;1000;0;0;0;0;0;0;0;0;0;0;0;0;0;0;10;10;10
+983;5;free;1;1000;0;0;0;0;0;0;0;0;0;0;0;0;0;0;10;10;10
+984;5;free;1;1000;0;0;0;0;0;0;0;0;0;0;0;0;0;0;10;10;10
+985;5;free;1;1000;0;0;0;0;0;0;0;0;0;0;0;0;0;0;10;10;10
+986;5;free;1;1000;0;0;0;0;0;0;0;0;0;0;0;0;0;0;10;10;10
+987;5;free;1;1000;0;0;0;0;0;0;0;0;0;0;0;0;0;0;10;10;10
+988;5;free;1;1000;0;0;0;0;0;0;0;0;0;0;0;0;0;0;10;10;10
+989;5;free;1;1000;0;0;0;0;0;0;0;0;0;0;0;0;0;0;10;10;10
+990;90;ZK_Hilfsstrecken;1;999;BUS,CAR,HGV;1;9999;20;1;20;130;100;4;80;50;4;50;50;50;10;0,8;10;Used for connector nodes
+991;90;free;1;1000;0;0;0;0;0;0;0;0;0;0;0;0;0;0;10;10;10
+992;90;free;1;1000;0;0;0;0;0;0;0;0;0;0;0;0;0;0;10;10;10
+993;90;free;1;1000;0;0;0;0;0;0;0;0;0;0;0;0;0;0;10;10;10
+994;90;UnknownByImporter(Default);1;1;BIKE,BUS,MINIBUS,CAR,HGV,PUTW,WALK;0;0;0;1;20;130;100;4;80;50;4;50;50;50;1;1,2;1;Used when highway/construction tag is unknown to the importer
+995;90;free;1;1000;0;0;0;0;0;0;0;0;0;0;0;0;0;0;10;10;10
+996;90;free;1;1000;0;0;0;0;0;0;0;0;0;0;0;0;0;0;10;10;10
+997;90;free;1;1000;0;0;0;0;0;0;0;0;0;0;0;0;0;0;10;10;10
+998;90;free;1;1000;0;0;0;0;0;0;0;0;0;0;0;0;0;0;10;10;10
+999;90;free;1;1000;0;0;0;0;0;0;0;0;0;0;0;0;0;0;10;10;10
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

@@ -1,0 +1,125 @@
+$VISION
+* PTV GROUP
+* 22.12.15
+* 
+* Table: Version block
+* 
+$VERSION:VERSNR;FILETYPE;LANGUAGE;UNIT
+8.200;Net;ENG;KM
+
+* 
+* Table: User-defined attributes
+* 
+$USERATTDEF:OBJID;ATTID;CODE;NAME;VALUETYPE;MINVALUE;MAXVALUE;DEFAULTVALUE;DEFAULTSTRINGVALUE;COMMENT;MAXSTRINGLENGTH;NUMDECPLACES;DATASOURCETYPE;FORMULA;SCALEDBYLENGTH;CROSSSECTIONLOGIC;CSLIGNORECLOSED;SUBATTRS;CANBEEMPTY;OPERATIONREFERENCE
+LINKTYPE;OSM_Wiki_Reference;OSM_Wiki_Reference;OSM_Wiki_Reference;LongText;MIN;MAX;;;Reference to meaning in the OSM Wiki;2147483647;0;Data;;0;SUM;0;;0;
+LINK;OSM_LANES_RAW;OSM_Lanes_Raw;OSM_Lanes_Raw;5;;;;;;30;0;Data;;0;SUM;0;;0;;;
+LINK;OSM_MAXSPEED_SOURCE;OSM_MaxSpeed_Source;OSM_MaxSpeed_Source;5;;;;unknown;;30;0;Data;;0;SUM;0;;0;;;
+LINK;OSM_LANES_SOURCE;OSM_Lanes_Source;OSM_Lanes_Source;5;;;;unknown;;30;0;Data;;0;SUM;0;;0;;;
+LINK;OSM_MAXSPEED_ORIGINAL;OSM_Maxspeed_Original;OSM_Maxspeed_Original;5;;;;missing;;30;0;Data;;0;SUM;0;;0;;;
+LINK;OSM_LANES_ORIGINAL;OSM_Lanes_Original;OSM_Lanes_Original;5;;;;missing;;30;0;Data;;0;SUM;0;;0;;;
+LINKTYPE;LinkTypeImpedanceFactor_Car;LinkTypeImpedanceFactor_Car;LinkTypeImpedanceFactor_Car;Double;MIN;MAX;1.000;;Type-dependent impedance factor for TSys car (Urban-Act);0;2;Data;;0;SUM;0;;0;
+LINKTYPE;LinkTypeImpedanceFactor_Bike;LinkTypeImpedanceFactor_Bike;LinkTypeImpedanceFactor_Bike;Double;MIN;MAX;1.000;;Type-dependent impedance factor for TSys bike (BASt-GiV);0;2;Data;;0;SUM;0;;0;
+LINKTYPE;LinkTypeImpedanceFactor_Pedestrian;LinkTypeImpedanceFactor_Pedestrian;LinkTypeImpedanceFactor_Pedestrian;Double;MIN;MAX;1.000;;Type-dependent impedance factor for TSys pedestrian (BASt-GiV);0;2;Data;;0;SUM;0;;0;
+LINK;OSM_PedestrianInfrastructure;OSM_PedestrianInfrastructure;OSM_PedestrianInfrastructure;Bool;0.000;0.000;0.000;;;255;0;Data;;0;MAX;0;;0;
+LINK;OSM_BicycleInfrastructure;OSM_BicycleInfrastructure;OSM_BicycleInfrastructure;Bool;0.000;0.000;0.000;;;255;0;Data;;0;MAX;0;;0;
+
+* 
+* Table: Notepad lines
+* 
+$INFO:INDEX;TEXT
+1;This network was build using data from OpenStreetMap
+2;© OpenStreetMap contributors
+
+* 
+* Table: Network
+* 
+$NETWORK:NETVERSIONID;NETVERSIONNAME;SCALE;LEFTHANDTRAFFIC;COORDDECPLACES;DECPLACESOTHER;CURRENCYDECPLACES;LONGLENGTHDECPLACES;SHORTLENGTHDECPLACES;TURNT0DECPLACES;SPEEDDECPLACES;MAXFLOATPRECISIONFILEEXPORT;CONCATMAXLEN;CONCATSEPARATOR;CREATEMODEDSEG;PROJECTIONDEFINITION;TURNTYPEDEFAULT;LINKORIENTATIONCALCULATIONTYPE
+1.210;;1.000;0;10;3;2;3;2;0;0;0;255;,;1;GEOGCS["GCS_WGS_1984",DATUM["D_WGS_1984",SPHEROID["WGS_1984",6378137,298.257223563]],PRIMEM["Greenwich",0],UNIT["Degree",0.017453292519943295]];ONLYFROMANGLE;FOUR
+
+* 
+* Table: Transport systems
+* 
+$TSYS:CODE;NAME;TYPE;PCU
+BIKE;Bicycle;PrT;1.000
+BUS;Bus;PuT;1.000
+MINIBUS;Minibus;PuT;1.000
+CAR;Car;PrT;1.000
+HGV;HGV;PrT;2.000
+LRT;Light Rail;PuT;1.000
+WALK;Pedestrian;PrT;1.000
+PUTW;PuT Walk;PuTWalk;1.000
+TRAIN;Train;PuT;1.000
+SUBWAY;Subway;PuT;1.000
+TRAM;Tram;PuT;1.000
+
+* 
+* Table: Modes
+* 
+$MODE:CODE;NAME;TSYSSET;INTERCHANGEABLE
+BIKE;Bicycle;BIKE;1
+CAR;Car;CAR;0
+HGV;HGV;HGV;0
+WALK;Pedestrian;WALK;1
+PuT;Public Transport;BUS,MINIBUS,LRT,PUTW,TRAIN,SUBWAY,TRAM;1
+
+* 
+* Table: Demand segments
+* 
+$DEMANDSEGMENT:CODE;NAME;MODE
+BIKE;Bicycle;BIKE
+WALK;Pedestrian;WALK
+CAR;Car;CAR
+HGV;HGV;HGV
+
+* 
+* Table: Directions
+* 
+$DIRECTION:NO;CODE;NAME
+1;>;up
+2;<;down
+
+* 
+* Table: Link types
+* 
+$LINKTYPE:NO;NAME;STRICT;RANK;TSYSSET;NUMLANES;CAPPRT;V0PRT;VMINPRT;VMAX_PRTSYS(BIKE);VMAX_PRTSYS(CAR);VMAX_PRTSYS(HGV);VMAX_PRTSYS(WALK);VDEF_PUTSYS(BUS);VDEF_PUTSYS(MINIBUS);VDEF_PUTSYS(LRT);VDEF_PUTSYS(PUTW);VDEF_PUTSYS(TRAIN);VDEF_PUTSYS(SUBWAY);VDEF_PUTSYS(TRAM);OSM_Wiki_Reference;LinkTypeImpedanceFactor_Car;LinkTypeImpedanceFactor_Bike;LinkTypeImpedanceFactor_Pedestrian
+0;Blocked Oneway;0;1;BIKE,WALK;0;0;0km/h;0km/h;20km/h;130km/h;100km/h;4km/h;80km/h;80km/h;50km/h;4km/h;50km/h;50km/h;50km/h;Blocked opposite direction;10;1;1
+1;Construction;0;1;;0;0;0km/h;0km/h;20km/h;130km/h;100km/h;4km/h;80km/h;50km/h;4km/h;50km/h;50km/h;50km/h;50km/h;Road under construction;10;10;10
+10;Motorway, 1 lane;0;1;BUS,CAR,HGV;1;1500;130km/h;0km/h;20km/h;130km/h;100km/h;4km/h;80km/h;80km/h;50km/h;4km/h;50km/h;50km/h;50km/h;High-capacity, controlled-access road, physically separated lanes, special traffic restrictions ("Autobahn");0.8;10;10
+11;Motorway, 2 lanes;0;1;BUS,CAR,HGV;2;3000;130km/h;0km/h;20km/h;130km/h;100km/h;4km/h;80km/h;80km/h;50km/h;4km/h;50km/h;50km/h;50km/h;High-capacity, controlled-access road, physically separated lanes, special traffic restrictions ("Autobahn");0.8;10;10
+12;Motorway, 3 lanes;0;1;BUS,CAR,HGV;3;4500;130km/h;0km/h;20km/h;130km/h;100km/h;4km/h;80km/h;80km/h;50km/h;4km/h;50km/h;50km/h;50km/h;High-capacity, controlled-access road, physically separated lanes, special traffic restrictions ("Autobahn");0.8;10;10
+13;Motorway, 4 lanes;0;1;BUS,CAR,HGV;4;6000;130km/h;0km/h;20km/h;130km/h;100km/h;4km/h;80km/h;80km/h;50km/h;4km/h;50km/h;50km/h;50km/h;High-capacity, controlled-access road, physically separated lanes, special traffic restrictions ("Autobahn");0.8;10;10
+18;Motorway_link, 1 lane;0;1;BUS,CAR,HGV;1;1100;70km/h;0km/h;20km/h;130km/h;100km/h;4km/h;80km/h;80km/h;50km/h;4km/h;50km/h;50km/h;50km/h;Slip road (ramp) connecting to a motorway ("Autobahn");0.8;10;10
+19;Motorway_link, 2 lanes;0;1;BUS,CAR,HGV;2;1200;70km/h;0km/h;20km/h;130km/h;100km/h;4km/h;80km/h;80km/h;50km/h;4km/h;50km/h;50km/h;50km/h;Slip road (ramp) connecting to a motorway ("Autobahn");0.8;10;10
+20;Trunk, 1 lane;0;1;BUS,CAR,HGV;1;1500;100km/h;0km/h;20km/h;130km/h;100km/h;4km/h;80km/h;80km/h;50km/h;4km/h;50km/h;50km/h;50km/h;Major high-speed road, not a motorway, often excludes slow traffic ("Kraftfahrstraße");0.8;10;10
+21;Trunk, 2 lanes;0;1;BUS,CAR,HGV;2;3000;100km/h;0km/h;20km/h;130km/h;100km/h;4km/h;80km/h;80km/h;50km/h;4km/h;50km/h;50km/h;50km/h;Major high-speed road, not a motorway, often excludes slow traffic ("Kraftfahrstraße");0.8;10;10
+22;Trunk, 3 lanes;0;1;BUS,CAR,HGV;3;4500;100km/h;0km/h;20km/h;130km/h;100km/h;4km/h;80km/h;80km/h;50km/h;4km/h;50km/h;50km/h;50km/h;Major high-speed road, not a motorway, often excludes slow traffic ("Kraftfahrstraße");0.8;10;10
+28;Trunk_link, 1 lane;0;1;BUS,CAR,HGV;1;1100;70km/h;0km/h;20km/h;130km/h;100km/h;4km/h;80km/h;80km/h;50km/h;4km/h;50km/h;50km/h;50km/h;Slip road (ramp) connecting to a trunk road ("Kraftfahrstraße");0.8;10;10
+29;Trunk_link, 2 lanes;0;1;BUS,CAR,HGV;2;1200;70km/h;0km/h;20km/h;130km/h;100km/h;4km/h;80km/h;80km/h;50km/h;4km/h;50km/h;50km/h;50km/h;Slip road (ramp) connecting to a trunk road ("Kraftfahrstraße");0.8;10;10
+30;Primary, 1 lane;0;1;BIKE,BUS,CAR,HGV,WALK,PUTW;1;1300;100km/h;0km/h;20km/h;130km/h;100km/h;4km/h;80km/h;80km/h;50km/h;4km/h;50km/h;50km/h;50km/h;Major road under national administration, connects large cities, significant interurban traffic (e.g. 10.000 veh / day, "Bundesstraße");1;1.3;1.3
+31;Primary, 2 lanes;0;1;BIKE,BUS,CAR,HGV,WALK,PUTW;2;2600;100km/h;0km/h;20km/h;130km/h;100km/h;4km/h;80km/h;80km/h;50km/h;4km/h;50km/h;50km/h;50km/h;Major road under national administration, connects large cities, significant interurban traffic (e.g. 10.000 veh / day, "Bundesstraße");1;1.3;1.3
+32;Primary, 3 lanes;0;1;BIKE,BUS,CAR,HGV,WALK,PUTW;3;3900;100km/h;0km/h;20km/h;130km/h;100km/h;4km/h;80km/h;80km/h;50km/h;4km/h;50km/h;50km/h;50km/h;Major road under national administration, connects large cities, significant interurban traffic (e.g. 10.000 veh / day, "Bundesstraße");1;1.3;1.3
+39;Primary_link;0;1;BIKE,BUS,CAR,HGV,WALK,PUTW;1;1000;50km/h;0km/h;20km/h;130km/h;100km/h;4km/h;80km/h;80km/h;50km/h;4km/h;50km/h;50km/h;50km/h;Slip road (ramp) connecting to a primary road ("Bundesstaße");1;1.3;1.3
+40;Secondary, 1 lane;0;1;BIKE,BUS,CAR,HGV,WALK,PUTW;1;1000;80km/h;0km/h;20km/h;130km/h;100km/h;4km/h;80km/h;80km/h;50km/h;4km/h;50km/h;50km/h;50km/h;Important regional road, connects smaller towns and centers ("Landesstraße");1.2;1;1
+41;Secondary, 2 lanes;0;1;BIKE,BUS,CAR,HGV,WALK,PUTW;2;2000;80km/h;0km/h;20km/h;130km/h;100km/h;4km/h;80km/h;80km/h;50km/h;4km/h;50km/h;50km/h;50km/h;Important regional road, connects smaller towns and centers ("Landesstraße");1.2;1;1
+49;Secondary_link;0;1;BIKE,BUS,CAR,HGV,WALK,PUTW;1;1000;30km/h;0km/h;20km/h;130km/h;100km/h;4km/h;80km/h;80km/h;50km/h;4km/h;50km/h;50km/h;50km/h;Slip road (ramp) connecting to a secondary road ("Landesstraße");1.2;1;1
+50;Tertiary, 1 lane;0;1;BIKE,BUS,CAR,HGV,WALK,PUTW;1;800;70km/h;0km/h;20km/h;130km/h;100km/h;4km/h;80km/h;80km/h;50km/h;4km/h;50km/h;50km/h;50km/h;Connects villages or serves as a major street within towns ("Kreisstraße");1.2;1;1
+51;Tertiary, 2 lanes;0;1;BIKE,BUS,CAR,HGV,WALK,PUTW;2;1600;70km/h;0km/h;20km/h;130km/h;100km/h;4km/h;80km/h;80km/h;50km/h;4km/h;50km/h;50km/h;50km/h;Connects villages or serves as a major street within towns ("Kreisstraße");1.2;1;1
+59;Tertiary_link;0;1;BIKE,BUS,CAR,HGV,WALK,PUTW;1;800;30km/h;0km/h;20km/h;130km/h;100km/h;4km/h;80km/h;80km/h;50km/h;4km/h;50km/h;50km/h;50km/h;Slip road (ramp) connecting to a tertiary road ("Kreisstraße");1.2;1;1
+60;Unclassified, 1 lane;0;1;BIKE,BUS,CAR,HGV,WALK,PUTW;1;800;70km/h;0km/h;20km/h;130km/h;100km/h;4km/h;80km/h;80km/h;50km/h;4km/h;50km/h;50km/h;50km/h;Minor public road, often rural, lowest standard, typically no center line ("Gemeindestraße");1.2;1;1
+70;Residential;0;1;BIKE,BUS,CAR,HGV,WALK,PUTW;1;400;30km/h;0km/h;20km/h;130km/h;100km/h;4km/h;80km/h;80km/h;50km/h;4km/h;50km/h;50km/h;50km/h;Street in residential areas, mainly for local access;1.3;1;1
+71;Road;0;1;BIKE,BUS,CAR,HGV,WALK,PUTW;1;400;30km/h;0km/h;20km/h;130km/h;100km/h;4km/h;80km/h;80km/h;50km/h;4km/h;50km/h;50km/h;50km/h;Classification not determined;1.3;1;1
+72;Living_Street;0;1;BIKE,BUS,CAR,HGV,WALK,PUTW;1;200;20 km/h;0km/h;20km/h;130km/h;100km/h;4km/h;80km/h;80km/h;50km/h;4km/h;50km/h;50km/h;50km/h;Street with pedestrian priority, traffic-calmed, very low speed ("Verkehrsberuhigter Bereich");1.3;1;1
+73;Service;0;1;BIKE,WALK,PUTW;1;200;20km/h;0km/h;20km/h;130km/h;100km/h;4km/h;80km/h;80km/h;50km/h;4km/h;50km/h;50km/h;50km/h;Minor road for access to properties, parking, or industrial sites ("Erschließungsweg");1.5;1.3;1
+75;Footway/Pedestrian;0;1;BIKE,WALK,PUTW;1;9999;4km/h;0km/h;20km/h;130km/h;100km/h;4km/h;80km/h;80km/h;50km/h;4km/h;50km/h;50km/h;50km/h;Path designated for pedestrians only;10;1.3;1
+76;Steps;0;1;BIKE,WALK,PUTW;1;9999;4km/h;0km/h;20km/h;130km/h;100km/h;4km/h;80km/h;80km/h;50km/h;4km/h;50km/h;50km/h;50km/h;Staircase for pedestrians;10;10;1
+77;Path;0;1;BIKE,WALK,PUTW;1;9999;4km/h;0km/h;20km/h;130km/h;100km/h;4km/h;80km/h;80km/h;50km/h;4km/h;50km/h;50km/h;50km/h;Generic path for non-motorized use;10;1;1
+78;Cycleway;0;1;BIKE,WALK,PUTW;1;9999;20km/h;0km/h;20km/h;130km/h;100km/h;4km/h;80km/h;80km/h;50km/h;4km/h;50km/h;50km/h;50km/h;Path designated for bicycles;10;1;1.3
+79;Track;0;1;BIKE,WALK,PUTW;1;9999;20km/h;0km/h;20km/h;130km/h;100km/h;4km/h;80km/h;80km/h;50km/h;4km/h;50km/h;50km/h;50km/h;Road for agricultural or forestry use;10;1.3;1
+80;General rail;0;1;LRT,TRAIN,SUBWAY,TRAM;0;0;0km/h;0km/h;20km/h;130km/h;100km/h;4km/h;80km/h;80km/h;50km/h;4km/h;50km/h;50km/h;50km/h;General railway line;10;10;10
+81;Rail;0;1;LRT,TRAIN;0;0;0km/h;0km/h;20km/h;130km/h;100km/h;4km/h;80km/h;80km/h;50km/h;4km/h;50km/h;50km/h;50km/h;Railway line, type not specified;10;10;10
+82;Light rail;0;1;LRT,TRAM;0;0;0km/h;0km/h;20km/h;130km/h;100km/h;4km/h;80km/h;80km/h;50km/h;4km/h;50km/h;50km/h;50km/h;LRT, urban rail;10;10;10
+83;Subway;0;1;SUBWAY;0;0;0km/h;0km/h;20km/h;130km/h;100km/h;4km/h;80km/h;80km/h;50km/h;4km/h;50km/h;50km/h;50km/h;SUBWAY, underground urban railway;10;10;10
+84;Tram;0;1;TRAM;0;0;0km/h;0km/h;20km/h;130km/h;100km/h;4km/h;80km/h;80km/h;50km/h;4km/h;50km/h;50km/h;50km/h;Tram, street-level urban rail;10;10;10
+94;Ferry;0;1;BIKE,BUS,CAR,HGV,WALK,PUTW;1;1000;20km/h;1km/h;20km/h;130km/h;100km/h;20km/h;80km/h;80km/h;50km/h;20km/h;50km/h;50km/h;50km/h;Route for vehicles or pedestrians using a boat or ferry service;2;1;1
+95;Ferry_Access;0;1;BIKE,BUS,CAR,HGV,WALK,PUTW;1;1000;1km/h;1km/h;20km/h;130km/h;100km/h;20km/h;80km/h;80km/h;50km/h;20km/h;50km/h;50km/h;50km/h;Access to a boat or ferry service. v0 = 1km/h necessary for connectors;2;1;1
+99;UnknownByImporter(Default);0;1;;0;0;0km/h;0km/h;20km/h;130km/h;100km/h;4km/h;80km/h;80km/h;50km/h;4km/h;50km/h;50km/h;50km/h;Used when highway/construction tag is unknown to the importer;10;10;10

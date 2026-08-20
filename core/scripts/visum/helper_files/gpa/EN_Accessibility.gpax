@@ -1,0 +1,1482 @@
+<?xml version="1.0" encoding="utf-8"?>
+<netEditorGraphicParameters version="2">
+	<netEditor2D>
+		<base comment="" hoverTransparency="30" mark1Color="ffff4040" mark1Thick="true" mark2Color="fff000f0" mark2Thick="true" textSizingFactorForScreen="1"/>
+		<layerParameters>
+			<layers>
+				<layer draw="true" type="LEGEND"/>
+				<layer draw="false" type="LOCATION"/>
+				<layer draw="false" type="SHARINGSTATIONS"/>
+				<layer draw="false" type="TEXTS"/>
+				<layer draw="false" type="DESIRELINESZONES"/>
+				<layer draw="false" type="MAINNODES"/>
+				<layer draw="false" type="LANEALLOCATION"/>
+				<layer draw="false" type="SCREENLINES"/>
+				<layer draw="false" type="POIS_POINTS"/>
+				<layer draw="true" type="ZONES"/>
+				<layer draw="false" type="DESIRELINESMAINZONES"/>
+				<layer draw="false" type="GISOBJECTS"/>
+				<layer draw="false" type="CONNECTORS"/>
+				<layer draw="false" type="NODES"/>
+				<layer draw="true" type="LINKS"/>
+				<layer draw="false" type="POIS_LINES"/>
+				<layer draw="false" type="POIS_SURFACES"/>
+				<layer draw="false" type="TRANSFERRELATIONS"/>
+				<layer draw="false" type="DETECTORS"/>
+				<layer draw="false" type="COUNTLOCATIONS"/>
+				<layer draw="false" type="STOPS"/>
+				<layer draw="false" type="STOPAREAS"/>
+				<layer draw="false" type="STOPPOINTS"/>
+				<layer draw="false" type="STOPCATCHMENTAREAS"/>
+				<layer draw="false" type="TURNS"/>
+				<layer draw="false" type="ROUTECOURSES"/>
+				<layer draw="false" type="TOLLSYSTEMS"/>
+				<layer draw="false" type="BACKGROUNDPOLYGONS"/>
+				<layer draw="false" type="MAINZONES"/>
+				<layer draw="false" type="TERRITORIES"/>
+				<layer draw="false" type="ISOCHRONES"/>
+				<layer draw="true" type="BACKGROUNDS"/>
+			</layers>
+		</layerParameters>
+		<baseMap backgroundColor="fffeffff" colorIntensityPerc="60" draw="true" mapProviderName="MapTiler" useDefaultProvider="false" useGrayScale="true" userDefinedMapProviderSet="false"/>
+		<zones avoidOverlapping="false">
+			<display>
+				<active classificationAttrID="ACCESS_WALK_T_1NXT" numDecPlaces="2" useClassifiedMode="true" useLayerOrder="true">
+					<uniform draw="true" drawChart="true" drawPointObject="true" drawPolygon="false" drawTable="true" drawUntilScale="false" drawUntilScaleValue="10000" pointObjectType="POINTOBJ_SYMBOL">
+						<text attrID="NAME" drawFrame="true" frameColor="ff0000a8" numDecPlaces="0" roundValue="1" textColor="ff0000a8" textSize="3" transparent="false">
+							<fontStyle bold="false" fontFamilyName="Arial" italic="false"/>
+						</text>
+						<symbol drawSymbolChar="false" size="2" symbolChar="" symbolCharColor="ff000000" symbolDisplayType="SYMBOL_SQUARE">
+							<polygonStyle drawBorder="true">
+								<fillStyle backgroundColor="00ffffff" color="ffffffff" hatchType="SOLIDFILLING" hatchWidth="0"/>
+								<borderStyle color="ff0000ff" dashPattern="1" dashWidth="1" width="0.7"/>
+							</polygonStyle>
+							<lineStyle color="ff0000a8" dash="CONTINUOUSLINE" thick="false"/>
+						</symbol>
+						<image imageFilename="" imageHasLabel="false" imageHeight="5" labelAttrID="NO" labelColor="ff0000a8" labelHeightPercentage="35" labelNumDecPlaces="0" labelRoundValue="1"/>
+						<polygonStyle drawBorder="true">
+							<fillStyle backgroundColor="00ffffff" color="800000a8" hatchType="EMPTYFILLING" hatchWidth="0.5"/>
+							<borderStyle color="ff0000a8" dashPattern="1" dashWidth="1" width="0.3"/>
+						</polygonStyle>
+					</uniform>
+					<classified>
+						<class hasCustomLegendName="true" layerNo="5" legendName="≤ 10 min" stringValue="*" upperLimit="10">
+							<contents draw="true" drawChart="true" drawPointObject="true" drawPolygon="true" drawTable="true" drawUntilScale="false" drawUntilScaleValue="10000" pointObjectType="POINTOBJ_SYMBOL">
+								<text attrID="ACCESS_WALK_T_1NXT" drawFrame="true" frameColor="ff333397" numDecPlaces="1" roundValue="1" textColor="ff333397" textSize="0" transparent="false">
+									<fontStyle bold="false" fontFamilyName="Arial" italic="false"/>
+								</text>
+								<symbol drawSymbolChar="false" size="0" symbolChar="" symbolCharColor="ff000000" symbolDisplayType="SYMBOL_SQUARE">
+									<polygonStyle drawBorder="false">
+										<fillStyle backgroundColor="00ffffff" color="ff009300" hatchType="SOLIDFILLING" hatchWidth="0"/>
+										<borderStyle color="ffeb2d40" dashPattern="1" dashWidth="1" width="1.5"/>
+									</polygonStyle>
+									<lineStyle color="ff333397" dash="CONTINUOUSLINE" thick="false"/>
+								</symbol>
+								<image imageFilename="" imageHasLabel="false" imageHeight="5" labelAttrID="NO" labelColor="ff333397" labelHeightPercentage="35" labelNumDecPlaces="4" labelRoundValue="1"/>
+								<polygonStyle drawBorder="true">
+									<fillStyle backgroundColor="00ffffff" color="7f009300" hatchType="SOLIDFILLING" hatchWidth="0.5"/>
+									<borderStyle color="ffffffff" dashPattern="1" dashWidth="1" width="0.1"/>
+								</polygonStyle>
+							</contents>
+						</class>
+						<class hasCustomLegendName="true" layerNo="6" legendName="≤ 15 min" stringValue="*" upperLimit="15">
+							<contents draw="true" drawChart="true" drawPointObject="true" drawPolygon="true" drawTable="true" drawUntilScale="false" drawUntilScaleValue="10000" pointObjectType="POINTOBJ_SYMBOL">
+								<text attrID="ACCESS_WALK_T_1NXT" drawFrame="true" frameColor="ff333397" numDecPlaces="1" roundValue="1" textColor="ff333397" textSize="0" transparent="false">
+									<fontStyle bold="false" fontFamilyName="Arial" italic="false"/>
+								</text>
+								<symbol drawSymbolChar="false" size="0" symbolChar="" symbolCharColor="ff000000" symbolDisplayType="SYMBOL_SQUARE">
+									<polygonStyle drawBorder="false">
+										<fillStyle backgroundColor="00ffffff" color="ff32cd32" hatchType="SOLIDFILLING" hatchWidth="0"/>
+										<borderStyle color="ff75169f" dashPattern="1" dashWidth="1" width="0.9"/>
+									</polygonStyle>
+									<lineStyle color="ff999977" dash="CONTINUOUSLINE" thick="false"/>
+								</symbol>
+								<image imageFilename="" imageHasLabel="false" imageHeight="5" labelAttrID="NO" labelColor="ff333397" labelHeightPercentage="35" labelNumDecPlaces="4" labelRoundValue="1"/>
+								<polygonStyle drawBorder="true">
+									<fillStyle backgroundColor="00ffffff" color="7f00ff00" hatchType="SOLIDFILLING" hatchWidth="0.5"/>
+									<borderStyle color="ffffffff" dashPattern="1" dashWidth="1" width="0.1"/>
+								</polygonStyle>
+							</contents>
+						</class>
+						<class hasCustomLegendName="true" layerNo="7" legendName="≤ 20 min" stringValue="*" upperLimit="20">
+							<contents draw="true" drawChart="true" drawPointObject="true" drawPolygon="true" drawTable="true" drawUntilScale="false" drawUntilScaleValue="10000" pointObjectType="POINTOBJ_SYMBOL">
+								<text attrID="ACCESS_WALK_T_1NXT" drawFrame="true" frameColor="ff333397" numDecPlaces="1" roundValue="1" textColor="ff333397" textSize="0" transparent="false">
+									<fontStyle bold="false" fontFamilyName="Arial" italic="false"/>
+								</text>
+								<symbol drawSymbolChar="false" size="0" symbolChar="" symbolCharColor="ff000000" symbolDisplayType="SYMBOL_SQUARE">
+									<polygonStyle drawBorder="false">
+										<fillStyle backgroundColor="00ffffff" color="7fffad5b" hatchType="SOLIDFILLING" hatchWidth="0"/>
+										<borderStyle color="ff3a0bcf" dashPattern="1" dashWidth="1" width="0.6"/>
+									</polygonStyle>
+									<lineStyle color="ffcccc67" dash="CONTINUOUSLINE" thick="false"/>
+								</symbol>
+								<image imageFilename="" imageHasLabel="false" imageHeight="5" labelAttrID="NO" labelColor="ff333397" labelHeightPercentage="35" labelNumDecPlaces="4" labelRoundValue="1"/>
+								<polygonStyle drawBorder="true">
+									<fillStyle backgroundColor="00ffffff" color="7fffad5b" hatchType="SOLIDFILLING" hatchWidth="0.5"/>
+									<borderStyle color="ffffffff" dashPattern="1" dashWidth="1" width="0.1"/>
+								</polygonStyle>
+							</contents>
+						</class>
+						<class hasCustomLegendName="true" layerNo="8" legendName="≤ 30 min" stringValue="*" upperLimit="30">
+							<contents draw="true" drawChart="true" drawPointObject="true" drawPolygon="true" drawTable="true" drawUntilScale="false" drawUntilScaleValue="10000" pointObjectType="POINTOBJ_SYMBOL">
+								<text attrID="ACCESS_WALK_T_1NXT" drawFrame="true" frameColor="ff333397" numDecPlaces="1" roundValue="1" textColor="ff333397" textSize="0" transparent="false">
+									<fontStyle bold="false" fontFamilyName="Arial" italic="false"/>
+								</text>
+								<symbol drawSymbolChar="false" size="0" symbolChar="" symbolCharColor="ff000000" symbolDisplayType="SYMBOL_SQUARE">
+									<polygonStyle drawBorder="false">
+										<fillStyle backgroundColor="00ffffff" color="ffff0000" hatchType="SOLIDFILLING" hatchWidth="0"/>
+										<borderStyle color="ff1d05e7" dashPattern="1" dashWidth="1" width="0.45"/>
+									</polygonStyle>
+									<lineStyle color="ffe5e55f" dash="CONTINUOUSLINE" thick="false"/>
+								</symbol>
+								<image imageFilename="" imageHasLabel="false" imageHeight="5" labelAttrID="NO" labelColor="ff333397" labelHeightPercentage="35" labelNumDecPlaces="4" labelRoundValue="1"/>
+								<polygonStyle drawBorder="true">
+									<fillStyle backgroundColor="00ffffff" color="7fff0000" hatchType="SOLIDFILLING" hatchWidth="0.5"/>
+									<borderStyle color="ffffffff" dashPattern="1" dashWidth="1" width="0.1"/>
+								</polygonStyle>
+							</contents>
+						</class>
+						<class hasCustomLegendName="true" layerNo="1" legendName="&gt; 30 min" stringValue="*" upperLimit="INF">
+							<contents draw="true" drawChart="true" drawPointObject="true" drawPolygon="true" drawTable="true" drawUntilScale="false" drawUntilScaleValue="10000" pointObjectType="POINTOBJ_SYMBOL">
+								<text attrID="NO" drawFrame="true" frameColor="ffffff57" numDecPlaces="0" roundValue="1" textColor="ffffff57" textSize="0" transparent="false">
+									<fontStyle bold="false" fontFamilyName="Arial" italic="false"/>
+								</text>
+								<symbol drawSymbolChar="false" size="0" symbolChar="" symbolCharColor="ff000000" symbolDisplayType="SYMBOL_SQUARE">
+									<polygonStyle drawBorder="true">
+										<fillStyle backgroundColor="00ffffff" color="99c0c0c0" hatchType="SOLIDFILLING" hatchWidth="0"/>
+										<borderStyle color="99c0c0c0" dashPattern="1" dashWidth="1" width="0.3"/>
+									</polygonStyle>
+									<lineStyle color="ffffff57" dash="CONTINUOUSLINE" thick="false"/>
+								</symbol>
+								<image imageFilename="" imageHasLabel="false" imageHeight="5" labelAttrID="NO" labelColor="ffffff57" labelHeightPercentage="35" labelNumDecPlaces="4" labelRoundValue="1"/>
+								<polygonStyle drawBorder="true">
+									<fillStyle backgroundColor="00ffffff" color="7fc0c0c0" hatchType="SOLIDFILLING" hatchWidth="0.5"/>
+									<borderStyle color="ffffffff" dashPattern="1" dashWidth="1" width="0.1"/>
+								</polygonStyle>
+							</contents>
+						</class>
+					</classified>
+					<filter attrID="NO" criterion="MAXIMUM" enabled="false" numObjects="10"/>
+				</active>
+				<passive>
+					<uniform draw="false" drawChart="false" drawPointObject="true" drawPolygon="true" drawTable="false" drawUntilScale="false" drawUntilScaleValue="10000" pointObjectType="POINTOBJ_TEXT">
+						<text attrID="NO" drawFrame="true" frameColor="ffa8a8a8" numDecPlaces="0" roundValue="1" textColor="ffa8a8a8" textSize="1.8" transparent="false">
+							<fontStyle bold="false" fontFamilyName="Arial" italic="false"/>
+						</text>
+						<symbol drawSymbolChar="false" size="3" symbolChar="" symbolCharColor="ff000000" symbolDisplayType="SYMBOL_TRIANGLE">
+							<polygonStyle drawBorder="true">
+								<fillStyle backgroundColor="00ffffff" color="ffa8a8a8" hatchType="SOLIDFILLING" hatchWidth="0"/>
+								<borderStyle color="ffa8a8a8" dashPattern="1" dashWidth="1" width="0.3"/>
+							</polygonStyle>
+							<lineStyle color="ffa8a8a8" dash="CONTINUOUSLINE" thick="false"/>
+						</symbol>
+						<image imageFilename="" imageHasLabel="false" imageHeight="5" labelAttrID="NO" labelColor="ffa8a8a8" labelHeightPercentage="35" labelNumDecPlaces="0" labelRoundValue="1"/>
+						<polygonStyle drawBorder="true">
+							<fillStyle backgroundColor="00ffffff" color="ffa8a8a8" hatchType="EMPTYFILLING" hatchWidth="0.5"/>
+							<borderStyle color="ffa8a8a8" dashPattern="1" dashWidth="1" width="0.3"/>
+						</polygonStyle>
+					</uniform>
+				</passive>
+				<marked>
+					<uniform draw="true" drawChart="false" drawPointObject="true" drawPolygon="true" drawTable="false" drawUntilScale="false" drawUntilScaleValue="10000" pointObjectType="POINTOBJ_TEXT">
+						<text attrID="NAME" drawFrame="true" frameColor="ffff4040" numDecPlaces="0" roundValue="1" textColor="ffff4040" textSize="1.8" transparent="false">
+							<fontStyle bold="false" fontFamilyName="Arial" italic="false"/>
+						</text>
+						<symbol drawSymbolChar="false" size="3" symbolChar="" symbolCharColor="ff000000" symbolDisplayType="SYMBOL_TRIANGLE">
+							<polygonStyle drawBorder="true">
+								<fillStyle backgroundColor="00ffffff" color="ffff4040" hatchType="SOLIDFILLING" hatchWidth="0"/>
+								<borderStyle color="ffff4040" dashPattern="1" dashWidth="1" width="0.3"/>
+							</polygonStyle>
+							<lineStyle color="ffff4040" dash="CONTINUOUSLINE" thick="false"/>
+						</symbol>
+						<image imageFilename="" imageHasLabel="false" imageHeight="5" labelAttrID="NO" labelColor="ffff4040" labelHeightPercentage="35" labelNumDecPlaces="0" labelRoundValue="1"/>
+						<polygonStyle drawBorder="true">
+							<fillStyle backgroundColor="00ffffff" color="ffff4040" hatchType="EMPTYFILLING" hatchWidth="0.5"/>
+							<borderStyle color="ffff4040" dashPattern="1" dashWidth="1" width="0.6"/>
+						</polygonStyle>
+					</uniform>
+				</marked>
+			</display>
+			<table draw="false" fillColor="ffffffff" frameColor="ff000000" relTextSizeDistance="30" tableAlignment="ADJUSTMENT_TOPCENTER" tableDistance="0" textSize="2">
+				<rows>
+					<row>
+						<columns>
+							<cell alignment="LEFTALIGNMENT" attrID="ACCESS_PUT_DEMAND_1NXT" color="ff000000" displayType="TABLEITEMDISPLAYTYPE_ATTRVALUE" numDecPlaces="0" roundValue="1" text="" underline="false"/>
+						</columns>
+					</row>
+				</rows>
+				<fontStyle bold="false" fontFamilyName="Arial" italic="false"/>
+			</table>
+			<chart autoScaleFactor="1" chartDisplayType="PIE" columnWidth="5" displayNegativeValues="false" draw="true" drawLabel="false" drawTextFrame="true" sameScaleForAllColumns="false" scaleMaxColumnHeight="30" scaleMaxPieArea="10" scaleMaxValueColumn="1000" scaleMaxValuePie="1000" scaleMinValueColumn="0" scaleMinValuePie="0" textColor="ff000000" textColorFromChartItem="true" textSize="1.6" useAutoScale="true">
+				<fontStyle bold="false" fontFamilyName="Arial" italic="false"/>
+				<textFrameStyle drawBorder="false">
+					<fillStyle backgroundColor="00ffffff" color="ffffffff" hatchType="SOLIDFILLING" hatchWidth="1.5"/>
+					<borderStyle color="ff000000" dashPattern="1" dashWidth="1" width="0.3"/>
+				</textFrameStyle>
+				<items>
+					<item displayAsBaseColumn="false" displayThreshold="0" draw="true" gridColumnWidth="228" numDecPlaces="0" roundValue="1" scaleAttrID="ACCESS_ISDESTINATION" scaleMaxColumnHeight="4" scaleMaxValueColumn="20" scaleMinValueColumn="0" stringFormatType="DEFAULTFMT" useDisplayThreshold="true">
+						<display classificationAttrID="NO" numDecPlaces="0" useClassifiedMode="false" useLayerOrder="false">
+							<uniform drawBorder="true">
+								<fillStyle backgroundColor="00ffffff" color="ffffffff" hatchType="SOLIDFILLING" hatchWidth="0"/>
+								<borderStyle color="ff8b0000" dashPattern="1" dashWidth="1" width="0.5"/>
+							</uniform>
+							<classified>
+								<class hasCustomLegendName="false" layerNo="1" legendName="&lt;= 0" stringValue="*" upperLimit="0">
+									<contents drawBorder="true">
+										<fillStyle backgroundColor="00ffffff" color="ffbe0000" hatchType="SOLIDFILLING" hatchWidth="1.5"/>
+										<borderStyle color="ffbe0000" dashPattern="1" dashWidth="1" width="0.3"/>
+									</contents>
+								</class>
+								<class hasCustomLegendName="false" layerNo="1" legendName="&gt; 0" stringValue="*" upperLimit="INF">
+									<contents drawBorder="true">
+										<fillStyle backgroundColor="00ffffff" color="ff00a800" hatchType="SOLIDFILLING" hatchWidth="1.5"/>
+										<borderStyle color="ff00a800" dashPattern="1" dashWidth="1" width="0.3"/>
+									</contents>
+								</class>
+							</classified>
+						</display>
+					</item>
+					<item displayAsBaseColumn="false" displayThreshold="0" draw="false" gridColumnWidth="228" numDecPlaces="0" roundValue="1" scaleAttrID="ACCESS_WALK_DEMAND_1NXT" scaleMaxColumnHeight="4" scaleMaxValueColumn="20" scaleMinValueColumn="0" stringFormatType="DEFAULTFMT" useDisplayThreshold="true">
+						<display classificationAttrID="NO" numDecPlaces="0" useClassifiedMode="false" useLayerOrder="false">
+							<uniform drawBorder="true">
+								<fillStyle backgroundColor="00ffffff" color="ff0000a8" hatchType="SOLIDFILLING" hatchWidth="0"/>
+								<borderStyle color="ff0000a8" dashPattern="1" dashWidth="1" width="0.5"/>
+							</uniform>
+							<classified>
+								<class hasCustomLegendName="false" layerNo="1" legendName="&lt;= 0" stringValue="*" upperLimit="0">
+									<contents drawBorder="true">
+										<fillStyle backgroundColor="00ffffff" color="ffbe0000" hatchType="SOLIDFILLING" hatchWidth="1.5"/>
+										<borderStyle color="ffbe0000" dashPattern="1" dashWidth="1" width="0.3"/>
+									</contents>
+								</class>
+								<class hasCustomLegendName="false" layerNo="1" legendName="&gt; 0" stringValue="*" upperLimit="INF">
+									<contents drawBorder="true">
+										<fillStyle backgroundColor="00ffffff" color="ff00a800" hatchType="SOLIDFILLING" hatchWidth="1.5"/>
+										<borderStyle color="ff00a800" dashPattern="1" dashWidth="1" width="0.3"/>
+									</contents>
+								</class>
+							</classified>
+						</display>
+					</item>
+					<item displayAsBaseColumn="false" displayThreshold="0" draw="false" gridColumnWidth="228" numDecPlaces="0" roundValue="1" scaleAttrID="ACCESS_PUT_DEMAND_1NXT" scaleMaxColumnHeight="4" scaleMaxValueColumn="20" scaleMinValueColumn="0" stringFormatType="DEFAULTFMT" useDisplayThreshold="true">
+						<display classificationAttrID="NO" numDecPlaces="0" useClassifiedMode="false" useLayerOrder="false">
+							<uniform drawBorder="true">
+								<fillStyle backgroundColor="00ffffff" color="ff0000a8" hatchType="SOLIDFILLING" hatchWidth="0"/>
+								<borderStyle color="ff0000a8" dashPattern="1" dashWidth="1" width="0.5"/>
+							</uniform>
+							<classified>
+								<class hasCustomLegendName="false" layerNo="1" legendName="&lt;= 0" stringValue="*" upperLimit="0">
+									<contents drawBorder="true">
+										<fillStyle backgroundColor="00ffffff" color="ffbe0000" hatchType="SOLIDFILLING" hatchWidth="1.5"/>
+										<borderStyle color="ffbe0000" dashPattern="1" dashWidth="1" width="0.3"/>
+									</contents>
+								</class>
+								<class hasCustomLegendName="false" layerNo="1" legendName="&gt; 0" stringValue="*" upperLimit="INF">
+									<contents drawBorder="true">
+										<fillStyle backgroundColor="00ffffff" color="ff00a800" hatchType="SOLIDFILLING" hatchWidth="1.5"/>
+										<borderStyle color="ff00a800" dashPattern="1" dashWidth="1" width="0.3"/>
+									</contents>
+								</class>
+							</classified>
+						</display>
+					</item>
+					<item displayAsBaseColumn="false" displayThreshold="0" draw="false" gridColumnWidth="228" numDecPlaces="0" roundValue="1" scaleAttrID="ACCESS_BIKE_DEMAND_1NXT" scaleMaxColumnHeight="4" scaleMaxValueColumn="20" scaleMinValueColumn="0" stringFormatType="DEFAULTFMT" useDisplayThreshold="true">
+						<display classificationAttrID="NO" numDecPlaces="0" useClassifiedMode="false" useLayerOrder="false">
+							<uniform drawBorder="true">
+								<fillStyle backgroundColor="00ffffff" color="ff0000a8" hatchType="SOLIDFILLING" hatchWidth="0"/>
+								<borderStyle color="ff0000a8" dashPattern="1" dashWidth="1" width="0.5"/>
+							</uniform>
+							<classified>
+								<class hasCustomLegendName="false" layerNo="1" legendName="&lt;= 0" stringValue="*" upperLimit="0">
+									<contents drawBorder="true">
+										<fillStyle backgroundColor="00ffffff" color="ffbe0000" hatchType="SOLIDFILLING" hatchWidth="1.5"/>
+										<borderStyle color="ffbe0000" dashPattern="1" dashWidth="1" width="0.3"/>
+									</contents>
+								</class>
+								<class hasCustomLegendName="false" layerNo="1" legendName="&gt; 0" stringValue="*" upperLimit="INF">
+									<contents drawBorder="true">
+										<fillStyle backgroundColor="00ffffff" color="ff00a800" hatchType="SOLIDFILLING" hatchWidth="1.5"/>
+										<borderStyle color="ff00a800" dashPattern="1" dashWidth="1" width="0.3"/>
+									</contents>
+								</class>
+							</classified>
+						</display>
+					</item>
+					<item displayAsBaseColumn="false" displayThreshold="0" draw="false" gridColumnWidth="228" numDecPlaces="0" roundValue="1" scaleAttrID="ACCESS_WALK_T_1NXT" scaleMaxColumnHeight="4" scaleMaxValueColumn="20" scaleMinValueColumn="0" stringFormatType="DEFAULTFMT" useDisplayThreshold="true">
+						<display classificationAttrID="NO" numDecPlaces="0" useClassifiedMode="false" useLayerOrder="false">
+							<uniform drawBorder="true">
+								<fillStyle backgroundColor="00ffffff" color="ff0000a8" hatchType="SOLIDFILLING" hatchWidth="0"/>
+								<borderStyle color="ff0000a8" dashPattern="1" dashWidth="1" width="0.5"/>
+							</uniform>
+							<classified>
+								<class hasCustomLegendName="false" layerNo="1" legendName="&lt;= 0" stringValue="*" upperLimit="0">
+									<contents drawBorder="true">
+										<fillStyle backgroundColor="00ffffff" color="ffbe0000" hatchType="SOLIDFILLING" hatchWidth="1.5"/>
+										<borderStyle color="ffbe0000" dashPattern="1" dashWidth="1" width="0.3"/>
+									</contents>
+								</class>
+								<class hasCustomLegendName="false" layerNo="1" legendName="&gt; 0" stringValue="*" upperLimit="INF">
+									<contents drawBorder="true">
+										<fillStyle backgroundColor="00ffffff" color="ff00a800" hatchType="SOLIDFILLING" hatchWidth="1.5"/>
+										<borderStyle color="ff00a800" dashPattern="1" dashWidth="1" width="0.3"/>
+									</contents>
+								</class>
+							</classified>
+						</display>
+					</item>
+				</items>
+			</chart>
+			<drawingOrder attrID="" order="ASCENDING"/>
+		</zones>
+		<links>
+			<layers>
+				<layer draw="false" type="BARLABELS"/>
+				<layer draw="false" type="LABELS"/>
+				<layer draw="false" type="ISOCHRONES"/>
+				<layer draw="true" type="OBJECTS"/>
+				<layer draw="false" type="BARS"/>
+			</layers>
+			<display>
+				<active classificationAttrID="RIN_CFL" numDecPlaces="0" useClassifiedMode="true" useLayerOrder="true">
+					<uniform draw="true" drawArrow="false" drawUntilScale="false" drawUntilScaleValue="10000">
+						<lineStyle>
+							<strokes>
+								<stroke color="ff000000" dashPattern="1" dashWidth="0.265" width="0.3"/>
+							</strokes>
+						</lineStyle>
+						<arrow drawSymbolChar="false" size="3" symbolChar="" symbolCharColor="ff000000" symbolDisplayType="SYMBOL_TRIANGLE">
+							<polygonStyle drawBorder="true">
+								<fillStyle backgroundColor="00ffffff" color="ff000000" hatchType="SOLIDFILLING" hatchWidth="0"/>
+								<borderStyle color="ff000000" dashPattern="1" dashWidth="1" width="0.3"/>
+							</polygonStyle>
+							<lineStyle color="ff000000" dash="CONTINUOUSLINE" thick="false"/>
+						</arrow>
+					</uniform>
+					<classified>
+						<class hasCustomLegendName="true" layerNo="5" legendName="CFL 0/I" stringValue="*" upperLimit="1">
+							<contents draw="true" drawArrow="false" drawUntilScale="false" drawUntilScaleValue="10000">
+								<lineStyle>
+									<strokes>
+										<stroke color="ffeb2d40" dashPattern="1" dashWidth="0.8833" width="1"/>
+									</strokes>
+								</lineStyle>
+								<arrow drawSymbolChar="false" size="3" symbolChar="" symbolCharColor="ff000000" symbolDisplayType="SYMBOL_TRIANGLE">
+									<polygonStyle drawBorder="true">
+										<fillStyle backgroundColor="00ffffff" color="ffbe0000" hatchType="SOLIDFILLING" hatchWidth="0"/>
+										<borderStyle color="ff000000" dashPattern="1" dashWidth="1" width="0.3"/>
+									</polygonStyle>
+									<lineStyle color="ff000000" dash="CONTINUOUSLINE" thick="false"/>
+								</arrow>
+							</contents>
+						</class>
+						<class hasCustomLegendName="true" layerNo="4" legendName="CFL II" stringValue="*" upperLimit="2">
+							<contents draw="true" drawArrow="false" drawUntilScale="false" drawUntilScaleValue="10000">
+								<lineStyle>
+									<strokes>
+										<stroke color="ff2495ff" dashPattern="1" dashWidth="0.79497" width="0.9"/>
+									</strokes>
+								</lineStyle>
+								<arrow drawSymbolChar="false" size="3" symbolChar="" symbolCharColor="ff000000" symbolDisplayType="SYMBOL_TRIANGLE">
+									<polygonStyle drawBorder="true">
+										<fillStyle backgroundColor="00ffffff" color="ff00a800" hatchType="SOLIDFILLING" hatchWidth="0"/>
+										<borderStyle color="ff000000" dashPattern="1" dashWidth="1" width="0.3"/>
+									</polygonStyle>
+									<lineStyle color="ff000000" dash="CONTINUOUSLINE" thick="false"/>
+								</arrow>
+							</contents>
+						</class>
+						<class hasCustomLegendName="true" layerNo="3" legendName="CFL III" stringValue="*" upperLimit="3">
+							<contents draw="true" drawArrow="false" drawUntilScale="false" drawUntilScaleValue="10000">
+								<lineStyle>
+									<strokes>
+										<stroke color="ff32cd32" dashPattern="1" dashWidth="0.70664" width="0.8"/>
+									</strokes>
+								</lineStyle>
+								<arrow drawSymbolChar="false" size="3" symbolChar="" symbolCharColor="ff000000" symbolDisplayType="SYMBOL_TRIANGLE">
+									<polygonStyle drawBorder="true">
+										<fillStyle backgroundColor="00ffffff" color="ffe0e000" hatchType="SOLIDFILLING" hatchWidth="0"/>
+										<borderStyle color="ff000000" dashPattern="1" dashWidth="1" width="0.3"/>
+									</polygonStyle>
+									<lineStyle color="ff000000" dash="CONTINUOUSLINE" thick="false"/>
+								</arrow>
+							</contents>
+						</class>
+						<class hasCustomLegendName="true" layerNo="2" legendName="CFL IV" stringValue="*" upperLimit="4">
+							<contents draw="true" drawArrow="false" drawUntilScale="false" drawUntilScaleValue="10000">
+								<lineStyle>
+									<strokes>
+										<stroke color="ffffa600" dashPattern="1" dashWidth="0.6183099999999999" width="0.7"/>
+									</strokes>
+								</lineStyle>
+								<arrow drawSymbolChar="false" size="3" symbolChar="" symbolCharColor="ff000000" symbolDisplayType="SYMBOL_TRIANGLE">
+									<polygonStyle drawBorder="true">
+										<fillStyle backgroundColor="00ffffff" color="ff00a8a8" hatchType="SOLIDFILLING" hatchWidth="0"/>
+										<borderStyle color="ff000000" dashPattern="1" dashWidth="1" width="0.3"/>
+									</polygonStyle>
+									<lineStyle color="ff000000" dash="CONTINUOUSLINE" thick="false"/>
+								</arrow>
+							</contents>
+						</class>
+						<class hasCustomLegendName="true" layerNo="1" legendName="no CFL" stringValue="*" upperLimit="INF">
+							<contents draw="false" drawArrow="false" drawUntilScale="false" drawUntilScaleValue="10000">
+								<lineStyle>
+									<strokes>
+										<stroke color="ff0000a8" dashPattern="1" dashWidth="0.26499" width="0.3"/>
+									</strokes>
+								</lineStyle>
+								<arrow drawSymbolChar="false" size="3" symbolChar="" symbolCharColor="ff000000" symbolDisplayType="SYMBOL_TRIANGLE">
+									<polygonStyle drawBorder="true">
+										<fillStyle backgroundColor="00ffffff" color="ff000000" hatchType="SOLIDFILLING" hatchWidth="0"/>
+										<borderStyle color="ff000000" dashPattern="1" dashWidth="1" width="0.3"/>
+									</polygonStyle>
+									<lineStyle color="ff000000" dash="CONTINUOUSLINE" thick="false"/>
+								</arrow>
+							</contents>
+						</class>
+					</classified>
+					<filter attrID="NO" criterion="MAXIMUM" enabled="false" numObjects="10"/>
+				</active>
+				<passive>
+					<uniform draw="false" drawArrow="false" drawUntilScale="false" drawUntilScaleValue="10000">
+						<lineStyle>
+							<strokes>
+								<stroke color="ffa8a8a8" dashPattern="1 1 1 0 0 0" dashWidth="0.265" width="0.3"/>
+							</strokes>
+						</lineStyle>
+						<arrow drawSymbolChar="false" size="3" symbolChar="" symbolCharColor="ff000000" symbolDisplayType="SYMBOL_TRIANGLE">
+							<polygonStyle drawBorder="true">
+								<fillStyle backgroundColor="00ffffff" color="ffa8a8a8" hatchType="SOLIDFILLING" hatchWidth="0"/>
+								<borderStyle color="ffa8a8a8" dashPattern="1" dashWidth="1" width="0.3"/>
+							</polygonStyle>
+							<lineStyle color="ffa8a8a8" dash="CONTINUOUSLINE" thick="false"/>
+						</arrow>
+					</uniform>
+				</passive>
+				<marked>
+					<uniform draw="true" drawArrow="true" drawUntilScale="false" drawUntilScaleValue="10000">
+						<lineStyle>
+							<strokes>
+								<stroke color="ffff4040" dashPattern="1" dashWidth="0.265" width="1"/>
+							</strokes>
+						</lineStyle>
+						<arrow drawSymbolChar="false" size="3" symbolChar="" symbolCharColor="ff000000" symbolDisplayType="SYMBOL_TRIANGLE">
+							<polygonStyle drawBorder="true">
+								<fillStyle backgroundColor="00ffffff" color="ffff4040" hatchType="SOLIDFILLING" hatchWidth="0"/>
+								<borderStyle color="ffff4040" dashPattern="1" dashWidth="1" width="0.3"/>
+							</polygonStyle>
+							<lineStyle color="ffff4040" dash="CONTINUOUSLINE" thick="false"/>
+						</arrow>
+					</uniform>
+				</marked>
+				<oneWay>
+					<uniform draw="false" drawArrow="true" drawUntilScale="false" drawUntilScaleValue="10000">
+						<lineStyle>
+							<strokes>
+								<stroke color="ffff4040" dashPattern="1" dashWidth="0.265" width="0.3"/>
+							</strokes>
+						</lineStyle>
+						<arrow drawSymbolChar="false" size="3" symbolChar="" symbolCharColor="ff000000" symbolDisplayType="SYMBOL_TRIANGLE">
+							<polygonStyle drawBorder="true">
+								<fillStyle backgroundColor="00ffffff" color="ffff4040" hatchType="SOLIDFILLING" hatchWidth="0"/>
+								<borderStyle color="ffff4040" dashPattern="1" dashWidth="1" width="0.3"/>
+							</polygonStyle>
+							<lineStyle color="ffff4040" dash="CONTINUOUSLINE" thick="false"/>
+						</arrow>
+					</uniform>
+				</oneWay>
+			</display>
+			<label avoidOverlapping="true">
+				<display>
+					<active classificationAttrID="TYPENO" numDecPlaces="0" useClassifiedMode="false" useLayerOrder="false">
+						<uniform draw="true" drawChart="true" drawPointObject="true" drawTable="true" drawUntilScale="false" drawUntilScaleValue="10000" pointObjectType="POINTOBJ_TEXT">
+							<text attrID="NUMSERVICETRIPS(AP)" drawFrame="true" frameColor="ff0000a8" numDecPlaces="2" roundValue="1" textColor="ff0000a8" textSize="3" transparent="false">
+								<fontStyle bold="false" fontFamilyName="Arial" italic="false"/>
+							</text>
+							<symbol drawSymbolChar="false" size="1" symbolChar="" symbolCharColor="ff000000" symbolDisplayType="SYMBOL_CIRCLE">
+								<polygonStyle drawBorder="true">
+									<fillStyle backgroundColor="00ffffff" color="fff000f0" hatchType="SOLIDFILLING" hatchWidth="0"/>
+									<borderStyle color="fff000f0" dashPattern="1" dashWidth="1" width="0.3"/>
+								</polygonStyle>
+								<lineStyle color="fff000f0" dash="CONTINUOUSLINE" thick="false"/>
+							</symbol>
+							<image imageFilename="" imageHasLabel="false" imageHeight="5" labelAttrID="NO" labelColor="fff000f0" labelHeightPercentage="35" labelNumDecPlaces="0" labelRoundValue="1"/>
+						</uniform>
+						<classified>
+							<class hasCustomLegendName="false" layerNo="1" legendName="&gt; " stringValue="*" upperLimit="INF">
+								<contents draw="true" drawChart="true" drawPointObject="true" drawTable="true" drawUntilScale="false" drawUntilScaleValue="10000" pointObjectType="POINTOBJ_PICTURE">
+									<text attrID="NO" drawFrame="true" frameColor="ff0000a8" numDecPlaces="4" roundValue="1" textColor="ff0000a8" textSize="3" transparent="false">
+										<fontStyle bold="false" fontFamilyName="Arial" italic="false"/>
+									</text>
+									<symbol drawSymbolChar="false" size="1" symbolChar="" symbolCharColor="ff000000" symbolDisplayType="SYMBOL_CIRCLE">
+										<polygonStyle drawBorder="true">
+											<fillStyle backgroundColor="00ffffff" color="ff0000a8" hatchType="SOLIDFILLING" hatchWidth="0"/>
+											<borderStyle color="ff0000a8" dashPattern="1" dashWidth="1" width="0.3"/>
+										</polygonStyle>
+										<lineStyle color="ff0000a8" dash="CONTINUOUSLINE" thick="false"/>
+									</symbol>
+									<image imageFilename="" imageHasLabel="false" imageHeight="5" labelAttrID="NO" labelColor="ff0000a8" labelHeightPercentage="35" labelNumDecPlaces="4" labelRoundValue="1"/>
+								</contents>
+							</class>
+						</classified>
+						<filter attrID="NO" criterion="MAXIMUM" enabled="false" numObjects="10"/>
+					</active>
+					<passive>
+						<uniform draw="true" drawChart="false" drawPointObject="true" drawTable="false" drawUntilScale="false" drawUntilScaleValue="10000" pointObjectType="POINTOBJ_TEXT">
+							<text attrID="NO" drawFrame="true" frameColor="ffa8a8a8" numDecPlaces="0" roundValue="1" textColor="ffa8a8a8" textSize="3" transparent="false">
+								<fontStyle bold="false" fontFamilyName="Arial" italic="false"/>
+							</text>
+							<symbol drawSymbolChar="false" size="1" symbolChar="" symbolCharColor="ff000000" symbolDisplayType="SYMBOL_CIRCLE">
+								<polygonStyle drawBorder="true">
+									<fillStyle backgroundColor="00ffffff" color="ffa8a8a8" hatchType="SOLIDFILLING" hatchWidth="0"/>
+									<borderStyle color="ffa8a8a8" dashPattern="1" dashWidth="1" width="0.3"/>
+								</polygonStyle>
+								<lineStyle color="ffa8a8a8" dash="CONTINUOUSLINE" thick="false"/>
+							</symbol>
+							<image imageFilename="" imageHasLabel="false" imageHeight="5" labelAttrID="NO" labelColor="ffa8a8a8" labelHeightPercentage="35" labelNumDecPlaces="0" labelRoundValue="1"/>
+						</uniform>
+					</passive>
+					<marked>
+						<uniform draw="true" drawChart="false" drawPointObject="true" drawTable="false" drawUntilScale="false" drawUntilScaleValue="10000" pointObjectType="POINTOBJ_TEXT">
+							<text attrID="NO" drawFrame="true" frameColor="ffff4040" numDecPlaces="0" roundValue="1" textColor="ffff4040" textSize="3" transparent="false">
+								<fontStyle bold="false" fontFamilyName="Arial" italic="false"/>
+							</text>
+							<symbol drawSymbolChar="false" size="1" symbolChar="" symbolCharColor="ff000000" symbolDisplayType="SYMBOL_CIRCLE">
+								<polygonStyle drawBorder="true">
+									<fillStyle backgroundColor="00ffffff" color="ffff4040" hatchType="SOLIDFILLING" hatchWidth="0"/>
+									<borderStyle color="ffff4040" dashPattern="1" dashWidth="1" width="0.3"/>
+								</polygonStyle>
+								<lineStyle color="ffff4040" dash="CONTINUOUSLINE" thick="false"/>
+							</symbol>
+							<image imageFilename="" imageHasLabel="false" imageHeight="5" labelAttrID="NO" labelColor="ffff4040" labelHeightPercentage="35" labelNumDecPlaces="0" labelRoundValue="1"/>
+						</uniform>
+					</marked>
+				</display>
+				<table draw="false" fillColor="ffffffff" frameColor="ff000000" relTextSizeDistance="30" tableAlignment="ADJUSTMENT_TOPCENTER" tableDistance="0" textSize="2">
+					<rows>
+						<row>
+							<columns>
+								<cell alignment="LEFTALIGNMENT" attrID="NO" color="ff000000" displayType="TABLEITEMDISPLAYTYPE_ATTRNAME" numDecPlaces="0" roundValue="1" text="" underline="false"/>
+								<cell alignment="RIGHTALIGNMENT" attrID="NO" color="ff000000" displayType="TABLEITEMDISPLAYTYPE_ATTRVALUE" numDecPlaces="0" roundValue="1" text="" underline="false"/>
+							</columns>
+						</row>
+						<row>
+							<columns>
+								<cell alignment="LEFTALIGNMENT" attrID="FROMNODENO" color="ff000000" displayType="TABLEITEMDISPLAYTYPE_ATTRNAME" numDecPlaces="0" roundValue="1" text="" underline="false"/>
+								<cell alignment="RIGHTALIGNMENT" attrID="FROMNODENO" color="ff000000" displayType="TABLEITEMDISPLAYTYPE_ATTRVALUE" numDecPlaces="0" roundValue="1" text="" underline="false"/>
+							</columns>
+						</row>
+					</rows>
+					<fontStyle bold="false" fontFamilyName="Arial" italic="false"/>
+				</table>
+				<chart autoScaleFactor="1" chartDisplayType="COLUMNS" columnWidth="5" displayNegativeValues="false" draw="false" drawLabel="false" drawTextFrame="true" sameScaleForAllColumns="false" scaleMaxColumnHeight="30" scaleMaxPieArea="1000" scaleMaxValueColumn="60000" scaleMaxValuePie="1000" scaleMinValueColumn="0" scaleMinValuePie="0" textColor="ff000000" textColorFromChartItem="true" textSize="1.6" useAutoScale="false">
+					<fontStyle bold="false" fontFamilyName="Arial" italic="false"/>
+					<textFrameStyle drawBorder="false">
+						<fillStyle backgroundColor="00ffffff" color="ffffffff" hatchType="SOLIDFILLING" hatchWidth="1.5"/>
+						<borderStyle color="ff000000" dashPattern="1" dashWidth="1" width="0.3"/>
+					</textFrameStyle>
+					<items>
+						<item displayAsBaseColumn="false" displayThreshold="0" draw="true" gridColumnWidth="" numDecPlaces="0" roundValue="1" scaleAttrID="VOLVEHPRT(AP)" scaleMaxColumnHeight="30" scaleMaxValueColumn="60000" scaleMinValueColumn="0" stringFormatType="DEFAULTFMT" useDisplayThreshold="true">
+							<display classificationAttrID="VOLVEHPRT(AP)" numDecPlaces="0" useClassifiedMode="false" useLayerOrder="false">
+								<uniform drawBorder="true">
+									<fillStyle backgroundColor="00ffffff" color="ff00a800" hatchType="SOLIDFILLING" hatchWidth="0"/>
+									<borderStyle color="ff00a800" dashPattern="1" dashWidth="1" width="0.3"/>
+								</uniform>
+								<classified>
+									<class hasCustomLegendName="false" layerNo="1" legendName="&lt;= 0" stringValue="*" upperLimit="0">
+										<contents drawBorder="true">
+											<fillStyle backgroundColor="00ffffff" color="ffbe0000" hatchType="SOLIDFILLING" hatchWidth="1.5"/>
+											<borderStyle color="ffbe0000" dashPattern="1" dashWidth="1" width="0.3"/>
+										</contents>
+									</class>
+									<class hasCustomLegendName="false" layerNo="1" legendName="&gt; 0" stringValue="*" upperLimit="INF">
+										<contents drawBorder="true">
+											<fillStyle backgroundColor="00ffffff" color="ff00a800" hatchType="SOLIDFILLING" hatchWidth="1.5"/>
+											<borderStyle color="ff00a800" dashPattern="1" dashWidth="1" width="0.3"/>
+										</contents>
+									</class>
+								</classified>
+							</display>
+						</item>
+						<item displayAsBaseColumn="false" displayThreshold="0" draw="true" gridColumnWidth="" numDecPlaces="0" roundValue="1" scaleAttrID="VOLPERSPUT(AP)" scaleMaxColumnHeight="30" scaleMaxValueColumn="60000" scaleMinValueColumn="0" stringFormatType="DEFAULTFMT" useDisplayThreshold="true">
+							<display classificationAttrID="VOLPERSPUT(AP)" numDecPlaces="0" useClassifiedMode="false" useLayerOrder="false">
+								<uniform drawBorder="true">
+									<fillStyle backgroundColor="00ffffff" color="ff0000ff" hatchType="SOLIDFILLING" hatchWidth="0"/>
+									<borderStyle color="00000000" dashPattern="1" dashWidth="1" width="0.3"/>
+								</uniform>
+								<classified>
+									<class hasCustomLegendName="false" layerNo="1" legendName="&lt;= 0" stringValue="*" upperLimit="0">
+										<contents drawBorder="true">
+											<fillStyle backgroundColor="00ffffff" color="ffbe0000" hatchType="SOLIDFILLING" hatchWidth="1.5"/>
+											<borderStyle color="ffbe0000" dashPattern="1" dashWidth="1" width="0.3"/>
+										</contents>
+									</class>
+									<class hasCustomLegendName="false" layerNo="1" legendName="&gt; 0" stringValue="*" upperLimit="INF">
+										<contents drawBorder="true">
+											<fillStyle backgroundColor="00ffffff" color="ff00a800" hatchType="SOLIDFILLING" hatchWidth="1.5"/>
+											<borderStyle color="ff00a800" dashPattern="1" dashWidth="1" width="0.3"/>
+										</contents>
+									</class>
+								</classified>
+							</display>
+						</item>
+					</items>
+				</chart>
+			</label>
+			<bars>
+				<general barGap="0" hideShortBars="true" useCrossValues="false">
+					<label avoidOverlapping="false" labelGap="1" labelInsideBar="false" labelVisibilityRule="DRAWPOSITIONDEPENDENT" usePolyLineMidPos="false">
+						<textFormat drawFrame="true" frameColor="ff000000" lineSpacing="50" textColor="ff000000" textColorFromBar="true" textOrientation="VERTICAL" textSize="2.5" transparentText="false">
+							<fontStyle bold="false" fontFamilyName="Arial" italic="false"/>
+						</textFormat>
+					</label>
+					<objectSelection classificationAttrID="TYPENO" drawOnClosedObjects="false" drawOnlyOnActiveMainObjects="false" drawOnlyOnActiveObjects="true" numDecPlaces="0" useClassifiedMode="false" useLayerOrder="false">
+						<classified>
+							<class hasCustomLegendName="false" layerNo="1" legendName="&lt;= 9" stringValue="*" upperLimit="9">
+								<contents draw="true"/>
+							</class>
+							<class hasCustomLegendName="false" layerNo="1" legendName="&lt;= 19" stringValue="*" upperLimit="19">
+								<contents draw="true"/>
+							</class>
+							<class hasCustomLegendName="false" layerNo="1" legendName="&lt;= 29" stringValue="*" upperLimit="29">
+								<contents draw="true"/>
+							</class>
+							<class hasCustomLegendName="false" layerNo="1" legendName="&lt;= 39" stringValue="*" upperLimit="39">
+								<contents draw="true"/>
+							</class>
+							<class hasCustomLegendName="false" layerNo="1" legendName="&lt;= 49" stringValue="*" upperLimit="49">
+								<contents draw="true"/>
+							</class>
+							<class hasCustomLegendName="false" layerNo="1" legendName="&lt;= 59" stringValue="*" upperLimit="59">
+								<contents draw="true"/>
+							</class>
+							<class hasCustomLegendName="false" layerNo="1" legendName="&lt;= 69" stringValue="*" upperLimit="69">
+								<contents draw="true"/>
+							</class>
+							<class hasCustomLegendName="false" layerNo="1" legendName="&lt;= 79" stringValue="*" upperLimit="79">
+								<contents draw="true"/>
+							</class>
+							<class hasCustomLegendName="false" layerNo="1" legendName="&gt; 79" stringValue="*" upperLimit="INF">
+								<contents draw="true"/>
+							</class>
+						</classified>
+					</objectSelection>
+					<defaultLinePathBarStyle draw="false">
+						<polygonStyle drawBorder="true">
+							<fillStyle backgroundColor="00ffffff" color="ff00a800" hatchType="SOLIDFILLING" hatchWidth="1.5"/>
+							<borderStyle color="ff00a800" dashPattern="1" dashWidth="1" width="0.3"/>
+						</polygonStyle>
+					</defaultLinePathBarStyle>
+				</general>
+				<items>
+					<item barType="STANDARD" draw="false" gridColumnWidth="180">
+						<scale autoScaleFactor="1" maxDimension="4" maxValue="20000" minValue="0" useAutoScale="true" useMinDimension="false"/>
+						<label labelThreshold="0" multiplyFactor="1" numDecPlaces="0" roundValue="1" showTitle="false" showUnit="false" showValue="true" stringFormatType="DEFAULTFMT" textContentType="TEXTFROMATTRIBUTEVALUE" textPriority="1" useLabelThreshold="true" useMultiplyFactor="false" useUserDefinedTitleText="false" userDefinedTitleText=""/>
+						<standardBar classificationAttrID="VOLVEHPRT(AP)" negativeScaleAttrID="VOLVEHPRT(AP)" numDecPlaces="0" scaleAttrID="VOLVEHPRT(AP)" useClassifiedMode="false" useLayerOrder="false">
+							<uniform draw="true">
+								<polygonStyle drawBorder="true">
+									<fillStyle backgroundColor="00ffffff" color="ffbe0000" hatchType="SOLIDFILLING" hatchWidth="0"/>
+									<borderStyle color="ffbe0000" dashPattern="1" dashWidth="1" width="0.3"/>
+								</polygonStyle>
+							</uniform>
+							<classified>
+								<class hasCustomLegendName="true" layerNo="1" legendName="&lt;=  0.00" stringValue="*" upperLimit="0">
+									<contents draw="true">
+										<polygonStyle drawBorder="true">
+											<fillStyle backgroundColor="00ffffff" color="ffbe0000" hatchType="SOLIDFILLING" hatchWidth="0"/>
+											<borderStyle color="ffbe0000" dashPattern="1" dashWidth="1" width="0.3"/>
+										</polygonStyle>
+									</contents>
+								</class>
+								<class hasCustomLegendName="false" layerNo="1" legendName="&gt; 0" stringValue="*" upperLimit="INF">
+									<contents draw="true">
+										<polygonStyle drawBorder="true">
+											<fillStyle backgroundColor="00ffffff" color="ff00a800" hatchType="SOLIDFILLING" hatchWidth="0"/>
+											<borderStyle color="ff00a800" dashPattern="1" dashWidth="1" width="0.3"/>
+										</polygonStyle>
+									</contents>
+								</class>
+							</classified>
+						</standardBar>
+						<lineBar aggrFunction="SUMMINMAXAVGWHG_SUM" aggrType="LINE" onlyActive="true" scaleAttrID="VOL(AH)" weightAvgAttrID="SEATCAP(AH)">
+							<transportSystems classificationAttrID="NUMLINES" hasCustomOrder="false" numDecPlaces="0" useClassifiedMode="false" useLayerOrder="false">
+								<classified>
+									<class hasCustomLegendName="false" layerNo="1" legendName="&lt;= 0" stringValue="*" upperLimit="0">
+										<contents draw="true">
+											<polygonStyle drawBorder="true">
+												<fillStyle backgroundColor="00ffffff" color="ff00a800" hatchType="SOLIDFILLING" hatchWidth="1.5"/>
+												<borderStyle color="ff00a800" dashPattern="1" dashWidth="1" width="0.3"/>
+											</polygonStyle>
+										</contents>
+									</class>
+									<class hasCustomLegendName="false" layerNo="1" legendName="&gt; 0" stringValue="*" upperLimit="INF">
+										<contents draw="true">
+											<polygonStyle drawBorder="true">
+												<fillStyle backgroundColor="00ffffff" color="ffbe0000" hatchType="SOLIDFILLING" hatchWidth="1.5"/>
+												<borderStyle color="ffbe0000" dashPattern="1" dashWidth="1" width="0.3"/>
+											</polygonStyle>
+										</contents>
+									</class>
+								</classified>
+								<perNetObj/>
+							</transportSystems>
+							<operators classificationAttrID="NO" hasCustomOrder="false" numDecPlaces="0" useClassifiedMode="false" useLayerOrder="false">
+								<classified>
+									<class hasCustomLegendName="false" layerNo="1" legendName="&lt;= 0" stringValue="*" upperLimit="0">
+										<contents draw="true">
+											<polygonStyle drawBorder="true">
+												<fillStyle backgroundColor="00ffffff" color="ff00a800" hatchType="SOLIDFILLING" hatchWidth="1.5"/>
+												<borderStyle color="ff00a800" dashPattern="1" dashWidth="1" width="0.3"/>
+											</polygonStyle>
+										</contents>
+									</class>
+									<class hasCustomLegendName="false" layerNo="1" legendName="&gt; 0" stringValue="*" upperLimit="INF">
+										<contents draw="true">
+											<polygonStyle drawBorder="true">
+												<fillStyle backgroundColor="00ffffff" color="ffbe0000" hatchType="SOLIDFILLING" hatchWidth="1.5"/>
+												<borderStyle color="ffbe0000" dashPattern="1" dashWidth="1" width="0.3"/>
+											</polygonStyle>
+										</contents>
+									</class>
+								</classified>
+								<perNetObj/>
+							</operators>
+							<mainLines classificationAttrID="NUMLINES" hasCustomOrder="false" numDecPlaces="0" useClassifiedMode="false" useLayerOrder="false">
+								<classified>
+									<class hasCustomLegendName="false" layerNo="1" legendName="&lt;= 0" stringValue="*" upperLimit="0">
+										<contents draw="true">
+											<polygonStyle drawBorder="true">
+												<fillStyle backgroundColor="00ffffff" color="ff00a800" hatchType="SOLIDFILLING" hatchWidth="1.5"/>
+												<borderStyle color="ff00a800" dashPattern="1" dashWidth="1" width="0.3"/>
+											</polygonStyle>
+										</contents>
+									</class>
+									<class hasCustomLegendName="false" layerNo="1" legendName="&gt; 0" stringValue="*" upperLimit="INF">
+										<contents draw="true">
+											<polygonStyle drawBorder="true">
+												<fillStyle backgroundColor="00ffffff" color="ffbe0000" hatchType="SOLIDFILLING" hatchWidth="1.5"/>
+												<borderStyle color="ffbe0000" dashPattern="1" dashWidth="1" width="0.3"/>
+											</polygonStyle>
+										</contents>
+									</class>
+								</classified>
+								<perNetObj/>
+							</mainLines>
+							<lines classificationAttrID="NUMSERVICETRIPSUNCOUPLED(AP)" hasCustomOrder="false" numDecPlaces="0" useClassifiedMode="false" useLayerOrder="false">
+								<classified>
+									<class hasCustomLegendName="false" layerNo="1" legendName="&gt; " stringValue="*" upperLimit="INF">
+										<contents draw="true">
+											<polygonStyle drawBorder="true">
+												<fillStyle backgroundColor="00ffffff" color="ff00a800" hatchType="SOLIDFILLING" hatchWidth="1.5"/>
+												<borderStyle color="ff00a800" dashPattern="1" dashWidth="1" width="0.3"/>
+											</polygonStyle>
+										</contents>
+									</class>
+								</classified>
+								<perNetObj/>
+							</lines>
+							<lineRoutes classificationAttrID="NUMSERVICETRIPSUNCOUPLED(AP)" hasCustomOrder="false" numDecPlaces="0" useClassifiedMode="false" useLayerOrder="false">
+								<classified>
+									<class hasCustomLegendName="false" layerNo="1" legendName="&lt;= 0" stringValue="*" upperLimit="0">
+										<contents draw="true">
+											<polygonStyle drawBorder="true">
+												<fillStyle backgroundColor="00ffffff" color="ff00a800" hatchType="SOLIDFILLING" hatchWidth="1.5"/>
+												<borderStyle color="ff00a800" dashPattern="1" dashWidth="1" width="0.3"/>
+											</polygonStyle>
+										</contents>
+									</class>
+									<class hasCustomLegendName="false" layerNo="1" legendName="&gt; 0" stringValue="*" upperLimit="INF">
+										<contents draw="true">
+											<polygonStyle drawBorder="true">
+												<fillStyle backgroundColor="00ffffff" color="ffbe0000" hatchType="SOLIDFILLING" hatchWidth="1.5"/>
+												<borderStyle color="ffbe0000" dashPattern="1" dashWidth="1" width="0.3"/>
+											</polygonStyle>
+										</contents>
+									</class>
+								</classified>
+								<perNetObj/>
+							</lineRoutes>
+							<lineRouteItems classificationAttrID="VOL(AH)" numDecPlaces="0" useLayerOrder="false">
+								<classified>
+									<class hasCustomLegendName="false" layerNo="1" legendName="&gt; " stringValue="*" upperLimit="INF">
+										<contents draw="true">
+											<polygonStyle drawBorder="true">
+												<fillStyle backgroundColor="00ffffff" color="ff00a800" hatchType="SOLIDFILLING" hatchWidth="1.5"/>
+												<borderStyle color="ff00a800" dashPattern="1" dashWidth="1" width="0.3"/>
+											</polygonStyle>
+										</contents>
+									</class>
+								</classified>
+							</lineRouteItems>
+							<paddingBar draw="false">
+								<polygonStyle drawBorder="true">
+									<fillStyle backgroundColor="00ffffff" color="ff545454" hatchType="SOLIDFILLING" hatchWidth="1.5"/>
+									<borderStyle color="ff545454" dashPattern="1" dashWidth="1" width="0.3"/>
+								</polygonStyle>
+							</paddingBar>
+						</lineBar>
+						<pathBar aggrFunction="SUMMINMAXAVGWHG_SUM" aggrType="PATHSET" onlyActive="true" scaleAttrID="PATH\VOL" weightAvgAttrID="SETNO">
+							<pathSets classificationAttrID="NO" hasCustomOrder="false" numDecPlaces="0" useClassifiedMode="false" useLayerOrder="false">
+								<classified>
+									<class hasCustomLegendName="false" layerNo="1" legendName="&lt;= 0" stringValue="*" upperLimit="0">
+										<contents draw="true">
+											<polygonStyle drawBorder="true">
+												<fillStyle backgroundColor="00ffffff" color="ff00a800" hatchType="SOLIDFILLING" hatchWidth="1.5"/>
+												<borderStyle color="ff00a800" dashPattern="1" dashWidth="1" width="0.3"/>
+											</polygonStyle>
+										</contents>
+									</class>
+									<class hasCustomLegendName="false" layerNo="1" legendName="&gt; 0" stringValue="*" upperLimit="INF">
+										<contents draw="true">
+											<polygonStyle drawBorder="true">
+												<fillStyle backgroundColor="00ffffff" color="ffbe0000" hatchType="SOLIDFILLING" hatchWidth="1.5"/>
+												<borderStyle color="ffbe0000" dashPattern="1" dashWidth="1" width="0.3"/>
+											</polygonStyle>
+										</contents>
+									</class>
+								</classified>
+								<perNetObj/>
+							</pathSets>
+							<paths classificationAttrID="NO" hasCustomOrder="false" numDecPlaces="0" useClassifiedMode="false" useLayerOrder="false">
+								<classified>
+									<class hasCustomLegendName="false" layerNo="1" legendName="&lt;= 0" stringValue="*" upperLimit="0">
+										<contents draw="true">
+											<polygonStyle drawBorder="true">
+												<fillStyle backgroundColor="00ffffff" color="ff00a800" hatchType="SOLIDFILLING" hatchWidth="1.5"/>
+												<borderStyle color="ff00a800" dashPattern="1" dashWidth="1" width="0.3"/>
+											</polygonStyle>
+										</contents>
+									</class>
+									<class hasCustomLegendName="false" layerNo="1" legendName="&gt; 0" stringValue="*" upperLimit="INF">
+										<contents draw="true">
+											<polygonStyle drawBorder="true">
+												<fillStyle backgroundColor="00ffffff" color="ffbe0000" hatchType="SOLIDFILLING" hatchWidth="1.5"/>
+												<borderStyle color="ffbe0000" dashPattern="1" dashWidth="1" width="0.3"/>
+											</polygonStyle>
+										</contents>
+									</class>
+								</classified>
+								<perNetObj/>
+							</paths>
+							<paddingBar draw="false">
+								<polygonStyle drawBorder="true">
+									<fillStyle backgroundColor="00ffffff" color="ff545454" hatchType="SOLIDFILLING" hatchWidth="1.5"/>
+									<borderStyle color="ff545454" dashPattern="1" dashWidth="1" width="0.3"/>
+								</polygonStyle>
+							</paddingBar>
+						</pathBar>
+					</item>
+					<item barType="STANDARD" draw="false" gridColumnWidth="168">
+						<scale autoScaleFactor="1" maxDimension="4" maxValue="97" minValue="0" useAutoScale="false" useMinDimension="false"/>
+						<label labelThreshold="0" multiplyFactor="1" numDecPlaces="0" roundValue="1" showTitle="false" showUnit="false" showValue="true" stringFormatType="DEFAULTFMT" textContentType="TEXTFROMATTRIBUTEVALUE" textPriority="1" useLabelThreshold="true" useMultiplyFactor="false" useUserDefinedTitleText="false" userDefinedTitleText=""/>
+						<standardBar classificationAttrID="VOLVEHPRT(AP)" negativeScaleAttrID="VOLFLOWBUNDLEVEHPRT(AP)" numDecPlaces="0" scaleAttrID="VOLFLOWBUNDLEVEHPRT(AP)" useClassifiedMode="false" useLayerOrder="false">
+							<uniform draw="true">
+								<polygonStyle drawBorder="true">
+									<fillStyle backgroundColor="00ffffff" color="ff00a800" hatchType="SOLIDFILLING" hatchWidth="0"/>
+									<borderStyle color="ff00a800" dashPattern="1" dashWidth="1" width="0.3"/>
+								</polygonStyle>
+							</uniform>
+							<classified>
+								<class hasCustomLegendName="true" layerNo="1" legendName="&lt;=  0.00" stringValue="*" upperLimit="0">
+									<contents draw="true">
+										<polygonStyle drawBorder="true">
+											<fillStyle backgroundColor="00ffffff" color="ffbe0000" hatchType="SOLIDFILLING" hatchWidth="0"/>
+											<borderStyle color="ffbe0000" dashPattern="1" dashWidth="1" width="0.3"/>
+										</polygonStyle>
+									</contents>
+								</class>
+								<class hasCustomLegendName="false" layerNo="1" legendName="&gt; 0" stringValue="*" upperLimit="INF">
+									<contents draw="true">
+										<polygonStyle drawBorder="true">
+											<fillStyle backgroundColor="00ffffff" color="ff00a800" hatchType="SOLIDFILLING" hatchWidth="0"/>
+											<borderStyle color="ff00a800" dashPattern="1" dashWidth="1" width="0.3"/>
+										</polygonStyle>
+									</contents>
+								</class>
+							</classified>
+						</standardBar>
+						<lineBar aggrFunction="SUMMINMAXAVGWHG_SUM" aggrType="TSYS" onlyActive="true" scaleAttrID="VOL(AH)" weightAvgAttrID="SEATCAP(AH)">
+							<transportSystems classificationAttrID="NUMLINES" hasCustomOrder="false" numDecPlaces="0" useClassifiedMode="false" useLayerOrder="false">
+								<classified>
+									<class hasCustomLegendName="false" layerNo="1" legendName="&lt;= 0" stringValue="*" upperLimit="0">
+										<contents draw="true">
+											<polygonStyle drawBorder="true">
+												<fillStyle backgroundColor="00ffffff" color="ff00a800" hatchType="SOLIDFILLING" hatchWidth="1.5"/>
+												<borderStyle color="ff00a800" dashPattern="1" dashWidth="1" width="0.3"/>
+											</polygonStyle>
+										</contents>
+									</class>
+									<class hasCustomLegendName="false" layerNo="1" legendName="&gt; 0" stringValue="*" upperLimit="INF">
+										<contents draw="true">
+											<polygonStyle drawBorder="true">
+												<fillStyle backgroundColor="00ffffff" color="ffbe0000" hatchType="SOLIDFILLING" hatchWidth="1.5"/>
+												<borderStyle color="ffbe0000" dashPattern="1" dashWidth="1" width="0.3"/>
+											</polygonStyle>
+										</contents>
+									</class>
+								</classified>
+								<perNetObj/>
+							</transportSystems>
+							<operators classificationAttrID="NO" hasCustomOrder="false" numDecPlaces="0" useClassifiedMode="false" useLayerOrder="false">
+								<classified>
+									<class hasCustomLegendName="false" layerNo="1" legendName="&lt;= 0" stringValue="*" upperLimit="0">
+										<contents draw="true">
+											<polygonStyle drawBorder="true">
+												<fillStyle backgroundColor="00ffffff" color="ff00a800" hatchType="SOLIDFILLING" hatchWidth="1.5"/>
+												<borderStyle color="ff00a800" dashPattern="1" dashWidth="1" width="0.3"/>
+											</polygonStyle>
+										</contents>
+									</class>
+									<class hasCustomLegendName="false" layerNo="1" legendName="&gt; 0" stringValue="*" upperLimit="INF">
+										<contents draw="true">
+											<polygonStyle drawBorder="true">
+												<fillStyle backgroundColor="00ffffff" color="ffbe0000" hatchType="SOLIDFILLING" hatchWidth="1.5"/>
+												<borderStyle color="ffbe0000" dashPattern="1" dashWidth="1" width="0.3"/>
+											</polygonStyle>
+										</contents>
+									</class>
+								</classified>
+								<perNetObj/>
+							</operators>
+							<mainLines classificationAttrID="NUMLINES" hasCustomOrder="false" numDecPlaces="0" useClassifiedMode="false" useLayerOrder="false">
+								<classified>
+									<class hasCustomLegendName="false" layerNo="1" legendName="&lt;= 0" stringValue="*" upperLimit="0">
+										<contents draw="true">
+											<polygonStyle drawBorder="true">
+												<fillStyle backgroundColor="00ffffff" color="ff00a800" hatchType="SOLIDFILLING" hatchWidth="1.5"/>
+												<borderStyle color="ff00a800" dashPattern="1" dashWidth="1" width="0.3"/>
+											</polygonStyle>
+										</contents>
+									</class>
+									<class hasCustomLegendName="false" layerNo="1" legendName="&gt; 0" stringValue="*" upperLimit="INF">
+										<contents draw="true">
+											<polygonStyle drawBorder="true">
+												<fillStyle backgroundColor="00ffffff" color="ffbe0000" hatchType="SOLIDFILLING" hatchWidth="1.5"/>
+												<borderStyle color="ffbe0000" dashPattern="1" dashWidth="1" width="0.3"/>
+											</polygonStyle>
+										</contents>
+									</class>
+								</classified>
+								<perNetObj/>
+							</mainLines>
+							<lines classificationAttrID="NUMSERVICETRIPSUNCOUPLED(AP)" hasCustomOrder="false" numDecPlaces="0" useClassifiedMode="false" useLayerOrder="false">
+								<classified>
+									<class hasCustomLegendName="false" layerNo="1" legendName="&lt;= 0" stringValue="*" upperLimit="0">
+										<contents draw="true">
+											<polygonStyle drawBorder="true">
+												<fillStyle backgroundColor="00ffffff" color="ff00a800" hatchType="SOLIDFILLING" hatchWidth="1.5"/>
+												<borderStyle color="ff00a800" dashPattern="1" dashWidth="1" width="0.3"/>
+											</polygonStyle>
+										</contents>
+									</class>
+									<class hasCustomLegendName="false" layerNo="1" legendName="&gt; 0" stringValue="*" upperLimit="INF">
+										<contents draw="true">
+											<polygonStyle drawBorder="true">
+												<fillStyle backgroundColor="00ffffff" color="ffbe0000" hatchType="SOLIDFILLING" hatchWidth="1.5"/>
+												<borderStyle color="ffbe0000" dashPattern="1" dashWidth="1" width="0.3"/>
+											</polygonStyle>
+										</contents>
+									</class>
+								</classified>
+								<perNetObj/>
+							</lines>
+							<lineRoutes classificationAttrID="NUMSERVICETRIPSUNCOUPLED(AP)" hasCustomOrder="false" numDecPlaces="0" useClassifiedMode="false" useLayerOrder="false">
+								<classified>
+									<class hasCustomLegendName="false" layerNo="1" legendName="&lt;= 0" stringValue="*" upperLimit="0">
+										<contents draw="true">
+											<polygonStyle drawBorder="true">
+												<fillStyle backgroundColor="00ffffff" color="ff00a800" hatchType="SOLIDFILLING" hatchWidth="1.5"/>
+												<borderStyle color="ff00a800" dashPattern="1" dashWidth="1" width="0.3"/>
+											</polygonStyle>
+										</contents>
+									</class>
+									<class hasCustomLegendName="false" layerNo="1" legendName="&gt; 0" stringValue="*" upperLimit="INF">
+										<contents draw="true">
+											<polygonStyle drawBorder="true">
+												<fillStyle backgroundColor="00ffffff" color="ffbe0000" hatchType="SOLIDFILLING" hatchWidth="1.5"/>
+												<borderStyle color="ffbe0000" dashPattern="1" dashWidth="1" width="0.3"/>
+											</polygonStyle>
+										</contents>
+									</class>
+								</classified>
+								<perNetObj/>
+							</lineRoutes>
+							<lineRouteItems classificationAttrID="VOL(AH)" numDecPlaces="0" useLayerOrder="false">
+								<classified>
+									<class hasCustomLegendName="false" layerNo="1" legendName="&gt; " stringValue="*" upperLimit="INF">
+										<contents draw="true">
+											<polygonStyle drawBorder="true">
+												<fillStyle backgroundColor="00ffffff" color="ff00a800" hatchType="SOLIDFILLING" hatchWidth="1.5"/>
+												<borderStyle color="ff00a800" dashPattern="1" dashWidth="1" width="0.3"/>
+											</polygonStyle>
+										</contents>
+									</class>
+								</classified>
+							</lineRouteItems>
+							<paddingBar draw="false">
+								<polygonStyle drawBorder="true">
+									<fillStyle backgroundColor="00ffffff" color="ff545454" hatchType="SOLIDFILLING" hatchWidth="1.5"/>
+									<borderStyle color="ff545454" dashPattern="1" dashWidth="1" width="0.3"/>
+								</polygonStyle>
+							</paddingBar>
+						</lineBar>
+						<pathBar aggrFunction="SUMMINMAXAVGWHG_SUM" aggrType="PATHSET" onlyActive="true" scaleAttrID="PATH\VOL" weightAvgAttrID="SEATCAP(AH)">
+							<pathSets classificationAttrID="NO" hasCustomOrder="false" numDecPlaces="0" useClassifiedMode="false" useLayerOrder="false">
+								<classified>
+									<class hasCustomLegendName="false" layerNo="1" legendName="&lt;= 0" stringValue="*" upperLimit="0">
+										<contents draw="true">
+											<polygonStyle drawBorder="true">
+												<fillStyle backgroundColor="00ffffff" color="ff00a800" hatchType="SOLIDFILLING" hatchWidth="1.5"/>
+												<borderStyle color="ff00a800" dashPattern="1" dashWidth="1" width="0.3"/>
+											</polygonStyle>
+										</contents>
+									</class>
+									<class hasCustomLegendName="false" layerNo="1" legendName="&gt; 0" stringValue="*" upperLimit="INF">
+										<contents draw="true">
+											<polygonStyle drawBorder="true">
+												<fillStyle backgroundColor="00ffffff" color="ffbe0000" hatchType="SOLIDFILLING" hatchWidth="1.5"/>
+												<borderStyle color="ffbe0000" dashPattern="1" dashWidth="1" width="0.3"/>
+											</polygonStyle>
+										</contents>
+									</class>
+								</classified>
+								<perNetObj/>
+							</pathSets>
+							<paths classificationAttrID="NO" hasCustomOrder="false" numDecPlaces="0" useClassifiedMode="false" useLayerOrder="false">
+								<classified>
+									<class hasCustomLegendName="false" layerNo="1" legendName="&lt;= 0" stringValue="*" upperLimit="0">
+										<contents draw="true">
+											<polygonStyle drawBorder="true">
+												<fillStyle backgroundColor="00ffffff" color="ff00a800" hatchType="SOLIDFILLING" hatchWidth="1.5"/>
+												<borderStyle color="ff00a800" dashPattern="1" dashWidth="1" width="0.3"/>
+											</polygonStyle>
+										</contents>
+									</class>
+									<class hasCustomLegendName="false" layerNo="1" legendName="&gt; 0" stringValue="*" upperLimit="INF">
+										<contents draw="true">
+											<polygonStyle drawBorder="true">
+												<fillStyle backgroundColor="00ffffff" color="ffbe0000" hatchType="SOLIDFILLING" hatchWidth="1.5"/>
+												<borderStyle color="ffbe0000" dashPattern="1" dashWidth="1" width="0.3"/>
+											</polygonStyle>
+										</contents>
+									</class>
+								</classified>
+								<perNetObj/>
+							</paths>
+							<paddingBar draw="false">
+								<polygonStyle drawBorder="true">
+									<fillStyle backgroundColor="00ffffff" color="ff545454" hatchType="SOLIDFILLING" hatchWidth="1.5"/>
+									<borderStyle color="ff545454" dashPattern="1" dashWidth="1" width="0.3"/>
+								</polygonStyle>
+							</paddingBar>
+						</pathBar>
+					</item>
+					<item barType="STANDARD" draw="false" gridColumnWidth="120">
+						<scale autoScaleFactor="1" maxDimension="4" maxValue="20000" minValue="0" useAutoScale="true" useMinDimension="false"/>
+						<label labelThreshold="0" multiplyFactor="1" numDecPlaces="0" roundValue="1" showTitle="false" showUnit="false" showValue="true" stringFormatType="DEFAULTFMT" textContentType="TEXTFROMATTRIBUTEVALUE" textPriority="1" useLabelThreshold="true" useMultiplyFactor="false" useUserDefinedTitleText="false" userDefinedTitleText=""/>
+						<standardBar classificationAttrID="VOLPERSPUT(AP)" negativeScaleAttrID="VOLVEHPRT(AP)" numDecPlaces="0" scaleAttrID="VOLPERSPUT(AP)" useClassifiedMode="false" useLayerOrder="false">
+							<uniform draw="true">
+								<polygonStyle drawBorder="true">
+									<fillStyle backgroundColor="00ffffff" color="ff0000a8" hatchType="SOLIDFILLING" hatchWidth="0"/>
+									<borderStyle color="ff0000a8" dashPattern="1" dashWidth="1" width="0.3"/>
+								</polygonStyle>
+							</uniform>
+							<classified>
+								<class hasCustomLegendName="true" layerNo="1" legendName="&lt;=  0.00" stringValue="*" upperLimit="0">
+									<contents draw="true">
+										<polygonStyle drawBorder="true">
+											<fillStyle backgroundColor="00ffffff" color="ffbe0000" hatchType="SOLIDFILLING" hatchWidth="0"/>
+											<borderStyle color="ffbe0000" dashPattern="1" dashWidth="1" width="0.3"/>
+										</polygonStyle>
+									</contents>
+								</class>
+								<class hasCustomLegendName="false" layerNo="1" legendName="&gt; 0" stringValue="*" upperLimit="INF">
+									<contents draw="true">
+										<polygonStyle drawBorder="true">
+											<fillStyle backgroundColor="00ffffff" color="ff009300" hatchType="SOLIDFILLING" hatchWidth="0"/>
+											<borderStyle color="ff009300" dashPattern="1" dashWidth="1" width="0.3"/>
+										</polygonStyle>
+									</contents>
+								</class>
+							</classified>
+						</standardBar>
+						<lineBar aggrFunction="SUMMINMAXAVGWHG_SUM" aggrType="LINE" onlyActive="true" scaleAttrID="VOL(AH)" weightAvgAttrID="SEATCAP(AH)">
+							<transportSystems classificationAttrID="NUMLINES" hasCustomOrder="false" numDecPlaces="0" useClassifiedMode="false" useLayerOrder="false">
+								<classified>
+									<class hasCustomLegendName="false" layerNo="1" legendName="&lt;= 0" stringValue="*" upperLimit="0">
+										<contents draw="true">
+											<polygonStyle drawBorder="true">
+												<fillStyle backgroundColor="00ffffff" color="ff00a800" hatchType="SOLIDFILLING" hatchWidth="1.5"/>
+												<borderStyle color="ff00a800" dashPattern="1" dashWidth="1" width="0.3"/>
+											</polygonStyle>
+										</contents>
+									</class>
+									<class hasCustomLegendName="false" layerNo="1" legendName="&gt; 0" stringValue="*" upperLimit="INF">
+										<contents draw="true">
+											<polygonStyle drawBorder="true">
+												<fillStyle backgroundColor="00ffffff" color="ffbe0000" hatchType="SOLIDFILLING" hatchWidth="1.5"/>
+												<borderStyle color="ffbe0000" dashPattern="1" dashWidth="1" width="0.3"/>
+											</polygonStyle>
+										</contents>
+									</class>
+								</classified>
+								<perNetObj/>
+							</transportSystems>
+							<operators classificationAttrID="NO" hasCustomOrder="false" numDecPlaces="0" useClassifiedMode="false" useLayerOrder="false">
+								<classified>
+									<class hasCustomLegendName="false" layerNo="1" legendName="&lt;= 0" stringValue="*" upperLimit="0">
+										<contents draw="true">
+											<polygonStyle drawBorder="true">
+												<fillStyle backgroundColor="00ffffff" color="ff00a800" hatchType="SOLIDFILLING" hatchWidth="1.5"/>
+												<borderStyle color="ff00a800" dashPattern="1" dashWidth="1" width="0.3"/>
+											</polygonStyle>
+										</contents>
+									</class>
+									<class hasCustomLegendName="false" layerNo="1" legendName="&gt; 0" stringValue="*" upperLimit="INF">
+										<contents draw="true">
+											<polygonStyle drawBorder="true">
+												<fillStyle backgroundColor="00ffffff" color="ffbe0000" hatchType="SOLIDFILLING" hatchWidth="1.5"/>
+												<borderStyle color="ffbe0000" dashPattern="1" dashWidth="1" width="0.3"/>
+											</polygonStyle>
+										</contents>
+									</class>
+								</classified>
+								<perNetObj/>
+							</operators>
+							<mainLines classificationAttrID="NUMLINES" hasCustomOrder="false" numDecPlaces="0" useClassifiedMode="false" useLayerOrder="false">
+								<classified>
+									<class hasCustomLegendName="false" layerNo="1" legendName="&lt;= 0" stringValue="*" upperLimit="0">
+										<contents draw="true">
+											<polygonStyle drawBorder="true">
+												<fillStyle backgroundColor="00ffffff" color="ff00a800" hatchType="SOLIDFILLING" hatchWidth="1.5"/>
+												<borderStyle color="ff00a800" dashPattern="1" dashWidth="1" width="0.3"/>
+											</polygonStyle>
+										</contents>
+									</class>
+									<class hasCustomLegendName="false" layerNo="1" legendName="&gt; 0" stringValue="*" upperLimit="INF">
+										<contents draw="true">
+											<polygonStyle drawBorder="true">
+												<fillStyle backgroundColor="00ffffff" color="ffbe0000" hatchType="SOLIDFILLING" hatchWidth="1.5"/>
+												<borderStyle color="ffbe0000" dashPattern="1" dashWidth="1" width="0.3"/>
+											</polygonStyle>
+										</contents>
+									</class>
+								</classified>
+								<perNetObj/>
+							</mainLines>
+							<lines classificationAttrID="NUMSERVICETRIPSUNCOUPLED(AP)" hasCustomOrder="false" numDecPlaces="0" useClassifiedMode="false" useLayerOrder="false">
+								<classified>
+									<class hasCustomLegendName="false" layerNo="1" legendName="&gt; " stringValue="*" upperLimit="INF">
+										<contents draw="true">
+											<polygonStyle drawBorder="true">
+												<fillStyle backgroundColor="00ffffff" color="ff00a800" hatchType="SOLIDFILLING" hatchWidth="1.5"/>
+												<borderStyle color="ff00a800" dashPattern="1" dashWidth="1" width="0.3"/>
+											</polygonStyle>
+										</contents>
+									</class>
+								</classified>
+								<perNetObj/>
+							</lines>
+							<lineRoutes classificationAttrID="NUMSERVICETRIPSUNCOUPLED(AP)" hasCustomOrder="false" numDecPlaces="0" useClassifiedMode="false" useLayerOrder="false">
+								<classified>
+									<class hasCustomLegendName="false" layerNo="1" legendName="&lt;= 0" stringValue="*" upperLimit="0">
+										<contents draw="true">
+											<polygonStyle drawBorder="true">
+												<fillStyle backgroundColor="00ffffff" color="ff00a800" hatchType="SOLIDFILLING" hatchWidth="1.5"/>
+												<borderStyle color="ff00a800" dashPattern="1" dashWidth="1" width="0.3"/>
+											</polygonStyle>
+										</contents>
+									</class>
+									<class hasCustomLegendName="false" layerNo="1" legendName="&gt; 0" stringValue="*" upperLimit="INF">
+										<contents draw="true">
+											<polygonStyle drawBorder="true">
+												<fillStyle backgroundColor="00ffffff" color="ffbe0000" hatchType="SOLIDFILLING" hatchWidth="1.5"/>
+												<borderStyle color="ffbe0000" dashPattern="1" dashWidth="1" width="0.3"/>
+											</polygonStyle>
+										</contents>
+									</class>
+								</classified>
+								<perNetObj/>
+							</lineRoutes>
+							<lineRouteItems classificationAttrID="VOL(AH)" numDecPlaces="0" useLayerOrder="false">
+								<classified>
+									<class hasCustomLegendName="false" layerNo="1" legendName="&gt; " stringValue="*" upperLimit="INF">
+										<contents draw="true">
+											<polygonStyle drawBorder="true">
+												<fillStyle backgroundColor="00ffffff" color="ff00a800" hatchType="SOLIDFILLING" hatchWidth="1.5"/>
+												<borderStyle color="ff00a800" dashPattern="1" dashWidth="1" width="0.3"/>
+											</polygonStyle>
+										</contents>
+									</class>
+								</classified>
+							</lineRouteItems>
+							<paddingBar draw="false">
+								<polygonStyle drawBorder="true">
+									<fillStyle backgroundColor="00ffffff" color="ff545454" hatchType="SOLIDFILLING" hatchWidth="1.5"/>
+									<borderStyle color="ff545454" dashPattern="1" dashWidth="1" width="0.3"/>
+								</polygonStyle>
+							</paddingBar>
+						</lineBar>
+						<pathBar aggrFunction="SUMMINMAXAVGWHG_SUM" aggrType="PATHSET" onlyActive="true" scaleAttrID="PATH\VOL" weightAvgAttrID="SETNO">
+							<pathSets classificationAttrID="NO" hasCustomOrder="false" numDecPlaces="0" useClassifiedMode="false" useLayerOrder="false">
+								<classified>
+									<class hasCustomLegendName="false" layerNo="1" legendName="&lt;= 0" stringValue="*" upperLimit="0">
+										<contents draw="true">
+											<polygonStyle drawBorder="true">
+												<fillStyle backgroundColor="00ffffff" color="ff00a800" hatchType="SOLIDFILLING" hatchWidth="1.5"/>
+												<borderStyle color="ff00a800" dashPattern="1" dashWidth="1" width="0.3"/>
+											</polygonStyle>
+										</contents>
+									</class>
+									<class hasCustomLegendName="false" layerNo="1" legendName="&gt; 0" stringValue="*" upperLimit="INF">
+										<contents draw="true">
+											<polygonStyle drawBorder="true">
+												<fillStyle backgroundColor="00ffffff" color="ffbe0000" hatchType="SOLIDFILLING" hatchWidth="1.5"/>
+												<borderStyle color="ffbe0000" dashPattern="1" dashWidth="1" width="0.3"/>
+											</polygonStyle>
+										</contents>
+									</class>
+								</classified>
+								<perNetObj/>
+							</pathSets>
+							<paths classificationAttrID="NO" hasCustomOrder="false" numDecPlaces="0" useClassifiedMode="false" useLayerOrder="false">
+								<classified>
+									<class hasCustomLegendName="false" layerNo="1" legendName="&lt;= 0" stringValue="*" upperLimit="0">
+										<contents draw="true">
+											<polygonStyle drawBorder="true">
+												<fillStyle backgroundColor="00ffffff" color="ff00a800" hatchType="SOLIDFILLING" hatchWidth="1.5"/>
+												<borderStyle color="ff00a800" dashPattern="1" dashWidth="1" width="0.3"/>
+											</polygonStyle>
+										</contents>
+									</class>
+									<class hasCustomLegendName="false" layerNo="1" legendName="&gt; 0" stringValue="*" upperLimit="INF">
+										<contents draw="true">
+											<polygonStyle drawBorder="true">
+												<fillStyle backgroundColor="00ffffff" color="ffbe0000" hatchType="SOLIDFILLING" hatchWidth="1.5"/>
+												<borderStyle color="ffbe0000" dashPattern="1" dashWidth="1" width="0.3"/>
+											</polygonStyle>
+										</contents>
+									</class>
+								</classified>
+								<perNetObj/>
+							</paths>
+							<paddingBar draw="false">
+								<polygonStyle drawBorder="true">
+									<fillStyle backgroundColor="00ffffff" color="ff545454" hatchType="SOLIDFILLING" hatchWidth="1.5"/>
+									<borderStyle color="ff545454" dashPattern="1" dashWidth="1" width="0.3"/>
+								</polygonStyle>
+							</paddingBar>
+						</pathBar>
+					</item>
+				</items>
+			</bars>
+			<isochrones classificationAttrID="ISOCTIMEPRT" lineWidth="1" numDecPlaces="0" useLayerOrder="false">
+				<classified>
+					<class hasCustomLegendName="false" layerNo="1" legendName="&lt;= 3min" stringValue="*" upperLimit="180">
+						<contents color="fffff3e8"/>
+					</class>
+					<class hasCustomLegendName="false" layerNo="1" legendName="&lt;= 6min" stringValue="*" upperLimit="360">
+						<contents color="ffffd8b0"/>
+					</class>
+					<class hasCustomLegendName="false" layerNo="1" legendName="&lt;= 9min" stringValue="*" upperLimit="540">
+						<contents color="ffffd0a0"/>
+					</class>
+					<class hasCustomLegendName="false" layerNo="1" legendName="&lt;= 12min" stringValue="*" upperLimit="720">
+						<contents color="ffffc080"/>
+					</class>
+					<class hasCustomLegendName="false" layerNo="1" legendName="&lt;= 15min" stringValue="*" upperLimit="900">
+						<contents color="ffffb060"/>
+					</class>
+					<class hasCustomLegendName="false" layerNo="1" legendName="&lt;= 20min" stringValue="*" upperLimit="1200">
+						<contents color="ffff9830"/>
+					</class>
+					<class hasCustomLegendName="false" layerNo="1" legendName="&lt;= 30min" stringValue="*" upperLimit="1800">
+						<contents color="fff77700"/>
+					</class>
+					<class hasCustomLegendName="false" layerNo="1" legendName="&lt;= 40min" stringValue="*" upperLimit="2400">
+						<contents color="ffd06800"/>
+					</class>
+					<class hasCustomLegendName="false" layerNo="1" legendName="&lt;= 50min" stringValue="*" upperLimit="3000">
+						<contents color="ffb05800"/>
+					</class>
+					<class hasCustomLegendName="false" layerNo="1" legendName="&gt; 50min" stringValue="*" upperLimit="INF">
+						<contents color="ff900000"/>
+					</class>
+				</classified>
+			</isochrones>
+			<drawingOrder attrID="" order="ASCENDING"/>
+		</links>
+	</netEditor2D>
+	<netEditor3D>
+		<base layoutIdentifier="Räumliche Netzansicht" netTransparencyPerc="0" skyColor="ffc0e0ff" skyTextureFilename="" undergroundColor="ff602000" undergroundTextureFilename="" useSeparate2DGPar="false" viewType="PLAINVIEW"/>
+		<simpleAttributeBasedPrisms diameterOfObjectsWithoutSurface="10" displayAbsoluteValue="false" drawObjectsWithoutSurface="true" netObjectType="ZONE" scaleAttrID="AREAKM2" useSeparateHypsometricTopFaceStyle="true">
+			<heightScale autoScaleFactor="1" maxDimension="4" maxValue="20000" minValue="0" useAutoScale="false" useMinDimension="false"/>
+			<materialsClassification classificationAttrID="NO" classificationMode="HYPSOMETRIC" numDecPlaces="0" useLayerOrder="false">
+				<uniform useSeparateTopFaceStyle="true">
+					<surfaceStyle color="ff5454ff" shininess="1" texHorizLen="1" textureFilename=""/>
+					<topFaceStyle color="ff5454ff" shininess="1" texHorizLen="1" textureFilename=""/>
+				</uniform>
+				<classified>
+					<class hasCustomLegendName="false" layerNo="1" legendName="&gt; " stringValue="*" upperLimit="INF">
+						<contents useSeparateTopFaceStyle="true">
+							<surfaceStyle color="ff5454ff" shininess="1" texHorizLen="1" textureFilename=""/>
+							<topFaceStyle color="ff5454ff" shininess="1" texHorizLen="1" textureFilename=""/>
+						</contents>
+					</class>
+				</classified>
+			</materialsClassification>
+			<hypsometricClassification numDecPlaces="0">
+				<classified>
+					<class hasCustomLegendName="false" layerNo="1" legendName="&gt; " stringValue="*" upperLimit="INF">
+						<contents color="ff0000a8"/>
+					</class>
+				</classified>
+			</hypsometricClassification>
+			<hypsometricTopFaceStyle color="ff5454ff" shininess="1" texHorizLen="1" textureFilename=""/>
+		</simpleAttributeBasedPrisms>
+		<linkBasedBars displayAbsoluteValue="false" drawOnClosedObjects="false" drawOnlyOnActiveObjects="false" useBacksideSurfaceStyle="false" useCrossValues="false">
+			<linkBars classificationAttrID="NO" classificationMode="HYPSOMETRIC" draw="true" numDecPlaces="0" scaleAttrID="VOLVEHPRT(AH)" useLayerOrder="false">
+				<uniform color="ff5454ff" shininess="1" texHorizLen="1" textureFilename=""/>
+				<classified>
+					<class hasCustomLegendName="false" layerNo="1" legendName="&gt; " stringValue="*" upperLimit="INF">
+						<contents color="ff5454ff" shininess="1" texHorizLen="1" textureFilename=""/>
+					</class>
+				</classified>
+			</linkBars>
+			<mainTurnBars classificationAttrID="NO" classificationMode="HYPSOMETRIC" draw="true" numDecPlaces="0" scaleAttrID="VOLVEHPRT(AH)" useLayerOrder="false">
+				<uniform color="ff5454ff" shininess="1" texHorizLen="1" textureFilename=""/>
+				<classified>
+					<class hasCustomLegendName="false" layerNo="1" legendName="&gt; " stringValue="*" upperLimit="INF">
+						<contents color="ff5454ff" shininess="1" texHorizLen="1" textureFilename=""/>
+					</class>
+				</classified>
+			</mainTurnBars>
+			<connectorBars classificationAttrID="NO" classificationMode="HYPSOMETRIC" draw="true" numDecPlaces="0" scaleAttrID="VOLVEHPRT(AH)" useLayerOrder="false">
+				<uniform color="ff5454ff" shininess="1" texHorizLen="1" textureFilename=""/>
+				<classified>
+					<class hasCustomLegendName="false" layerNo="1" legendName="&gt; " stringValue="*" upperLimit="INF">
+						<contents color="ff5454ff" shininess="1" texHorizLen="1" textureFilename=""/>
+					</class>
+				</classified>
+			</connectorBars>
+			<barScale autoScaleFactor="1" maxDimension="4" maxValue="20000" minValue="0" useAutoScale="false" useMinDimension="false"/>
+			<backsideSurfaceStyle color="ff5454ff" shininess="1" texHorizLen="1" textureFilename=""/>
+			<hypsometricClassification numDecPlaces="0">
+				<classified>
+					<class hasCustomLegendName="false" layerNo="1" legendName="&gt; " stringValue="*" upperLimit="INF">
+						<contents color="ff0000a8"/>
+					</class>
+				</classified>
+			</hypsometricClassification>
+		</linkBasedBars>
+		<sbaTrajectories drawSignalHeads="true" drawSimulationGraph="true" simulationGraphConnectorColor="ff303030" simulationGraphLinkColor="ff424242" simulationGraphTurnColor="00000000">
+			<display classificationAttrID="TSYS\CODE" numDecPlaces="0" useClassifiedMode="false" useLayerOrder="false">
+				<uniform color="ffff4040"/>
+				<classified>
+					<class hasCustomLegendName="false" layerNo="1" legendName="*" stringValue="*" upperLimit="INF">
+						<contents color="ff0000a8"/>
+					</class>
+				</classified>
+			</display>
+		</sbaTrajectories>
+	</netEditor3D>
+	<printParameters>
+		<contents drawTileGlueLine="false" expandToPrintPage="false" outputArea="CURRENTVIEW" outputSize="FITTOPAGE" oversizeHandling="CUT" printMarkings="true" scaleAbsoluteMillimeterSizes="false" scaleFactor="1" tileOverlapping="0"/>
+		<pageSetup bottomMargin="0" centerHorizontally="true" centerVertically="true" leftMargin="0" orientation="AUTOMATIC" rightMargin="0" topMargin="0"/>
+		<printArea bottomMargin="-0.0049832091414723804" fixedAspectRatio="1" leftMargin="-0.0049049732624553144" rightMargin="0.005128611228428781" showPrintAreaOnScreen="false" topMargin="0.0049832091414723804" useFixedAspectRatio="false"/>
+		<printFrame draw="true" showPrintAreaOnScreen="true">
+			<borderStyle color="ff000000" dashPattern="1" dashWidth="0.265" width="0.3"/>
+			<header autoValue="[user-defined]" draw="false" minLineHeight="10" textAlignment="LEFTALIGNMENT" textColor="ff000000" textSize="3" useMinLineHeight="false" userDefinedText="">
+				<fontStyle bold="false" fontFamilyName="Arial" italic="false"/>
+			</header>
+			<footer draw="true" imageHeight="3" minLineHeight="10" textColor="ff000000" textSize="3" useMinLineHeight="false">
+				<fontStyle bold="false" fontFamilyName="Arial" italic="false"/>
+				<columns>
+					<column textAlignment="LEFTALIGNMENT" width="25">
+						<rows>
+							<cell autoValue="[Hide cell]" userDefinedText=""/>
+							<cell autoValue="[user-defined]" userDefinedText="VISUM [Visum version] PTV AG"/>
+						</rows>
+					</column>
+					<column textAlignment="LEFTALIGNMENT" width="50">
+						<rows>
+							<cell autoValue="[Hide cell]" userDefinedText=""/>
+							<cell autoValue="[File name]" userDefinedText=""/>
+						</rows>
+					</column>
+					<column textAlignment="LEFTALIGNMENT" width="25">
+						<rows>
+							<cell autoValue="[Hide cell]" userDefinedText=""/>
+							<cell autoValue="erstellt am: [Date]" userDefinedText="erstellt am: [Date]"/>
+						</rows>
+					</column>
+				</columns>
+			</footer>
+		</printFrame>
+	</printParameters>
+	<legendParameters>
+		<legendGeneralParameters backgroundColor="e5ffffff" drawGraphicScale="true" drawLegend="true" gap_Classifications="2" gap_Columns="2" gap_Elements="3" gap_FooterTexts_GraphicScale="2" gap_LegendElements_Footer="2" gap_LineHeightFactor="" gap_SubElements="2" gap_Symbol_Label="3" gap_Symbols="1" gap_Title_LegendElements="1" graphicScaleAlignment="RIGHTALIGNMENT" graphicScalePlacement="GraphicScaleBelowFooterTexts" legendAlignment="TOPRIGHTALIGNMENT" margin_Bottom="" margin_Left="" margin_Right="" margin_Top="" numColumns="1" titleAlignment="LEFTALIGNMENT" titleText="Legend">
+			<attributeTextParameters textColor="ff000000" textSize="3">
+				<fontStyle bold="false" fontFamilyName="Arial" italic="false"/>
+			</attributeTextParameters>
+			<elementTextParameters textColor="ff000000" textSize="4">
+				<fontStyle bold="false" fontFamilyName="Arial" italic="false"/>
+			</elementTextParameters>
+			<footerTextParameters textColor="ff000000" textSize="4">
+				<fontStyle bold="false" fontFamilyName="Arial" italic="false"/>
+			</footerTextParameters>
+			<graphicScaleTextParameters textColor="ff000000" textSize="3.5">
+				<fontStyle bold="false" fontFamilyName="Arial" italic="false"/>
+			</graphicScaleTextParameters>
+			<labelTextParameters textColor="ff000000" textSize="3.5">
+				<fontStyle bold="false" fontFamilyName="Arial" italic="false"/>
+			</labelTextParameters>
+			<subElementTextParameters textColor="ff000000" textSize="0">
+				<fontStyle bold="false" fontFamilyName="Arial" italic="false"/>
+			</subElementTextParameters>
+			<titleTextParameters textColor="ff000000" textSize="5">
+				<fontStyle bold="true" fontFamilyName="Arial" italic="false"/>
+			</titleTextParameters>
+			<printFrameFooter draw="true" imageHeight="2" minLineHeight="10" textColor="ff000000" textSize="3" useMinLineHeight="false">
+				<fontStyle bold="false" fontFamilyName="Arial" italic="false"/>
+				<columns>
+					<column textAlignment="LEFTALIGNMENT" width="50">
+						<rows>
+							<cell autoValue="[empty]" userDefinedText=""/>
+							<cell autoValue="[empty]" userDefinedText=""/>
+						</rows>
+					</column>
+					<column textAlignment="LEFTALIGNMENT" width="0">
+						<rows>
+							<cell autoValue="[empty]" userDefinedText=""/>
+							<cell autoValue="[empty]" userDefinedText=""/>
+						</rows>
+					</column>
+					<column textAlignment="LEFTALIGNMENT" width="50">
+						<rows>
+							<cell autoValue="[empty]" userDefinedText=""/>
+							<cell autoValue="[empty]" userDefinedText=""/>
+						</rows>
+					</column>
+				</columns>
+			</printFrameFooter>
+			<frameStyle>
+				<strokes>
+					<stroke color="ffffffff" dashPattern="1" dashWidth="1" width="2"/>
+					<stroke color="ff000000" dashPattern="1" dashWidth="1" width="0.3"/>
+				</strokes>
+			</frameStyle>
+		</legendGeneralParameters>
+		<legendElementsParameters>
+			<legendElementParameter areaSymbol="NOLEGENDAREASYMBOL" constrainWidth="false" drawFilling="true" drawPassive="false" drawScale="false" lineSymbol="HORIZONTALLINE" maximumWidth="70" pointSurfaceDrawingStyle="DRAWONLAYAREA" showOnlyClassesWithObjects="false" symbolHeight="5" symbolWidth="10" text="Connectivity Function Level (CFL)" useLayerOrder="false">
+				<id elementID="LINKS" elementKey="0"/>
+			</legendElementParameter>
+			<legendElementParameter areaSymbol="RECTANGLEAREA" constrainWidth="false" drawFilling="true" drawPassive="false" drawScale="false" lineSymbol="NOLEGENDLINESYMBOL" maximumWidth="70" pointSurfaceDrawingStyle="DRAWBOTH" showOnlyClassesWithObjects="false" symbolHeight="5" symbolWidth="10" text="Travel Time" useLayerOrder="false">
+				<id elementID="ZONES" elementKey="0"/>
+			</legendElementParameter>
+		</legendElementsParameters>
+		<enabledLegendElements>
+			<legendElementReference elementID="ZONES" elementKey="0"/>
+			<legendElementReference elementID="LINKS" elementKey="0"/>
+		</enabledLegendElements>
+	</legendParameters>
+</netEditorGraphicParameters>

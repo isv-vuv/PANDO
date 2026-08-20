@@ -1,0 +1,164 @@
+<?xml version="1.0" encoding="utf-8"?>
+<WorkflowConfig xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:xsd="http://www.w3.org/2001/XMLSchema" Name="OSM Standard configuration" FileVersion="18.00" WriteNETFile="true">
+	<ParserSettings>
+		<NodeFilter>
+			<TagFilter Tag="*" Values="*" Bins="TAGGED_NODES"/>
+		</NodeFilter>
+		<WayFilter>
+			<!-- Road links are collected into one bin, because topology has to be processed commonly -->
+			<TagFilter Tag="highway" Values="motorway,motorway_link,trunk,trunk_link,primary,primary_link,secondary,secondary_link,tertiary,tertiary_link,unclassified,residential,living_street,construction,path,footway,pedestrian,steps,cycleway,track,road,service" Bins="ROAD_WAYS"/>
+			<TagFilter Tag="route" Values="ferry" Bins="ROAD_WAYS"/>
+			<TagFilter Tag="railway" Values="rail,light_rail,subway,tram" Bins="RAIL_WAYS"/>
+			<TagFilter Tag="*" Values="*" Bins="TAGGED_WAYS"/>
+			<TagFilter Tag="" Values="" Bins="ALL_WAYS"/>
+		</WayFilter>
+		<RelationFilter>
+			<TagFilter Tag="type" Values="public_transport" Bins="PUT_RELATIONS"/>
+			<TagFilter Tag="type" Values="route" Bins="ROUTE_RELATIONS"/>
+			<TagFilter Tag="type" Values="route_master" Bins="MASTERROUTE_RELATIONS"/>
+			<TagFilter Tag="*" Values="*" Bins="TAGGED_RELATIONS"/>
+		</RelationFilter>
+	</ParserSettings>
+	<BinConfig>
+		<MultiDict Code="ALL_NODES" DictCapacity="2250000"/>
+		<List Code="TAGGED_NODES"/>
+		<List Code="TAGGED_WAYS"/>
+		<List Code="TAGGED_RELATIONS"/>
+		<List Code="PUT_RELATIONS"/>
+		<List Code="ROUTE_RELATIONS"/>
+		<List Code="MASTERROUTE_RELATIONS"/>
+		<Set Code="StopPointsBin"/>
+		<Set Code="StopAreaNodesBin"/>
+		<Set Code="StopAreaRelationsBin"/>
+		<List Code="ROAD_WAYS"/>
+		<Set Code="LinkTopologyBin"/>
+		<Dict Code="NodeExportBin"/>
+		<List Code="RelationsBin"/>
+		<Dict Code="ProblemWaysBin"/>
+		<List Code="O2V_TurnsBin"/>
+		<List Code="RAIL_WAYS"/>
+		<List Code="RailLinkTopologyBin"/>
+		<Dict Code="RailProblemWaysBin"/>
+		<Dict Code="PuTNodeExportBin"/>
+		<List Code="SharingStationsBin"/>
+	</BinConfig>
+	
+	<Pipes>
+		<!-- process attributes for road links -->
+		<Pipe Code="LinkAttributesPipe" InputBin="ROAD_WAYS" OutputBin="LinkTopologyBin">
+			<EntityFilter Code="FilterAccessibleRoads" Expression="access !€ ['private']">
+				<ApplyIf>access??</ApplyIf>
+			</EntityFilter>
+			<EntityFilter Code="FilterHighwayAreas" Expression="area != 'yes'">
+				<ApplyIf>area??</ApplyIf>
+			</EntityFilter>
+			<SetDefaultTagValues Code="LinkDefaults"/>	<!--Initialize some internal tags according to CFG-section 'LinkDefaults' in order to have a defined set of tags available in the workflow. The values are NOT automatically transferred to the Visum network -->
+
+			<SetTagValues>		<!-- Handle tram tracks on roads: set some attributes and open for TSys 'Tram'. These links are NOT handled by the later Topology processing for tram ways -->
+				<ApplyIf>(railway == "tram")</ApplyIf>
+				<Tag k="O2V_TRAM" v="'yes'"/>
+				<Tag k="O2V_LANES" v="(tracks??) ? tracks : O2V_LANES"/>
+			</SetTagValues>
+			<!-- set the road-related tags AFTER the rail-realted ones in order to overwrite O2V_LANES in case we have both -->
+			<SetTagValues>
+				<Tag k="O2V_HIGHWAY" v="(highway == 'construction') ? construction : highway"/>	<!-- read highway from construction tag if construction else from highway tag -->
+				<Tag k="O2V_ONEWAY" v="(oneway??) ? oneway : ((junction=='roundabout') ? 'yes' : O2V_ONEWAY)"/>	<!-- oneway is implied for roundabouts -->
+				<Tag k="O2V_LANES" v="(lanes??) ? lanes : O2V_LANES"/>
+				<Tag k="O2V_MAXSPEED" v="(maxspeed??) ? maxspeed : O2V_MAXSPEED"/>
+				<Tag k="O2V_LEVEL" v="(layer??) ? layer : ((level??) ? level : O2V_LEVEL)"/>
+				<Tag k="O2V_CYCLEWAY" v="(cycleway??) ? cycleway : 'empty'"/>
+				<Tag k="O2V_ONEWAY_BICYCLE" v="(#oneway:bicycle#??) ? #oneway:bicycle# : 'empty'"/>
+				<Tag k="O2V_FOOT" v="(foot??) ? foot : O2V_PED"/>			
+			</SetTagValues>
+			<SetTagValues>  <!-- handle different lane counts for one way or not -->
+				<ApplyIf>(O2V_ONEWAY == "yes")</ApplyIf>
+				<Tag k="O2V_LANES" v="(lanes??) ? lanes : O2V_LANES_ONEWAY"/>
+			</SetTagValues>
+			<SetLinkTypes Code="LinkTypeRules" LinkTypeTag="O2V_LINKTYPE"/>
+			<SetTagValues>
+				<ApplyIf>((route == "ferry") AND (car == 'no'))</ApplyIf>
+				<Tag k="O2V_CAR" v="'no'"/>
+			</SetTagValues>
+			<SetTagValues>
+				<ApplyIf>((route == "ferry") AND (foot == 'no'))</ApplyIf>
+				<Tag k="O2V_PED" v="'no'"/>
+			</SetTagValues>
+			<SetTagValues>
+				<ApplyIf>((route == "ferry") AND (bicycle == 'no'))</ApplyIf>
+				<Tag k="O2V_PE" v="'no'"/>
+			</SetTagValues>
+			<SetTagValues>
+				<ApplyIf>((route == "ferry") AND (hgv == 'no'))</ApplyIf>
+				<Tag k="O2V_HGV" v="'no'"/>
+				<Tag k="O2V_BUS" v="'no'"/>
+			</SetTagValues>
+			<SetTSysSet/>
+			<CheckAndMarkWayNodes Code="CheckAndMarkWayNodes" TargetBin="ProblemWaysBin" NodesTargetBin="NodeExportBin"/>
+		</Pipe>
+		<!-- Handle problematic ways such as loops etc. -->
+		<Pipe Code="ProblemWayPipe" InputBin="ProblemWaysBin" OutputBin="LinkTopologyBin" Wait4Pipes="LinkAttributesPipe">
+			<ProcessProblemWays NodesTargetBin="NodeExportBin"/>
+		</Pipe>
+		<!-- export the nodes required for road links-->
+		<Pipe Code="NodeExportPipe" InputBin="NodeExportBin" Wait4Pipes="ProblemWayPipe">
+			<GenerateVISUMNodes Code="GenerateVISUMNodes"/>
+			<!-- Visum_Node_No gets written to default tag VISUM_NODE_NO-->
+		</Pipe>
+		
+		<!-- split the road links at intersections etc. and export -->
+		<Pipe Code="SplitAndExportLinksPipe" InputBin="LinkTopologyBin" OutputBin="" Wait4Pipes="NodeExportPipe">
+			<SplitWaysAtMarkedNodes/>
+			<GenerateVISUMLinks Code="GenerateVISUMLinks"/>
+		</Pipe>
+		
+		<!-- convert OSM turn relations (which are usually positive) into VIsum turn restrictions (which are negative) -->
+		<Pipe Code="TurnRestrictionsPipe" InputBin="ALL_RELATIONS" OutputBin="RelationsBin" Wait4Pipes="SplitAndExportLinksPipe">
+			<ProcessTurnRestrictions Code="ProcessTurnRestrictions" TargetBin="O2V_TurnsBin">
+				<VehicleTypeMapping>	<!--here we map the vehicle types defined in OSM to our internal representation. -->
+					<Tag O2V_Category="O2V_CAR" OSM_Type="motorcar" OSM_Supertype="motor_vehicle"/>
+					<Tag O2V_Category="O2V_HGV" OSM_Type="hgv" OSM_Supertype="motor_vehicle"/>
+					<Tag O2V_Category="O2V_BUS" OSM_Type="psv" OSM_Supertype="motor_vehicle"/>
+				</VehicleTypeMapping>
+			</ProcessTurnRestrictions>
+		</Pipe>
+		<Pipe Code="TurnExportPipe" InputBin="O2V_TurnsBin" OutputBin="" Wait4Pipes="TurnRestrictionsPipe">	<!-- Export the turns. This needs a separate pipe, because ProcessTurnRestrictions writes the generated restriction objects to a separate bin -->
+			<GenerateVISUMTurns Code="GenerateVISUMTurns"/>
+		</Pipe>
+		<!-- process the rail and light rail network. We do topology processing, because we might have loops (light_rail,...) -->
+		<Pipe Code="RailLinkAttributesPipe" InputBin="RAIL_WAYS" OutputBin="RailLinkTopologyBin">
+			<EntityFilter Code="FilterRelevantRailLinks" Expression="(service !€ ['yard','spur','siding']) AND (disused != 'yes')">
+				<ApplyIf>service??</ApplyIf>
+			</EntityFilter>
+			<EntityFilter Code="ExcludeTramLinksOnRoads" Expression="(! (highway??)) || (highway=='service')" />	<!-- exclude ways which also have a highway-tag, unless they are service roads, which are not covered by normal road processing-->
+			<SetDefaultTagValues Code="LinkDefaults"/>
+			<SetTagValues>
+				<Tag k="O2V_RAILWAY" v="(railway == 'construction') ? construction : railway"/>	<!-- read railway from construction tag if construction else from railway tag -->
+				<Tag k="O2V_LANES" v="(tracks??) ? tracks : O2V_LANES"/>
+				<Tag k="O2V_LEVEL" v="(layer??) ? layer : ((level??) ? level : O2V_LEVEL)"/>
+			</SetTagValues>
+			
+			<SetOptionTag SelectedValue="'yes'" NonSelectedValue="'no'">
+				<OptionTag k="O2V_TRAM" v="(railway=='tram') || (tram=='yes')"/>
+				<OptionTag k="O2V_LR" v="(railway=='light_rail') || (light_rail=='yes')"/>
+				<OptionTag k="O2V_RAIL" v="(railway=='rail') || (rail=='yes')"/>
+				<OptionTag k="O2V_SUB" v="(railway=='subway') || (subway=='yes')"/>
+			</SetOptionTag>
+			<SetTSysSet />
+			<SetLinkTypes Code="LinkTypeRules" LinkTypeTag="O2V_LINKTYPE"/>
+			<CheckAndMarkWayNodes Code="CheckAndMarkRailWayNodes" TargetBin="RailProblemWaysBin" NodesTargetBin="PuTNodeExportBin"/>
+		</Pipe>
+		<Pipe Code="RailProblemWayPipe" InputBin="RailProblemWaysBin" OutputBin="RailLinkTopologyBin" Wait4Pipes="RailLinkAttributesPipe">
+			<ProcessProblemWays NodesTargetBin="PuTNodeExportBin"/>
+		</Pipe>
+		
+		<!-- Export notes required for rail-based public transport -->		
+		<Pipe Code="PuTNodeExportPipe" InputBin="PuTNodeExportBin" Wait4Pipes="RailProblemWayPipe">
+			<GenerateVISUMNodes Code="GenerateStopNodes"/>
+		</Pipe>
+		
+		<Pipe Code="RailSplitAndExportPipe" InputBin="RailLinkTopologyBin" OutputBin="" Wait4Pipes="RailProblemWayPipe, PuTNodeExportPipe">
+			<SplitWaysAtMarkedNodes/>
+			<GenerateVISUMLinks Code="WriteRailLinks"/>
+		</Pipe>
+	</Pipes>
+</WorkflowConfig>
