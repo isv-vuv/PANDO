@@ -1,0 +1,30 @@
+# Set default behavior to automatically normalize line endings
+* text=auto
+
+# Explicitly ensure Unix (LF) line endings for code, configs and documentation
+*.py text eol=lf
+*.json text eol=lf
+*.md text eol=lf
+*.txt text eol=lf
+*.xml text eol=lf
+*.svg text eol=lf
+*.qml text eol=lf
+*.css text eol=lf
+*.bat text eol=crlf
+*.cmd text eol=crlf
+*.ps1 text eol=crlf
+
+# Binary file types that must remain unmodified
+*.png binary
+*.jpg binary
+*.jpeg binary
+*.ico binary
+*.tif binary
+*.tiff binary
+*.gpkg binary
+*.pbf binary
+*.zip binary
+*.7z binary
+*.pdf binary
+*.docx binary
+*.db binary

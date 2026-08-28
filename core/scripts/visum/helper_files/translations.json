@@ -1,0 +1,215 @@
+{
+  "name_tool_short": {
+    "en": "DLNT",
+    "de": "LLT"
+  },
+  "title_help": {
+    "en": "Documentation",
+    "de": "Dokumentation"
+  },
+  "file_selection": {
+    "en": "Choose a VISUM model",
+    "de": "Wähle ein Visumnetz"
+  },
+  "ver_files": {
+    "en": "VISUM version files",
+    "de": "Versiondateien"
+  },
+  "app_title": {
+    "en": "Calculation of direct-line networks based on connectivity function levels",
+    "de": "Ermittlung von Luftliniennetzen basierend auf Verbindungsfunktionsstufen"
+  },
+  "language_choice_title": {
+    "en": "Language Choice",
+    "de": "Sprachauswahl"
+  },
+  "language_choice": {
+    "en": "Select your preferred language",
+    "de": "Wähle die gewünschte Sprache"
+  },
+  "menu_import_data": {
+    "en": "Import Data\n(initiates a calculator instance)",
+    "de": "Daten einlesen\n(initiiert eine Berechnungsinstanz)"
+  },
+  "menu_calculate": {
+    "en": "Perform Calculation",
+    "de": "Berechnung durchführen"
+  },
+  "menu_reset_calculations": {
+    "en": "Reset Calculation",
+    "de": "Berechnungen zurücksetzen"
+  },
+  "menu_set_defaults": {
+    "en": "Set Default Values",
+    "de": "Defaultwerte übernehmen"
+  },
+  "menu_info": {
+    "en": "Info",
+    "de": "Info"
+  },
+  "options_tab": {
+    "en": "Options",
+    "de": "Auswahl"
+  },
+  "parameter_input_section": {
+    "en": "Input Parameter",
+    "de": "Parameter Eingaben"
+  },
+  "menu_default_values": {
+    "en": "Default Values",
+    "de": "Defaultwerte"
+  },
+  "toolbar_filter_inserted_links": {
+    "en": "Filtering of\ninserted links",
+    "de": "Filtern der\neingefügten Strecken"
+  },
+  "toolbar_delete_inserted_links": {
+    "en": "Deletion of\ninserted links",
+    "de": "Löschen der\neingefügten Strecken"
+  },
+  "status_set_defaults": {
+    "en": "Set Default Values",
+    "de": "Default-Werte hergestellt"
+  },
+  "status_attribute_applied_reimport_reset": {
+    "en": "Selected parameters are imported, zones are imported, calculations are reset",
+    "de": "Parameterauswahl wurde übernommen, Bezirke sind neu importiert, Rechnungen wurden zurückgesetzt"
+  },
+  "status_calculation_performed": {
+    "en": "Calculation is executed",
+    "de": "Berechnung durchgeführt"
+  },
+  "status_data_imported": {
+    "en": "Data imported",
+    "de": "Daten importiert"
+  },
+  "status_results_deleted_may_reimport": {
+    "en": "Results deleted, re-import Results to visum if necessary",
+    "de": "Ergebnisse gelöscht, ggf Ergebnisse neu nach Visum importieren"
+  },
+  "status_net_exported_imported": {
+    "en": "Network file exported and imported into Visum",
+    "de": "Net-Datei exportiert und in Visum importiert"
+  },
+  "status_matrix_loaded_into_visum": {
+    "en": "Matrix Loaded to Visum",
+    "de": "Matrix in Visum geladen"
+  },
+  "status_combined_results_imported": {
+    "en": "The combined Results were imported into Visum",
+    "de": "die kombinierten Ergebnisse wurden in Visum importiert"
+  },
+  "setting_zone_attribute_centrality": {
+    "en": "traffic cells attribute\nfor centrality",
+    "de": "Attribut Verkehrszellen\nfür Zentralität"
+  },
+  "distance_calculation_setting": {
+    "en": "Distance calculation",
+    "de": "Distanzberechnung"
+  },
+  "setting_neighbourhood_degree_cfl": {
+    "en": "Neighbourhood level per CFL",
+    "de": "Nachbarschaftsgrad je VFS"
+  },
+  "settings_number_of_suppliers_cfl": {
+    "en": "Number of Suppliers per CFL",
+    "de": "Anzahl Versorger je VFS"
+  },
+  "setting_zone_attribute_origin": {
+    "en": "traffic cells attribute\n'is origin'",
+    "de": "Attribut Verkehrszellen\n\"ist Quelle\""
+  },
+  "centrality": {
+    "en": "Centrality",
+    "de": "Zentralität"
+  },
+  "setting_zone_attribute_destination": {
+    "en": "traffic cell attribute\n'is destination'",
+    "de": "Attribut Verkehrszellen\n\"ist Ziel\""
+  },
+  "setting_cfl": {
+    "en": "Connectivity Function Level",
+    "de": "Verbindungsfunktionsstufe"
+  },
+  "setting_attribute_value_cfl": {
+    "en": "Attribute value CFL",
+    "de": "Attributwert VFS"
+  },
+  "setting_exchange_function": {
+    "en": "Exchange function\nn-Nearest Neighbour",
+    "de": "Austauschfunktion\nn-naechste Nachbarn"
+  },
+  "setting_supply_function": {
+    "en": "Supply function:\nn supply centers",
+    "de": "Versorgungsfunktion:\nn Versorgungszentren"
+  },
+
+  "setting_create_in_visum": {
+    "en": "Export to Visum as:",
+    "de": "Export nach Visum als:"
+  },
+  "setting_import_to_visum": {
+    "en": "Export to Visum all CFL:\nlinks and matrices",
+    "de": "Export nach Visum alle VFS:\nStrecken und Matrizen"
+  },
+  "label_distance_calculation_function": {
+    "en": "function for distance calculation",
+    "de": "Funktion Distanzberechnung"
+  },
+  "tab_main": {
+    "en": "Anwendung",
+    "de": "Application"
+  },
+  "tab_log": {
+    "en": "Log Messages",
+    "de": "Log-Meldungen"
+  },
+  "dialog_language_select_message": {
+    "en": "Please select your preferred language",
+    "de": "Bitte wählen Sie Ihre bevorzugte Sprache"
+  },
+  "label_attr_cfl": {
+    "en": "Attribute CFL",
+    "de": "Attribut VFS"
+  },
+  "dialog_language_select_title": {
+    "en": "Select Language",
+    "de": "Sprache auswählen"
+  },
+  "error_no_calculator_instance": {
+    "en": "There is no calculator instance defined. Use Import Data first.",
+    "de": "Es existiert keine Berechnungsinstanz. Verwende Zuerst."
+  },
+  "warn_net_file_import_error": {
+    "en": "Error importing the network file.",
+    "de": "Fehler beim Import der Netzdatei."
+  },
+  "file_exported_to_visum": {
+    "en": " Export completed for chosen CFL",
+    "de": " Export abgeschlossen für gewählte VFS."
+  },
+  "label_attr_zones_centrality": {
+    "en": "traffic cells attribute centrality",
+    "de": "Bezirke: Attr. Zentralität"
+  },
+  "cfl": {
+    "en": "CFL",
+    "de": "VFS"
+  },
+    "application": {
+    "en": "application",
+    "de": "Anwendung"
+  },
+    "foundations": {
+    "en": "Fundamentals for calculating direct-line networks based on connectivity function levels",
+    "de": "Grundlagen zur Ermittlung von Luftliniennetzen basierend auf Verbindungsfunktionsstufen"
+  },
+    "documentation_code": {
+    "en": "code documentation",
+    "de": "Dokumentation Code"
+  },
+  "connections": {
+    "en": "connections",
+    "de": "Verbindungen"
+  }
+}

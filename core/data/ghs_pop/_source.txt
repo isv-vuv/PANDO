@@ -1,0 +1,8 @@
+GHS-POP (Global Human Settlement Layer - Population Grid)
+© European Union / European Commission, Joint Research Centre (JRC) Creative Commons Attribution 4.0 International (CC BY 4.0)
+https://human-settlement.emergency.copernicus.eu/
+Terms: Open data licensed under CC BY 4.0. Free to copy, redistribute, adapt, and build upon for any purpose (including commercial). Appropriate credit/attribution to the European Union (JRC) and indication of whether modifications were made are required.
+
+Hosting & Download Server:
+Server: Universität Stuttgart (ISV), https://map.isv.uni-stuttgart.de/pando/
+Terms: Global GHS-POP GeoTIFF raster data are provided via Universität Stuttgart servers for automated in-app download.

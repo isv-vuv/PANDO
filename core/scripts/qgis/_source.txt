@@ -1,0 +1,8 @@
+Methodology intra-municipal centralities:
+Wohnsdorf, Yannik (2026): "Zentrale Orte und innergemeindliche Zentralitäten in Deutschland für die Anwendung der RIN", DaRUS, V1, https://doi.org/10.18419/DARUS-5596
+
+Custom Application & Extension (Model 5):
+The methodology for intra-municipal centralities is based on the work by Wohnsdorf. Building upon this foundation, the QGIS models (Model 5 / Model5_CentralityMapper, Model5_NationwideIntensity) were adapted and extended to incorporate the centrality analysis (local maxima analysis of OSM POIs to evaluate distance and intensity thresholds for centralities of levels 3 and 4) into the workflow.
+
+Icons & Visual Assets:
+Map-Toolbar icons are based on the QGIS Default Icon Theme (GNU GPLv2+), © QGIS Development Team.

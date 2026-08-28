@@ -1,0 +1,9 @@
+{
+  "minimum_population_level_0": 500000,
+  "minimum_population_level_1": 200000,
+  "minimum_population_level_2": 100000,
+  "population_tolerance": 10,
+  "distance_tolerance": 10,
+  "dual_centres_search_radius_km": 5,
+  "dual_centres_population_tolerance": 20
+}

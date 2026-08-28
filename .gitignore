@@ -1,0 +1,27 @@
+*.gpkg
+plan.md
+plan-modelle-final.md
+*.osm.pbf
+*.tif
+*.tif.aux.xml
+uv.lock
+pyproject.toml
+.python-version
+projects/*
+*.pyc
+.idea
+*.shp
+*.shx
+*.dbf
+_ToDo.txt
+_ToDo.txt
+app_crash.log
+core/scripts/visum/helper_files/~$sumLegende_Format.docx
+core/scripts/visum/helper_files/VisumLegende_Format.docx
+Model Descriptions.docx
+/core/app/logo_tmp
+/_tmp
+symbology-style.db
+*.db
+Git_Push.txt
+.deps_ok

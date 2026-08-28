@@ -1,0 +1,102 @@
+How-To:
+Copy Folder to Configuration Directory: AppData\Roaming\PTV Vision\PTV Visum 2025\Importer\PANDO_Importer\
+Select Importer in Visum when importing OSM Data
+
+Importer Name: PANDO_Importer
+Original Base Importer: Detailed Urban Road and Railway Network
+
+=====================================================================
+PANDO_Importer Overview & Ergänzte Attribute
+=====================================================================
+Der PANDO_Importer basiert auf dem PTV-Referenz-Importer 'Detailed Urban Road and Railway Network' und wurde um zusätzliche benutzerdefinierte Attribute (UDAs), spezifische Widerstandsfaktoren sowie Baustellen- und Infrastruktur-Mappings erweitert:
+
+1. Ergänzte Benutzerdefinierte Attribute (UDAs):
+   - Speicherung von Herkunft und Rohdaten aus der OSM-Aufbereitung:
+     - OSM_Lanes_Raw: Rohwert der OSM-Spurenanzahl
+     - OSM_MaxSpeed_Source: Herkunftsnachweis der Höchstgeschwindigkeit
+     - OSM_Lanes_Source: Herkunftsnachweis der Spurenanzahl
+     - OSM_Maxspeed_Original: Ursprünglicher OSM-Maxspeed-Wert
+     - OSM_Lanes_Original: Ursprünglicher OSM-Spuren-Wert
+     - OSM_PedestrianInfrastructure: Indikator für Fußgängerinfrastruktur
+     - OSM_BicycleInfrastructure: Indikator für Fahrradinfrastruktur
+
+2. Ergänzte Netz- & Widerstandsparameter:
+   - Differenzierte Widerstandsfaktoren (LinkTypeImpedanceFactor_Car, LinkTypeImpedanceFactor_Bike, LinkTypeImpedanceFactor_Pedestrian) je nach Netzebene.
+   - Baustellen-Attribute (OSM_Construction) für Straßen- und Schieneninfrastruktur.
+   - Anschlussstellen-Attribute für Autobahnkreuze / Ausfahrten (OSM_HighwayJunction).
+
+=====================================================================
+Historische Anpassungen von YR (21.05.2025)
+=====================================================================
+- Translated into English:
+	- New gpa file with translations
+	- TSYS, Modes, Demandsegments
+	- Translation for Link Types
+- Added more UDAs for better understanding 
+- Ferry
+	- add ferry links gpa
+	- increased speed (20 for all modes)
+	- increased capacity (100 -> 1.000)
+	- ImpFactor = 1.1
+- ImpFactors adjusted: Higher levels of road network with lower factors. Lower levels with higher factors.
+
+=====================================================================
+Historische Anpassungen von YW (30.01.2025)
+=====================================================================
+net-file:
+The net-file is the base file that creates necessary TSys, LinkTypes etc.
+- added a UDA for LinkTypes that contains a highway tag description from the german OSM-wiki
+- renamed TSys, Mode and DSeg to German names
+- added links with tag highway=road,service,track
+- separation of walking infrastructure for better understanding of original data
+- removed all NA linktypes
+- added linktype 99 as default linktype (blocked for all Tsys; v0=0; cap=0; used if highway/construction tag-value is unknown to importer)
+- speeds according to cfg-file
+
+-------------------------------------
+cfg-file:
+Interprets OSM-Attributes and assigns values for Visum for Nodes, Linktypes, Links, etc
+[TSysMappings]
+- rename of TSys to German names
+
+[LinkDefaults]
+- O2V speed changed
+	- assumption for roads outside of urban areas (außerorts) cross-checked with taginfo combinations highwayXmaxspeed
+	- assumption for _link-roads (ramps etc.) 20km/h slower than real road maximum being 70 km/h because of small radiuses of ramps
+- 'trunk' and 'trunk_link' are not set to oneway as default (O2V_ONEWAY) (wiki only talks about motorways *in Germany* that might imply oneway=yes for all links)
+- added links with tag highway=road,service,track
+- added defaults for links tagged as construction (O2V atts copied from highway=* and railway=*)
+
+[LinkTypeRules]
+- read construction-links the same way as highway-links and railway-links by changing from these types to O2V_values in xml
+
+[NodeAttributeMappings]
+- added the attributes for motorway junctions
+	- OSM_HighwayJunction = Bool if present
+	- Name = name
+	- Code = ref
+	
+[LinkAttributeMappings]
+- added LinkAtts
+	- OSM_REF = ref
+	- OSM_CONSTRUCTION = 1 if highway='construction'
+	- OSM_ONEWAY = oneway
+	- OSM_ROUNDABOUT = 1 if junction='roundabout'
+	(ab hier momentan inaktiv/auskommentiert mit ; am Beginn der Zeile)
+	- OSM_SURFACE_org = surface
+	- OSM_SURFACE = Aufbereitung und Übersetzung des Attributs
+	- OSM_FußInfra_org = Attribute mit Hinweis auf Fußinfrastruktur in highway oder sidewalk tags etc
+	- OSM_FußInfra = Boolean-Aufbereitung der FußInfraTags
+	- OSM_RadInfra_org = Attribute mit Hinweis auf Radinfrastruktur in highway oder sidewalk tags etc
+	- OSM_RadInfra = Boolean-Aufbereitung der RadInfraTags
+	
+-------------------------------------
+xml-file:
+Processing of the file (Pipes etc), when to execute what (takes values from net and mappings from cfg)
+
+<ParserSettings>
+- add new highway-tags to the WayFilter
+- in 2025 the parts with PuT lines are not contained anymore only the network (infrastructure) from PuT is considered
+- deactivated POI processes
+- deactivated sharing stations
+- added O2V_HIGHWAYS (LinkAttributesPipe) and O2V_RAILWAYS(RailLinkAttributesPipe) to account for construction values

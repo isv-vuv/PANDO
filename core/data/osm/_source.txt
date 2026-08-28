@@ -1,0 +1,14 @@
+OpenStreetMap Data & Contributors
+© OpenStreetMap contributors Open Data Commons Open Database License (ODbL 1.0)
+https://www.openstreetmap.org/copyright
+Terms: Open data licensed under the Open Database License (ODbL). Free to copy, distribute, transmit, and adapt. Any adapted database must be distributed under the same ODbL license (Share-Alike), and attribution ("© OpenStreetMap contributors") is required.
+
+Geocoding API (Nominatim):
+Service provided by the OpenStreetMap Foundation (https://nominatim.org)
+Usage Policy: https://operations.osmfoundation.org/policies/nominatim/
+Terms: Used for city search and reverse geocoding. Requests must include a custom User-Agent header, adhere to fair-use limits, and respect server capacity.
+
+Data Extraction Service (Geofabrik):
+Extracts provided by Geofabrik GmbH (https://www.geofabrik.de)
+Service & Server Terms: https://download.geofabrik.de/
+Terms: Data extracts are provided "as is" without warranty. Automated downloads must comply with Geofabrik's fair-use server guidelines (reasonable download frequency, proper User-Agent identification, no excessive automated polling).
