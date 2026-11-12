@@ -51,10 +51,11 @@ def create_high_quality_osm_layer(name: str = "OpenStreetMap") -> Optional[QgsRa
     if layer.isValid():
         try:
             from qgis.core import QgsBilinearRasterResampler
-            resampler = QgsBilinearRasterResampler()
             if hasattr(layer, "resampleFilter") and layer.resampleFilter():
-                layer.resampleFilter().setZoomedInResampler(resampler)
-                layer.resampleFilter().setZoomedOutResampler(resampler)
+                # Each setter takes ownership; sharing an instance double-frees it
+                # when QGIS destroys the layer (including on application exit).
+                layer.resampleFilter().setZoomedInResampler(QgsBilinearRasterResampler())
+                layer.resampleFilter().setZoomedOutResampler(QgsBilinearRasterResampler())
         except Exception:
             pass
     return layer
@@ -71,10 +72,10 @@ def create_satellite_layer(name: str = "Satellite") -> Optional[QgsRasterLayer]:
     if layer.isValid():
         try:
             from qgis.core import QgsBilinearRasterResampler
-            resampler = QgsBilinearRasterResampler()
             if hasattr(layer, "resampleFilter") and layer.resampleFilter():
-                layer.resampleFilter().setZoomedInResampler(resampler)
-                layer.resampleFilter().setZoomedOutResampler(resampler)
+                # The filter owns the two resamplers independently.
+                layer.resampleFilter().setZoomedInResampler(QgsBilinearRasterResampler())
+                layer.resampleFilter().setZoomedOutResampler(QgsBilinearRasterResampler())
         except Exception:
             pass
     return layer

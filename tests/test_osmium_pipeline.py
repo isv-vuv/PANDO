@@ -8,6 +8,7 @@ from unittest.mock import patch
 
 from core.app.app_core.osmium import (
     OsmiumCancelledError,
+    OsmiumError,
     OsmiumRuntime,
     normalize_architecture,
     normalize_platform,
@@ -205,6 +206,69 @@ class OsmiumRunnerTests(unittest.TestCase):
             (Path(captured["kwargs"]["cwd"]) / polygon_argument).resolve(),
             polygon.resolve(),
         )
+
+    def test_cross_drive_extract_keeps_output_available_to_next_step(self):
+        with tempfile.TemporaryDirectory() as temp_dir:
+            working_directory = Path(temp_dir) / "osm work"
+            working_directory.mkdir()
+            polygon = Path(temp_dir) / "bounds" / "bound.poly"
+            polygon.parent.mkdir()
+            polygon.touch()
+            (working_directory / "input.osm.pbf").touch()
+
+            for output_option in (["-o", "out.pbf"], ["--output", "out.pbf"], ["--output=out.pbf"]):
+                with self.subTest(output_option=output_option):
+                    output = working_directory / "out.pbf"
+
+                    def fake_popen(command, **kwargs):
+                        cwd = Path(kwargs["cwd"])
+                        if command[1] == "extract":
+                            self.assertEqual(cwd, polygon.parent)
+                            self.assertTrue((cwd / command[4]).is_file())
+                            if "-o" in command:
+                                destination = command[command.index("-o") + 1]
+                            elif "--output" in command:
+                                destination = command[command.index("--output") + 1]
+                            else:
+                                destination = next(arg.split("=", 1)[1] for arg in command if arg.startswith("--output="))
+                            self.assertEqual(Path(destination), output)
+                            (cwd / destination).touch()
+                        else:
+                            self.assertTrue((cwd / command[2]).is_file())
+                        return FakeProcess()
+
+                    # Force the cross-drive fallback on every test platform.
+                    with patch("core.app.app_core.osmium.os.path.relpath", side_effect=ValueError("different drives")):
+                        run_osmium(
+                            self._runtime("windows"),
+                            ["extract", "-p", polygon, "input.osm.pbf", *output_option],
+                            cwd=working_directory,
+                            popen=fake_popen,
+                        )
+                    run_osmium(
+                        self._runtime("windows"),
+                        ["tags-filter", "out.pbf", "w/highway"],
+                        cwd=working_directory,
+                        popen=fake_popen,
+                    )
+                    output.unlink()
+
+    def test_failed_command_does_not_log_success(self):
+        class FailedProcess(FakeProcess):
+            def communicate(self, timeout=None):
+                self.returncode = 1
+                return ("", "Input file not found")
+
+        logs = []
+        with self.assertRaises(OsmiumError):
+            run_osmium(
+                self._runtime("linux"),
+                ["tags-filter", "missing.pbf"],
+                log=logs.append,
+                popen=lambda *_args, **_kwargs: FailedProcess(),
+            )
+        self.assertIn("Input file not found", logs)
+        self.assertFalse(any("erfolgreich abgeschlossen" in message for message in logs))
 
 
 class OsmPipelineTests(unittest.TestCase):
@@ -409,6 +473,7 @@ class OsmPipelineTests(unittest.TestCase):
         self.assertIn("bound.poly", cmd)
         self.assertNotIn("S:/NetworkDrive/project/bound.poly", cmd)
         self.assertEqual(Path(kwargs["cwd"]), Path("S:/NetworkDrive/project"))
+        self.assertEqual(cmd[cmd.index("-o") + 1], str(Path("C:/different_drive/work/out.pbf")))
 
 
 if __name__ == "__main__":

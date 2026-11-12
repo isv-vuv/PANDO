@@ -8,8 +8,10 @@ from datetime import datetime
 
 warnings.filterwarnings("ignore", category=ResourceWarning)
 
-from core.app.app_qt.main_window import UrbanActQtMainWindow
+# Load QGIS DLLs before application modules import hashlib/SSL or GIS wheels.
+# On Windows, loading their bundled DLLs first can break qgis._core.
 from core.app.app_qt.qt_base import QtBootstrapError, run_qt_application
+from core.app.app_qt.main_window import UrbanActQtMainWindow
 
 
 def _global_excepthook(exc_type, exc_value, exc_traceback):

@@ -1,3 +1,9 @@
+if __package__:
+    from .visum_logging import measured, timed_step, log_network_counts
+    from .visum_com import create_visum, get_visum_appdata_dir
+else:
+    from visum_logging import measured, timed_step, log_network_counts
+    from visum_com import create_visum, get_visum_appdata_dir
 import os
 import re
 import sys
@@ -93,7 +99,7 @@ def get_project_paths() -> tuple[Path, Path, Path]:
 def get_osm_importer_dir(importer_folder_name: str = "PANDO_Importer") -> Path:
     """Ermittelt den Pfad zum Importer-Ordner im AppData-Verzeichnis des aktuellen Users."""
     appdata = Path(os.environ.get("APPDATA", ""))
-    target_dir = appdata / "PTV Vision" / "PTV Visum 2025" / "Importer" / "PANDO_Importer"
+    target_dir = get_visum_appdata_dir() / "Importer" / importer_folder_name
 
     if target_dir.exists():
         return target_dir
@@ -125,8 +131,7 @@ def get_visum_projection_wkt(gdf: gpd.GeoDataFrame) -> str:
 
     appdata = os.environ.get("APPDATA")
     if appdata and zone_str:
-        wgs84_utm_dir = Path(
-            appdata) / "PTV Vision" / "PTV Visum 2025" / "Projections" / "Projected Coordinate Systems" / "Utm" / "Wgs 1984"
+        wgs84_utm_dir = get_visum_appdata_dir() / "Projections" / "Projected Coordinate Systems" / "Utm" / "Wgs 1984"
 
         if not wgs84_utm_dir.exists():
             ptv_dir = Path(appdata) / "PTV Vision"
@@ -325,7 +330,8 @@ $USERATTDEF:OBJID;ATTID;CODE;NAME;VALUETYPE;MINVALUE;MAXVALUE;DEFAULTVALUE;DEFAU
 
 def set_zone_based_zoom(visum, margin_factor: float = 0.05):
     """Setzt den Bildausschnitt (Zoom) in Visum basierend auf den Quantilen der Bezirkskoordinaten."""
-    zone_coords = visum.Net.Zones.GetMultipleAttributes(["XCOORD", "YCOORD"])
+    with timed_step('visum.Net.Zones.GetMultipleAttributes'):
+        zone_coords = visum.Net.Zones.GetMultipleAttributes(["XCOORD", "YCOORD"])
     if not zone_coords:
         logging.warning("Keine Bezirke in Visum für Zoom-Einstellung gefunden.")
         return
@@ -352,6 +358,7 @@ def set_zone_based_zoom(visum, margin_factor: float = 0.05):
     visum.Graphic.SetWindow(x_min_padded, y_min_padded, x_max_padded, y_max_padded)
 
 
+@measured
 def run_import_links_and_zones(
         zones_gpkg: Path,
         mainzones_gpkg: Path,
@@ -375,7 +382,7 @@ def run_import_links_and_zones(
 
     if visum is None:
         logging.info("Starte frische Visum COM-Instanz...")
-        visum = com.Dispatch("Visum.Visum.250")
+        visum = create_visum()
         visum.Graphic.ShowMaximized()
 
     try:
@@ -386,6 +393,8 @@ def run_import_links_and_zones(
     except Exception:
         pass
 
+    logging.info("[Diagnose] OSM-Eingangsdatei: %s | Größe %.1f MiB", osm_file.resolve(), osm_file.stat().st_size / (1024 ** 2))
+    logging.info("[Diagnose] Bezirke: %d; Hauptbezirke: %d", len(df_zones), len(df_mainzones) if df_mainzones is not None else 0)
     visum.ClearNet()
 
     # Define WKT string for WGS84
@@ -401,24 +410,31 @@ def run_import_links_and_zones(
         str(Path(tempfile.gettempdir()) / f"{osm_file.stem}_converted.net"),
         str(importer_dir / f"{importer_name}.gpa") if (importer_dir / f"{importer_name}.gpa").exists() else ""
     ]
+    logging.info("[Diagnose] OSM-Importer: %s | Parameterdateien: %s", importer_name, param_file_names)
     logging.info("Importiere OSM-Streckennetz in Visum via PTV OSM-Importer (Vorgang dauert ca. 5–15 Minuten, bitte warten)...")
-    visum.IO.ImportOpenStreetMap([str(osm_file)], param_file_names, False, 0)
+    with timed_step('visum.IO.ImportOpenStreetMap'):
+        visum.IO.ImportOpenStreetMap([str(osm_file)], param_file_names, False, 0)
+    log_network_counts(visum, "nach OSM-Import")
     logging.info("OSM-Streckennetz erfolgreich in Visum importiert.")
 
     # Set WGS84 as explicit source coordinate system post-import
-    visum.Net.SetProjection(wgs84_geographic_wkt, False)
+    with timed_step('visum.Net.SetProjection'):
+        visum.Net.SetProjection(wgs84_geographic_wkt, False)
 
     step1_ver = ver_dir / "01_Links_Imported.ver"
     logging.info(f"Speichere Schritt 1 unter: {step1_ver}")
-    visum.SaveVersion(str(step1_ver))
+    with timed_step('visum.SaveVersion'):
+        visum.SaveVersion(str(step1_ver))
 
     # Schritt 2: Umschalten auf UTM & OSM-Strecken mathematisch transformieren
     logging.info("Schritt 2: Schalte auf UTM-Zielprojektion um & transformiere Streckenkoordinaten")
-    visum.Net.SetProjection(wkt_text, True)  # True = Rechnet WGS84-Grad-Koordinaten der Strecken in UTM-Meter um
+    with timed_step('visum.Net.SetProjection'):
+        visum.Net.SetProjection(wkt_text, True)  # True = Rechnet WGS84-Grad-Koordinaten der Strecken in UTM-Meter um
 
     # Erst jetzt die Bezirke additiv ins UTM-Netz laden
     logging.info("Lade Bezirke additiv ins UTM-Netz...")
-    visum.IO.LoadNet(str(zones_net_path), ReadAdditive=True)
+    with timed_step('visum.IO.LoadNet'):
+        visum.IO.LoadNet(str(zones_net_path), ReadAdditive=True)
 
     # Polygon-Flächengeometrien nativ in Visum-Bezirke schreiben (mit Mapping auf Visums interne VISUM_ID)
     logging.info("Weise Polygon-Geometrien ('WKTSURFACE') direkt den Visum-Bezirken zu...")
@@ -439,7 +455,8 @@ def run_import_links_and_zones(
             zone_wkts = valid_zone_wkts[["VISUM_ID", "WKTSURFACE"]].dropna().values.tolist()
 
             if zone_wkts:
-                visum.Net.Zones.SetMultiAttValues("WKTSURFACE", zone_wkts)
+                with timed_step('visum.Net.Zones.SetMultiAttValues'):
+                    visum.Net.Zones.SetMultiAttValues("WKTSURFACE", zone_wkts)
                 logging.info(f"{len(zone_wkts)} Polygon-Flächengeometrien erfolgreich den Bezirken zugewiesen.")
         except Exception as e:
             logging.warning(f"Konnte WKTSURFACE für Bezirke nicht zuweisen: {e}")
@@ -461,7 +478,8 @@ def run_import_links_and_zones(
             mainzone_wkts = valid_mainzone_wkts[["VISUM_ID", "WKTSURFACE"]].dropna().values.tolist()
 
             if mainzone_wkts:
-                visum.Net.MainZones.SetMultiAttValues("WKTSURFACE", mainzone_wkts)
+                with timed_step('visum.Net.MainZones.SetMultiAttValues'):
+                    visum.Net.MainZones.SetMultiAttValues("WKTSURFACE", mainzone_wkts)
                 logging.info(f"{len(mainzone_wkts)} Polygon-Flächengeometrien erfolgreich den Hauptbezirken zugewiesen.")
         except Exception as e:
             logging.warning(f"Konnte WKTSURFACE für Hauptbezirke nicht zuweisen: {e}")
@@ -482,7 +500,8 @@ def run_import_links_and_zones(
 
     step2_ver = ver_dir / "02_Zones_Imported.ver"
     logging.info(f"Speichere Schritt 2 unter: {step2_ver}")
-    visum.SaveVersion(str(step2_ver))
+    with timed_step('visum.SaveVersion'):
+        visum.SaveVersion(str(step2_ver))
 
     return visum
 

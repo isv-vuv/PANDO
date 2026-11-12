@@ -28,6 +28,7 @@ from core.app.app_core.osm_pipeline import (
     OsmPipeline,
 )
 from core.app.app_core.osmium import resolve_osmium
+from core.app.app_core.pipeline_metrics import benchmark_run, benchmark_step
 from core.app.app_core.processing import register_processing_scripts
 from core.app.app_core.project import (
     canonical_project_paths,
@@ -742,6 +743,7 @@ class UrbanActPipeline:
             return None
         return {key: str(outputs[key]) for key in required}
 
+    @benchmark_run
     def run_phase_a_only(
         self,
         *,
@@ -943,6 +945,7 @@ class UrbanActPipeline:
         except (ImportError, OSError, ValueError):
             return False
 
+    @benchmark_run
     def run(
         self,
         model2_parameters: Optional[Mapping[str, object]] = None,
@@ -1102,6 +1105,7 @@ class UrbanActPipeline:
             callbacks.output(key, str(value))
 
         root = Path(tool_root())
+        benchmark_step("model_input_preparation")
         effective_pop = custom_census or str(root / "core/data/ghs_pop/ghs_pop_global.tif")
         if no_local_reference:
             pop_local = create_dummy_population(
@@ -1142,6 +1146,7 @@ class UrbanActPipeline:
 
         # Pre-clip global GADM ADM layers to project spatial bounds before Model 1
         poly_file_for_adm = phase_a.get("bound_pa")
+        benchmark_step("gadm_clipping")
         clipped_adms = prepare_clipped_gadm_layers(
             self.project_path,
             poly_file_for_adm,
@@ -1240,6 +1245,7 @@ class UrbanActPipeline:
                     callbacks.output(output.context_key, str(value))
 
         def model_finished(description, _raw_outputs, model_context) -> None:
+            benchmark_step("model_bookkeeping")
             outputs = {
                 output.context_key: model_context.get(output.context_key)
                 for output in description.outputs
@@ -1390,6 +1396,7 @@ class UrbanActPipeline:
                 update_manifest_phase(manifest, str(current_model["key"]), "failed", error=f"{exc}\n{error_trace}")
                 save_pipeline_manifest(self.project_path, manifest)
             raise
+        callbacks.phase_started("Exporte und Projektaufbereitung", 9, 9)
         post_process_exports_and_styles(self.project_path, log=log)
         save_pipeline_manifest(self.project_path, manifest)
         callbacks.phase_progress(100)
@@ -1745,6 +1752,11 @@ def post_process_exports_and_styles(project_path: str, *, log: Optional[Callable
 
     # 3. Export Shapefiles for Zones & Mainzones in local CRS
     visum_zones_dir = os.path.join(project_path, "processed", "visum", "shapefile", "Zones")
+    for level in range(4):
+        source = os.path.join(model1_dir, f"adm{level}.gpkg")
+        if os.path.isfile(source):
+            export_vector_file_to_shapefile(
+                source, os.path.join(visum_zones_dir, f"adm{level}.shp"), target_crs=local_crs)
     for zone_name in ("zones", "mainzones"):
         gpkg_path = os.path.join(model6_dir, f"{zone_name}.gpkg")
         shp_path = os.path.join(visum_zones_dir, f"{zone_name}.shp")

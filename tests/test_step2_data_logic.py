@@ -1,8 +1,11 @@
 from datetime import date
 from types import SimpleNamespace
+import os
+import tempfile
 import unittest
+from unittest.mock import patch
 
-from core.app.app_core.project import PbfVerification
+from core.app.app_core.project import PbfVerification, verify_pbf_files, pending_pbf_download_jobs
 from core.app.app_qt.steps.step2_data import (
     PbfSearchWorker,
     Step2DataWidget,
@@ -139,7 +142,7 @@ class Step2DataLogicTests(unittest.TestCase):
         )
 
         self.assertEqual(
-            availability_for_job({"filename": "bayern-latest.osm.pbf"}, verification),
+            availability_for_job({"filename": "bayern-latest.osm.pbf"}, verification, now=date(2026, 7, 30)),
             "offline",
         )
         self.assertEqual(
@@ -168,6 +171,24 @@ class Step2DataLogicTests(unittest.TestCase):
             ),
             "stale",
         )
+
+    def test_redownload_selects_newest_complete_file_and_clears_stale_label(self):
+        job = {"filename": "bayern-latest.osm.pbf", "size_bytes": 2048}
+        old_name = "2026-06-01_bayern.osm.pbf"
+        new_name = "2026-07-30_bayern.osm.pbf"
+        incomplete_name = "2026-07-31_bayern.osm.pbf"
+        now = date(2026, 7, 31)
+        with tempfile.TemporaryDirectory() as data_path:
+            for name, size in [(old_name, 2048), (new_name, 2048), (incomplete_name, 1)]:
+                with open(os.path.join(data_path, name), "wb") as stream:
+                    stream.write(b"x" * size)
+            for names in ([new_name, old_name, incomplete_name], [incomplete_name, old_name, new_name]):
+                with self.subTest(names=names), patch("core.app.app_core.project.os.listdir", return_value=names):
+                    verification = verify_pbf_files(data_path, [job], data_path=data_path)
+                self.assertEqual(verification.found_names, [new_name])
+                self.assertEqual(verification.user_pbf_path, os.path.join(data_path, new_name))
+                self.assertEqual(availability_for_job(job, verification, now=now), "offline")
+                self.assertEqual(pending_pbf_download_jobs([job], verification, now=now), [])
 
     def test_file_up_to_thirty_days_old_remains_current(self):
         verification = PbfVerification(

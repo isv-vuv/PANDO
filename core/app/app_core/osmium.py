@@ -232,9 +232,17 @@ def run_osmium(
                     for a_idx, arg in enumerate(normalized_arguments):
                         if a_idx == index + 1:
                             updated_args.append(polygon_path.name)
+                        elif arg.startswith("--output="):
+                            output_path = Path(arg.split("=", 1)[1])
+                            if not output_path.is_absolute():
+                                output_path = working_directory / output_path
+                            updated_args.append(f"--output={output_path}")
                         elif arg != "-p" and not arg.startswith("-"):
                             p = Path(arg)
-                            if not p.is_absolute() and (working_directory / p).exists():
+                            # Output files usually do not exist yet. Preserve
+                            # their original destination when changing cwd too.
+                            is_output = a_idx > 0 and normalized_arguments[a_idx - 1] in ("-o", "--output")
+                            if not p.is_absolute() and (is_output or (working_directory / p).exists()):
                                 updated_args.append(str((working_directory / p).resolve()))
                             else:
                                 updated_args.append(arg)
@@ -278,11 +286,12 @@ def run_osmium(
         for line in (stdout + "\n" + stderr).splitlines():
             if line:
                 log(line)
-        sub_cmd = normalized_arguments[0] if normalized_arguments else "befehl"
-        log(f"Osmium: Befehl '{sub_cmd}' erfolgreich abgeschlossen.")
     result = subprocess.CompletedProcess(command, process.returncode, stdout, stderr)
     if result.returncode:
         raise OsmiumError(
             f"Osmium-Befehl fehlgeschlagen ({result.returncode}): {' '.join(command)}\n{stderr.strip()}"
         )
+    if log:
+        sub_cmd = normalized_arguments[0] if normalized_arguments else "befehl"
+        log(f"Osmium: Befehl '{sub_cmd}' erfolgreich abgeschlossen.")
     return result

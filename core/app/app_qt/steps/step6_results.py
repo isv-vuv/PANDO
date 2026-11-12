@@ -2,7 +2,6 @@
 
 from __future__ import annotations
 
-import glob
 import logging
 import os
 import platform
@@ -13,8 +12,11 @@ from pathlib import Path
 from typing import Optional, Sequence
 
 from core.locales import localizer
+from core.scripts.visum.scripts.visum_com import create_visum
+from core.app.app_qt.results_map import ResultsMapWidget
 from core.app.app_qt.qt_base import (
     Dialogs,
+    QgsApplication,
     Qt,
     QtCore,
     QtGui,
@@ -62,316 +64,42 @@ def open_path_in_explorer(target_path: str | Path) -> bool:
 
 
 def find_qgis_executable() -> Optional[str]:
-    """Discover QGIS 4 / QGIS desktop executable candidate."""
-    candidates = []
+    """Resolve the desktop executable belonging to the running QGIS runtime.
 
-    env_bat = os.environ.get("QGIS_BAT")
-    if env_bat and os.path.isfile(env_bat):
-        bin_dir = os.path.dirname(env_bat)
-        for name in ("qgis-bin.exe", "qgis.bat", "qgis.exe"):
-            p = os.path.join(bin_dir, name)
-            if os.path.isfile(p):
-                candidates.append(p)
-
-    candidates.extend(glob.glob(r"C:\OSGeo4W*\bin\qgis-bin.exe"))
-    candidates.extend(glob.glob(r"C:\OSGeo4W*\bin\qgis.bat"))
-    candidates.extend(glob.glob(r"C:\Program Files\QGIS*\bin\qgis-bin.exe"))
-    candidates.extend(glob.glob(r"C:\Program Files\QGIS*\bin\qgis.bat"))
-    candidates.extend(glob.glob(os.path.expandvars(r"%LOCALAPPDATA%\Programs\OSGeo4W\bin\qgis-bin.exe")))
-    candidates.extend(glob.glob(os.path.expandvars(r"%LOCALAPPDATA%\Programs\OSGeo4W\bin\qgis.bat")))
-
-    for cand in candidates:
-        if os.path.isfile(cand):
-            return cand
-
-import xml.etree.ElementTree as ET
-
-
-def _inject_qgs_canvas_extent(qgs_file: Path, xmin: float, ymin: float, xmax: float, ymax: float) -> None:
-    """Inject/update the mapcanvas and ProjectViewSettings extent in a .qgs XML file."""
-    try:
-        if not qgs_file.is_file():
-            return
-        tree = ET.parse(str(qgs_file))
-        root = tree.getroot()
-
-        # 1. ProjectViewSettings
-        pvs = root.find("ProjectViewSettings")
-        if pvs is None:
-            pvs = ET.SubElement(root, "ProjectViewSettings")
-        pvs.set("UseProjectScales", "0")
-        pvs.set("rotation", "0")
-
-        dve = pvs.find("DefaultViewExtent")
-        if dve is None:
-            dve = ET.SubElement(pvs, "DefaultViewExtent")
-        dve.set("xmin", f"{xmin:.6f}")
-        dve.set("ymin", f"{ymin:.6f}")
-        dve.set("xmax", f"{xmax:.6f}")
-        dve.set("ymax", f"{ymax:.6f}")
-
-        # 2. theMapCanvas
-        mc = None
-        for child in root.findall("mapcanvas"):
-            if child.get("name") in ("theMapCanvas", None, ""):
-                mc = child
-                break
-        if mc is None:
-            mc = ET.SubElement(root, "mapcanvas", {"name": "theMapCanvas"})
-
-        ext = mc.find("extent")
-        if ext is None:
-            ext = ET.SubElement(mc, "extent")
-        for c in list(ext):
-            ext.remove(c)
-
-        xmin_el = ET.SubElement(ext, "xmin")
-        xmin_el.text = f"{xmin:.6f}"
-        ymin_el = ET.SubElement(ext, "ymin")
-        ymin_el.text = f"{ymin:.6f}"
-        xmax_el = ET.SubElement(ext, "xmax")
-        xmax_el.text = f"{xmax:.6f}"
-        ymax_el = ET.SubElement(ext, "ymax")
-        ymax_el.text = f"{ymax:.6f}"
-
-        tree.write(str(qgs_file), encoding="utf-8", xml_declaration=True)
-    except Exception as exc:
-        logger.warning("Could not inject canvas extent into %s: %s", qgs_file, exc)
-
-
-def layer_draw_order_key(layer_path: str | Path) -> int:
+    Never search other installations or PATH: a different QGIS version may be
+    installed alongside the one whose libraries PANDO has loaded.
     """
-    Returns layer ordering priority for QGIS layer tree.
-    Lower number = placed higher in the layer tree / rendered on top.
-    
-    Paired Priority Hierarchy:
-    1. Model 6: zone_centroids (10) > zones (11)
-    2. Model 5: zone_pa_ia1_ia2_points (20) > zone_pa_ia1_ia2 (21)
-    3. Model 2: central_place_points (30) > zone_adm2_typeno (31)
-    4. Heatmap & POI: sector_all_points (40) > sector_all_intensity (41)
-    5. Raster: pop_raster_corr (50)
-    6. Generic: other points (60) > other polygons (70) > other rasters (80)
-    7. OpenStreetMap background (99, bottom)
-    """
-    name = Path(layer_path).stem.lower()
-    suffix = Path(layer_path).suffix.lower()
-
-    # 1. Model 6 (Assembled Final Zones)
-    if "centroid" in name:
-        return 10
-    if name == "zones" or name.startswith("zone_assembled") or name.startswith("06_"):
-        return 11
-
-    # 2. Model 5 (Planning & Influence Areas PA / IA1 / IA2 & Nationwide Centralities)
-    if ("inner_urban" in name or "pa_ia" in name or "urban" in name) and ("point" in name or "pt" in name):
-        return 20
-    if "central_place" in name and "nationwide" in name:
-        return 23
-    if "nationwide" in name and ("point" in name or "pt" in name):
-        return 25
-    if "pa_ia" in name or "urban" in name:
-        return 21
-
-    # 3. Model 2 (Central Places & Administrative ADM2 Zones)
-    if ("central_place" in name or "adm2" in name) and ("point" in name or "pt" in name):
-        return 30
-    if "adm2" in name or "zone_adm" in name or "type" in name or "model2" in name:
-        return 31
-
-    # 4. Model 5 Heatmap & POI Sector Points (Intensity above Sector Points)
-    if "intensity" in name:
-        return 40
-    if "sector" in name or "poi" in name:
-        if suffix in (".tif", ".tiff", ".asc", ".sdat"):
-            return 40
-        return 41
-
-    # 5. Model 1 (ADM Boundaries: ADM3 on top down to ADM0, and Population Raster)
-    if name == "adm3":
-        return 45
-    if name == "adm2":
-        return 46
-    if name == "adm1":
-        return 47
-    if name == "adm0":
-        return 48
-    if "pop" in name or "census" in name or "zensus" in name:
-        return 50
-
-    # Generic fallbacks
-    if "point" in name:
-        return 60
-    if suffix in (".tif", ".tiff", ".asc", ".sdat"):
-        return 80
-    return 70
-
-
-def create_qgis_project_for_layers(
-    project_path: str | Path,
-    layer_paths: Sequence[str | Path],
-    project_name: str = "pando_results",
-) -> Optional[Path]:
-    """Create a .qgs project file configured with the project's local CRS and an OpenStreetMap background layer."""
-    project_path = Path(project_path)
-    if not project_path.exists():
+    prefix = QgsApplication.prefixPath() if QgsApplication is not None else ""
+    prefix = prefix or os.environ.get("QGIS_PREFIX_PATH", "")
+    if not prefix:
         return None
 
-    # Determine local CRS
-    local_crs = "EPSG:3857"
-    crs_file = project_path / "input" / "local_crs.txt"
-    if crs_file.is_file():
-        try:
-            local_crs = crs_file.read_text(encoding="utf-8").strip() or local_crs
-        except Exception:
-            pass
-    else:
-        try:
-            from core.app.app_core.project import load_pipeline_manifest
-            manifest = load_pipeline_manifest(str(project_path))
-            local_crs = manifest.get("local_crs") or local_crs
-        except Exception:
-            pass
-
-    existing_layers = [Path(p) for p in layer_paths if Path(p).exists()]
-    if not existing_layers:
-        return None
-
-    # Sort existing layers by priority hierarchy (Points > Zones > Heatmap > Base)
-    sorted_existing_layers = sorted(existing_layers, key=layer_draw_order_key)
-
-    qgs_dir = project_path / "processed" / "qgis_output"
-    qgs_dir.mkdir(parents=True, exist_ok=True)
-    qgs_file = qgs_dir / f"{project_name}.qgs"
-
-    try:
-        from qgis.core import (
-            QgsCoordinateReferenceSystem,
-            QgsProject,
-            QgsRasterLayer,
-            QgsVectorLayer,
+    prefix_path = Path(prefix)
+    system = platform.system()
+    if system == "Windows":
+        # Standalone and OSGeo4W installs use <root>/apps/qgis[-ltr].
+        # Prefer the executable inside that prefix where available.
+        names = ("qgis-ltr-bin.exe",) if "ltr" in prefix_path.name.lower() else (
+            "qgis-bin.exe", "qgis.exe",
         )
+        bin_dirs = [prefix_path / "bin"]
+        if prefix_path.parent.name.lower() == "apps":
+            bin_dirs.append(prefix_path.parent.parent / "bin")
+        candidates = [directory / name for directory in bin_dirs for name in names]
+    elif system == "Darwin":
+        bundle = next((p for p in (prefix_path, *prefix_path.parents) if p.suffix == ".app"), None)
+        candidates = [bundle / "Contents" / "MacOS" / "QGIS"] if bundle else []
+    else:
+        candidates = [prefix_path / "bin" / "qgis"]
 
-        project = QgsProject()
-        project.clear()
-        project.setCrs(QgsCoordinateReferenceSystem(local_crs))
+    for candidate in candidates:
+        if candidate.is_file():
+            return str(candidate)
+    return None
 
-        # 1. Background OpenStreetMap Layer (50% opacity, grayscale, distinct name)
-        osm_url = "type=xyz&url=https://tile.openstreetmap.org/%7Bz%7D/%7Bx%7D/%7By%7D.png&zmax=19&zmin=0"
-        osm_layer = QgsRasterLayer(osm_url, "OpenStreetMap (OSM) Grey", "wms")
-        if osm_layer.isValid():
-            osm_layer.setOpacity(0.5)
-            pipe = osm_layer.pipe()
-            if pipe:
-                hs = pipe.hueSaturationFilter()
-                if hs:
-                    try:
-                        from qgis.core import QgsHueSaturationFilter
-                        hs.setGrayscaleMode(QgsHueSaturationFilter.GrayscaleLightness)
-                    except Exception:
-                        pass
-                    hs.setSaturation(-100)
-            project.addMapLayer(osm_layer, False)
-
-        # 2. Result Layers
-        added_layers = []
-        for lp in sorted_existing_layers:
-            suffix = lp.suffix.lower()
-            if suffix in (".tif", ".tiff", ".asc", ".sdat"):
-                layer = QgsRasterLayer(str(lp), lp.stem, "gdal")
-            else:
-                layer = QgsVectorLayer(str(lp), lp.stem, "ogr")
-
-            if layer.isValid():
-                qml_sidecar = lp.with_suffix(".qml")
-                if qml_sidecar.is_file():
-                    layer.loadNamedStyle(str(qml_sidecar))
-                project.addMapLayer(layer, False)
-                added_layers.append(layer)
-
-        # 3. Calculate Bounding Box of result data layers (excluding background OSM) in project CRS
-        combined_extent = None
-        proj_crs = project.crs()
-
-        for layer in added_layers:
-            if not layer.isValid():
-                continue
-            if not isinstance(layer, QgsRasterLayer):
-                try:
-                    layer.updateExtents()
-                except Exception:
-                    pass
-
-            ext = layer.extent()
-            if ext.isEmpty() or ext.isNull():
-                continue
-
-            layer_crs = layer.crs()
-            if not layer_crs.isValid():
-                layer_crs = QgsCoordinateReferenceSystem("EPSG:4326")
-
-            if layer_crs != proj_crs:
-                transformed_ext = None
-                for ctx in (project.transformContext(), QgsProject.instance().transformContext(), project):
-                    try:
-                        ct = QgsCoordinateTransform(layer_crs, proj_crs, ctx)
-                        if ct.isValid():
-                            t_box = ct.transformBoundingBox(ext)
-                            if not t_box.isEmpty() and not t_box.isNull():
-                                transformed_ext = t_box
-                                break
-                    except Exception:
-                        pass
-
-                if transformed_ext is None:
-                    # Fallback transformation via pyproj if QgsCoordinateTransform context was unavailable
-                    try:
-                        import pyproj
-                        transformer = pyproj.Transformer.from_crs(layer_crs.authid(), proj_crs.authid(), always_xy=True)
-                        x1, y1 = transformer.transform(ext.xMinimum(), ext.yMinimum())
-                        x2, y2 = transformer.transform(ext.xMaximum(), ext.yMaximum())
-                        from qgis.core import QgsRectangle
-                        transformed_ext = QgsRectangle(min(x1, x2), min(y1, y2), max(x1, x2), max(y1, y2))
-                    except Exception:
-                        transformed_ext = ext
-                ext = transformed_ext
-
-            if combined_extent is None or combined_extent.isEmpty():
-                from qgis.core import QgsRectangle
-                combined_extent = QgsRectangle(ext)
-            else:
-                combined_extent.combineExtentWith(ext)
-
-        if combined_extent is not None and not combined_extent.isEmpty() and not combined_extent.isNull():
-            combined_extent.scale(1.08)  # 8% margin around the data
-            try:
-                project.viewSettings().setDefaultViewExtent(combined_extent)
-            except Exception:
-                pass
-
-        # Build Layer Tree: Result layers on TOP (Points -> Zones -> Heatmap), OSM layer at the BOTTOM
-        root = project.layerTreeRoot()
-        for layer in added_layers:
-            root.addLayer(layer)
-        if osm_layer.isValid():
-            root.addLayer(osm_layer)
-
-        project.write(str(qgs_file))
-
-        # Ensure XML canvas extent is written into the project file
-        if combined_extent is not None and not combined_extent.isEmpty():
-            _inject_qgs_canvas_extent(
-                qgs_file,
-                xmin=combined_extent.xMinimum(),
-                ymin=combined_extent.yMinimum(),
-                xmax=combined_extent.xMaximum(),
-                ymax=combined_extent.yMaximum(),
-            )
-
-        logger.info("Created QGIS project with local CRS %s, OpenStreetMap (OSM) Grey, and extent: %s", local_crs, qgs_file)
-        return qgs_file
-    except Exception as exc:
-        logger.warning("Could not create QGIS project via PyQGIS: %s", exc)
-        return existing_layers[0] if existing_layers else None
+from core.app.app_core.result_maps import (
+    create_qgis_project_for_layers, layer_draw_order_key, result_paths,
+)
 
 
 def open_in_qgis(layer_paths: Sequence[str | Path], project_path: str | Path = "", title: str = "pando_view") -> bool:
@@ -403,11 +131,11 @@ def open_in_qgis(layer_paths: Sequence[str | Path], project_path: str | Path = "
             proc = subprocess.Popen([qgis_bin, target_to_open], **kwargs)
             _BACKGROUND_PROCESSES.append(proc)
             return True
-        else:
-            return open_path_in_explorer(target_to_open)
+        logger.warning("Could not find the desktop executable for the running QGIS installation")
+        return False
     except Exception as exc:
         logger.warning("Could not launch QGIS with %s: %s", target_to_open, exc)
-        return open_path_in_explorer(target_to_open)
+        return False
 
 
 def _set_visum_project_directories(visum, language: str = "de") -> None:
@@ -606,17 +334,7 @@ def open_in_visum(
         study_zoom_gpa = resolve_visum_gpa(visum_dir, zoom_name)
 
     try:
-        import win32com.client as com
-        visum = None
-        for prog_id in ("Visum.Visum.250", "Visum.Visum.25", "Visum.Visum.240", "Visum.Visum.24", "Visum.Visum"):
-            try:
-                visum = com.Dispatch(prog_id)
-                break
-            except Exception:
-                continue
-
-        if visum is None:
-            raise RuntimeError("Visum COM automation object could not be dispatched.")
+        visum = create_visum()
 
         visum.Graphic.ShowMaximized()
         visum.LoadVersion(str(target_ver.resolve()))
@@ -676,8 +394,10 @@ class ResultCardWidget(_Q_WIDGET_BASE):
         open_visum_callback=None,
         show_folder: bool = True,
         parent: Optional[object] = None,
+        preview_callback=None,
     ):
         super().__init__(parent)
+        self.preview_callback = preview_callback
         self.title = title
         self.description = description
         self.layer_paths = layer_paths
@@ -716,6 +436,13 @@ class ResultCardWidget(_Q_WIDGET_BASE):
             self.btn_folder.clicked.connect(self._on_open_folder)
             btn_row.addWidget(self.btn_folder)
 
+        if self.preview_callback:
+            self.btn_preview = QtWidgets.QPushButton(localizer.get_string("step6_btn_show_map"), self.group_box)
+            self.btn_preview.setCursor(qt_enum(Qt, "PointingHandCursor", "CursorShape"))
+            self.btn_preview.setEnabled(any(Path(path).is_file() for path in self.layer_paths))
+            self.btn_preview.clicked.connect(lambda: self.preview_callback(self.layer_paths, self.title))
+            btn_row.addWidget(self.btn_preview)
+
         # QGIS button
         if self.open_qgis_callback:
             self.btn_qgis = QtWidgets.QPushButton(localizer.get_string("step6_btn_open_qgis", default="In QGIS öffnen"), self.group_box)
@@ -747,22 +474,40 @@ class ResultCardWidget(_Q_WIDGET_BASE):
 
     def _on_open_visum(self) -> None:
         if self.open_visum_callback:
-            self.open_visum_callback(self.folder_path)
+            if not self.open_visum_callback(self.folder_path):
+                Dialogs.warning(
+                    self,
+                    localizer.get_string('step5_title_error', default='Fehler'),
+                    localizer.get_string('step6_visum_open_failed', default=(
+                        'Das Ergebnis konnte nicht in Visum geöffnet werden. '
+                        'Bitte die Modelldatei und die Visum-Installation prüfen. '
+                        'Weitere Details stehen im Protokoll.')),
+                )
 
 
 class Step6ResultsWidget(_Q_WIDGET_BASE):
     """Step 6 Widget providing an overview of all generated results and opening tools."""
 
+    recalculate_requested = pyqtSignal() if pyqtSignal else None
+
     def __init__(self, localizer_obj, parent: Optional[object] = None, project_path: str = ""):
         super().__init__(parent)
         self.localizer = localizer_obj
         self.project_path = project_path
+        from core.app.app_core.centrality_edits import project_session
+        self.edit_session = project_session(parent, project_path)
 
         self._setup_ui()
 
     def set_project_path(self, path: str) -> None:
+        self.results_map.clear()
         self.project_path = path
+        from core.app.app_core.centrality_edits import project_session
+        self.edit_session = project_session(self.parent(), path)
+        self._load_ferry_wait()
+        self.results_map.edit_session = self.edit_session
         self.refresh_results()
+        self.results_map.show_planning_area(self.project_path)
 
     def _setup_ui(self) -> None:
         main_layout = QtWidgets.QVBoxLayout(self)
@@ -773,11 +518,39 @@ class Step6ResultsWidget(_Q_WIDGET_BASE):
         self.header, _title_label, _step_label = create_step_header(
             self.localizer.get_string("step6_title", default="Schritt 6: Ergebnisse und Auswertung"),
             current_step=6,
-            total_steps=6,
+            total_steps=7,
             localizer=self.localizer,
             parent=self,
         )
         main_layout.addWidget(self.header)
+
+        ferry_box = QtWidgets.QGroupBox(self.localizer.get_string('ferry_parameters'), self)
+        ferry_layout = QtWidgets.QHBoxLayout(ferry_box)
+        self.ferry_label = QtWidgets.QLabel(self.localizer.get_string('ferry_wait_minutes'), ferry_box)
+        ferry_layout.addWidget(self.ferry_label)
+        self.ferry_wait_spin = QtWidgets.QDoubleSpinBox(ferry_box)
+        self.ferry_wait_spin.setRange(0, 10080)
+        self.ferry_wait_spin.setDecimals(1)
+        self.ferry_wait_spin.setSuffix(' min')
+        self._load_ferry_wait()
+        ferry_layout.addWidget(self.ferry_wait_spin)
+        self.ferry_save_button = QtWidgets.QPushButton(self.localizer.get_string('ferry_save'), ferry_box)
+        self.ferry_save_button.clicked.connect(self._save_ferry_wait)
+        ferry_layout.addWidget(self.ferry_save_button)
+        ferry_layout.addStretch()
+        main_layout.addWidget(ferry_box)
+        self.ferry_box = ferry_box
+
+        self.stale_banner = QtWidgets.QFrame(self)
+        self.stale_banner.setStyleSheet('QFrame { background: #fef3c7; color: #713f12; border-radius: 5px; }')
+        banner_layout = QtWidgets.QHBoxLayout(self.stale_banner)
+        self.stale_text = QtWidgets.QLabel(self.localizer.get_string('centres_stale'), self.stale_banner)
+        self.stale_text.setWordWrap(True)
+        banner_layout.addWidget(self.stale_text, 1)
+        self.recalculate_button = QtWidgets.QPushButton(self.localizer.get_string('centres_prepare_update'), self.stale_banner)
+        self.recalculate_button.clicked.connect(self.recalculate_requested.emit)
+        banner_layout.addWidget(self.recalculate_button)
+        main_layout.addWidget(self.stale_banner)
 
         # Scrollable area for result cards and section 0 overview
         self.scroll_area = QtWidgets.QScrollArea(self)
@@ -790,10 +563,43 @@ class Step6ResultsWidget(_Q_WIDGET_BASE):
         self.scroll_layout.setContentsMargins(0, 2, 8, 0)
         self.scroll_layout.setSpacing(10)
 
+        self.splitter = QtWidgets.QSplitter(qt_enum(Qt, "Horizontal", "Orientation"), self)
+        self.results_map = ResultsMapWidget(self.localizer, self.splitter, edit_session=self.edit_session)
+        self.results_map.edits_changed.connect(self._refresh_stale_banner)
+        self._refresh_stale_banner()
         self._build_cards()
 
         self.scroll_area.setWidget(self.scroll_widget)
-        main_layout.addWidget(self.scroll_area, 1)
+        self.splitter.addWidget(self.scroll_area)
+        self.splitter.addWidget(self.results_map)
+        self.splitter.setChildrenCollapsible(False)
+        self.splitter.setStretchFactor(0, 1)
+        self.splitter.setStretchFactor(1, 1)
+        self.splitter.setSizes([600, 600])
+        main_layout.addWidget(self.splitter, 1)
+        self.results_map.show_planning_area(self.project_path)
+
+    def _load_ferry_wait(self):
+        import json
+        path = Path(self.project_path) / 'ferry_parameters.json'
+        value = json.loads(path.read_text(encoding='utf-8'))['wait_minutes'] if path.is_file() else 20
+        self.ferry_wait_spin.setValue(float(value))
+
+    def _save_ferry_wait(self):
+        if not self.project_path or self.edit_session.busy:
+            return
+        import json
+        value = self.ferry_wait_spin.value()
+        path = Path(self.project_path) / 'ferry_parameters.json'
+        temporary = path.with_suffix('.json.tmp')
+        try:
+            temporary.write_text(json.dumps({'wait_minutes': value}, indent=2), encoding='utf-8')
+            temporary.replace(path)
+            self.edit_session.set_ferry_wait(value)
+        except Exception as exc:
+            Dialogs.error(self, self.localizer.get_string('centres_error'), str(exc))
+            return
+        self._refresh_stale_banner()
 
     def _on_open_project_dir(self) -> None:
         if self.project_path and os.path.exists(self.project_path):
@@ -809,13 +615,15 @@ class Step6ResultsWidget(_Q_WIDGET_BASE):
         visum_dir = base / "processed" / "visum"
         open_path_in_explorer(str(visum_dir) if visum_dir.exists() else str(base))
 
-    def _on_open_all_in_qgis(self) -> None:
+    def _all_result_layers(self) -> list[Path]:
         base = Path(self.project_path) if self.project_path else Path("")
         qgis_out = base / "processed" / "qgis_output"
-        all_layers = [
+        nationwide = qgis_out / 'model5_NationwideIntensity'
+        return [
             qgis_out / "model6_ZoneAssembler" / "zone_centroids.gpkg",
             qgis_out / "model6_ZoneAssembler" / "zones.gpkg",
-            qgis_out / "model5_NationwideIntensity" / "nationwide_centrality_points.gpkg",
+            nationwide / ('inner_urban_central_points_nationwide.gpkg' if (nationwide / 'inner_urban_central_points_nationwide.gpkg').exists() else 'nationwide_centrality_points.gpkg'),
+            nationwide / 'central_place_points_nationwide.gpkg',
             qgis_out / "model5_UrbanCentrality" / "zone_pa_ia1_ia2_points.gpkg",
             qgis_out / "model5_UrbanCentrality" / "zone_pa_ia1_ia2.gpkg",
             qgis_out / "model2_ZoneClass" / "central_place_points.gpkg",
@@ -829,7 +637,23 @@ class Step6ResultsWidget(_Q_WIDGET_BASE):
             qgis_out / "model1_DataPrep" / "adm0.gpkg",
             qgis_out / "model1_DataPrep" / "pop_raster_corr.tif",
         ]
-        open_in_qgis(all_layers, project_path=self.project_path, title="all_results")
+
+    def _on_open_all_in_qgis(self) -> None:
+        open_in_qgis(self._all_result_layers(), project_path=self.project_path, title="all_results")
+
+    def _show_layers_in_map(self, layer_paths, title) -> None:
+        self.edit_session.last_preview = (list(layer_paths), title)
+        project_file = create_qgis_project_for_layers(
+            self.project_path, layer_paths, project_name="pando_embedded_preview"
+        ) if self.project_path else None
+        if project_file is None or project_file.suffix.lower() != ".qgs":
+            self.results_map.clear()
+            self.results_map.status.setText(self.localizer.get_string("step6_map_error"))
+            return
+        self.results_map.show_project(project_file, title)
+
+    def _on_show_all_in_map(self) -> None:
+        self._show_layers_in_map(self._all_result_layers(), self.localizer.get_string("step6_map_all_results"))
 
     def _build_cards(self) -> None:
         while self.scroll_layout.count():
@@ -858,7 +682,7 @@ class Step6ResultsWidget(_Q_WIDGET_BASE):
 
         # Action Buttons Row
         btn_container = QtWidgets.QWidget(self.scroll_widget)
-        btn_layout = QtWidgets.QHBoxLayout(btn_container)
+        btn_layout = QtWidgets.QGridLayout(btn_container)
         btn_layout.setContentsMargins(0, 2, 0, 4)
         btn_layout.setSpacing(8)
 
@@ -868,7 +692,15 @@ class Step6ResultsWidget(_Q_WIDGET_BASE):
         self.btn_open_project_dir.setFont(app_font(9))
         self.btn_open_project_dir.setCursor(qt_enum(Qt, "PointingHandCursor", "CursorShape"))
         self.btn_open_project_dir.clicked.connect(self._on_open_project_dir)
-        btn_layout.addWidget(self.btn_open_project_dir)
+        btn_layout.addWidget(self.btn_open_project_dir, 0, 0)
+
+        self.btn_show_all_map = QtWidgets.QPushButton(
+            self.localizer.get_string("step6_btn_show_all_map"), btn_container
+        )
+        self.btn_show_all_map.setFont(app_font(9))
+        self.btn_show_all_map.clicked.connect(self._on_show_all_in_map)
+        self.btn_show_all_map.setEnabled(any(path.is_file() for path in self._all_result_layers()))
+        btn_layout.addWidget(self.btn_show_all_map, 1, 0)
 
         self.btn_open_all_qgis = QtWidgets.QPushButton(
             self.localizer.get_string("step6_btn_open_all_qgis", default="Alle Layer in QGIS öffnen"), btn_container
@@ -876,7 +708,7 @@ class Step6ResultsWidget(_Q_WIDGET_BASE):
         self.btn_open_all_qgis.setFont(app_font(9))
         self.btn_open_all_qgis.setCursor(qt_enum(Qt, "PointingHandCursor", "CursorShape"))
         self.btn_open_all_qgis.clicked.connect(self._on_open_all_in_qgis)
-        btn_layout.addWidget(self.btn_open_all_qgis)
+        btn_layout.addWidget(self.btn_open_all_qgis, 1, 1)
 
         self.btn_open_visum_dir = QtWidgets.QPushButton(
             self.localizer.get_string("step6_btn_open_visum_dir", default="Visum-Projektordner öffnen"), btn_container
@@ -884,9 +716,8 @@ class Step6ResultsWidget(_Q_WIDGET_BASE):
         self.btn_open_visum_dir.setFont(app_font(9))
         self.btn_open_visum_dir.setCursor(qt_enum(Qt, "PointingHandCursor", "CursorShape"))
         self.btn_open_visum_dir.clicked.connect(self._on_open_visum_dir)
-        btn_layout.addWidget(self.btn_open_visum_dir)
+        btn_layout.addWidget(self.btn_open_visum_dir, 0, 1)
 
-        btn_layout.addStretch()
         self.scroll_layout.addWidget(btn_container)
 
         # =========================================================================
@@ -902,7 +733,7 @@ class Step6ResultsWidget(_Q_WIDGET_BASE):
         # 1.1 Zensus-Einwohnerdaten
         m1_dir = qgis_out / "model1_DataPrep"
         pop_tif = m1_dir / "pop_raster_corr.tif"
-        pop_layers = [str(pop_tif)] if pop_tif.exists() else []
+        pop_layers = [str(p) for p in result_paths(self.project_path, "population") if p.exists()]
         self.scroll_layout.addWidget(
             ResultCardWidget(
                 title=self.localizer.get_string("step6_layer_census_title", default="Zensus-Einwohnerdaten (Modell 1)"),
@@ -910,6 +741,7 @@ class Step6ResultsWidget(_Q_WIDGET_BASE):
                 layer_paths=pop_layers,
                 folder_path=str(m1_dir),
                 open_qgis_callback=lambda layers: self._open_layer_group_in_qgis(layers, "zensusraster"),
+                preview_callback=self._show_layers_in_map,
                 show_folder=True,
                 parent=self.scroll_widget,
             )
@@ -924,6 +756,7 @@ class Step6ResultsWidget(_Q_WIDGET_BASE):
                 layer_paths=adm_layers,
                 folder_path=str(m1_dir),
                 open_qgis_callback=lambda layers: self._open_layer_group_in_qgis(layers, "administrative_grenzen"),
+                preview_callback=self._show_layers_in_map,
                 show_folder=True,
                 parent=self.scroll_widget,
             )
@@ -943,7 +776,7 @@ class Step6ResultsWidget(_Q_WIDGET_BASE):
         m2_dir = qgis_out / "model2_ZoneClass"
         m2_zone = m2_dir / "zone_adm2_typeno.gpkg"
         m2_points = m2_dir / "central_place_points.gpkg"
-        m2_layers = [str(m2_zone), str(m2_points)]
+        m2_layers = [str(p) for p in result_paths(self.project_path, "central_places")]
         self.scroll_layout.addWidget(
             ResultCardWidget(
                 title=self.localizer.get_string("step6_layer_central_places_title", default="Zentrale Orte (Modell 2 / ADM2)"),
@@ -951,6 +784,7 @@ class Step6ResultsWidget(_Q_WIDGET_BASE):
                 layer_paths=m2_layers,
                 folder_path=str(m2_dir),
                 open_qgis_callback=lambda layers: self._open_layer_group_in_qgis(layers, "zentrale_orte"),
+                preview_callback=self._show_layers_in_map,
                 show_folder=True,
                 parent=self.scroll_widget,
             )
@@ -962,7 +796,7 @@ class Step6ResultsWidget(_Q_WIDGET_BASE):
         m5_poi = m5_dir / "sector_all_points.gpkg"
         m5_zone = m5_dir / "zone_pa_ia1_ia2.gpkg"
         m5_points = m5_dir / "zone_pa_ia1_ia2_points.gpkg"
-        m5_layers = [str(m5_intensity), str(m5_poi), str(m5_zone), str(m5_points)]
+        m5_layers = [str(p) for p in result_paths(self.project_path, "urban")]
         self.scroll_layout.addWidget(
             ResultCardWidget(
                 title=self.localizer.get_string("step6_layer_urban_centrality_title", default="Intensitätsschätzung und innergemeindliche Zentralitäten im Untersuchungsraum (Modell 5)"),
@@ -970,6 +804,7 @@ class Step6ResultsWidget(_Q_WIDGET_BASE):
                 layer_paths=m5_layers,
                 folder_path=str(m5_dir),
                 open_qgis_callback=lambda layers: self._open_layer_group_in_qgis(layers, "urban_centrality"),
+                preview_callback=self._show_layers_in_map,
                 show_folder=True,
                 parent=self.scroll_widget,
             )
@@ -998,6 +833,7 @@ class Step6ResultsWidget(_Q_WIDGET_BASE):
                     layer_paths=m5_nw_layers,
                     folder_path=str(m5_nw_dir),
                     open_qgis_callback=lambda layers: self._open_layer_group_in_qgis(layers, "landesweite_intensitaet"),
+                    preview_callback=self._show_layers_in_map,
                     show_folder=True,
                     parent=self.scroll_widget,
                 )
@@ -1007,7 +843,7 @@ class Step6ResultsWidget(_Q_WIDGET_BASE):
         m6_dir = qgis_out / "model6_ZoneAssembler"
         m6_zones = m6_dir / "zones.gpkg"
         m6_centroids = m6_dir / "zone_centroids.gpkg"
-        m6_layers = [str(m6_zones), str(m6_centroids)]
+        m6_layers = [str(p) for p in result_paths(self.project_path, "zones")]
         cfl_gpa_name = "EN_Central_Places_Direct_Lines_CFL.gpax" if is_en else "DE_Zentrale_Orte_Luftlinienverbindungen_VFS.gpax"
         self.scroll_layout.addWidget(
             ResultCardWidget(
@@ -1016,6 +852,7 @@ class Step6ResultsWidget(_Q_WIDGET_BASE):
                 layer_paths=m6_layers,
                 folder_path=str(m6_dir),
                 open_qgis_callback=lambda layers: self._open_layer_group_in_qgis(layers, "verkehrszellen"),
+                preview_callback=self._show_layers_in_map,
                 open_visum_callback=lambda _: open_in_visum(self.project_path, gpa_filename=cfl_gpa_name, deactivate_links_and_odpairs=True, language=lang),
                 show_folder=True,
                 parent=self.scroll_widget,
@@ -1086,9 +923,23 @@ class Step6ResultsWidget(_Q_WIDGET_BASE):
 
         self.scroll_layout.addStretch()
 
+    def release_resources(self) -> None:
+        """Release map providers before navigation can reopen project outputs."""
+        self.results_map.clear()
+
     def refresh_results(self) -> None:
         """Re-render cards with updated paths."""
         self._build_cards()
+        self._refresh_stale_banner()
+
+    def _refresh_stale_banner(self):
+        self.stale_banner.setVisible(bool(self.edit_session.pending()))
 
     def retranslate_ui(self) -> None:
+        self.ferry_box.setTitle(self.localizer.get_string('ferry_parameters'))
+        self.ferry_label.setText(self.localizer.get_string('ferry_wait_minutes'))
+        self.ferry_save_button.setText(self.localizer.get_string('ferry_save'))
         self._build_cards()
+        self.stale_text.setText(self.localizer.get_string('centres_stale'))
+        self.recalculate_button.setText(self.localizer.get_string('centres_prepare_update'))
+        self.results_map.retranslate_ui()

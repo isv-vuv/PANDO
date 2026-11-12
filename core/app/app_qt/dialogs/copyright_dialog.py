@@ -57,6 +57,12 @@ COPYRIGHT_SOURCES = [
         "sub_title": "Access Node Deriver, RIN-Tool, Luftlinientool & Visum Importer",
         "rel_path": os.path.join("core", "scripts", "visum", "_source.txt"),
     },
+    {
+        "id": "report",
+        "title": "7. Report",
+        "sub_title": "Typst, Inter, PDFium & CSL",
+        "rel_path": os.path.join("core", "report_licenses", "_source.txt"),
+    },
 ]
 
 REQUIRED_SOURCE_IDS = [src["id"] for src in COPYRIGHT_SOURCES]
@@ -86,7 +92,7 @@ def load_source_content(rel_path: str, base_dir: Optional[str] = None) -> str:
 
 
 class CopyrightDialog(_Q_DIALOG_BASE):
-    """Modal dialog displaying all 6 source texts with individual & master acceptance checkboxes."""
+    """Modal dialog displaying all source texts with individual & master acceptance checkboxes."""
 
     def __init__(
         self,
@@ -186,7 +192,7 @@ class CopyrightDialog(_Q_DIALOG_BASE):
         self.master_checkbox.stateChanged.connect(self._on_master_checkbox_changed)
         main_layout.addWidget(self.master_checkbox)
 
-        # Tab Widget for the 6 sources in exact priority order
+        # Tab Widget for the sources in exact priority order
         self.tab_widget = QtWidgets.QTabWidget(self)
         if hasattr(self.tab_widget, "tabBar"):
             bar = self.tab_widget.tabBar()

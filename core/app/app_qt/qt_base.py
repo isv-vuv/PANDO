@@ -85,8 +85,10 @@ def require_qgis_qt() -> None:
     if QGIS_IMPORT_ERROR is None:
         return
     raise QtBootstrapError(
-        "qgis.PyQt could not be imported. Start this application with the "
-        "QGIS Python environment, not a generic system Python interpreter.\n"
+        "The Qt/PyQGIS bindings could not be loaded.\n"
+        f"Python interpreter: {sys.executable}\n"
+        "Use the QGIS Python environment. If it is already active, check for "
+        "conflicting DLLs loaded before QGIS.\n"
         f"Original error: {QGIS_IMPORT_ERROR}"
     )
 
@@ -541,7 +543,7 @@ def bind_header_scroll_separator(header_widget: Optional[QWidget], scroll_area: 
 def create_step_header(
     title_raw: str,
     current_step: int,
-    total_steps: int = 6,
+    total_steps: int = 7,
     localizer: Optional[object] = None,
     parent: Optional[object] = None,
     scroll_area: Optional[QtWidgets.QScrollArea] = None,

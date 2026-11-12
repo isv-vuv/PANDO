@@ -1,3 +1,7 @@
+if __package__:
+    from .visum_com import create_visum
+else:
+    from visum_com import create_visum
 import logging
 import os
 import re
@@ -85,7 +89,7 @@ def run_procedure_sequence(target_project_dir=None, visum=None, log=logging.info
     if visum is None:
         if input_ver.exists():
             log(f"Lade Version: {input_ver.name}")
-            visum = com.Dispatch("Visum.Visum.250")
+            visum = create_visum()
             visum.Graphic.ShowMaximized()
             visum.LoadVersion(str(input_ver))
         else:
@@ -118,6 +122,11 @@ def run_procedure_sequence(target_project_dir=None, visum=None, log=logging.info
             proc_xml = cand
             break
 
+    from ferry_wait import apply_ferry_wait, load_wait_minutes
+    wait_minutes = load_wait_minutes(base_project_dir)
+    count = apply_ferry_wait(visum, wait_minutes)
+    log(f"Fährwartezeit: {wait_minutes:g} min, {count} Einstiegsabbieger")
+
     if proc_xml and proc_xml.exists():
         log(f"Importiere Verfahrensablauf ({app_lang.upper()}): {proc_xml.name}")
         visum.Procedures.Open(str(proc_xml.resolve()), True, True, True)
@@ -139,6 +148,19 @@ def run_procedure_sequence(target_project_dir=None, visum=None, log=logging.info
     else:
         log(f"Warnung: {setup_dsegments_path.name} nicht gefunden.")
 
+    if proc_xml is not None:
+        if __package__:
+            from .procedure_demand import restore_assignment_segments
+        else:
+            from procedure_demand import restore_assignment_segments
+        restore_assignment_segments(visum, proc_xml, log)
+
+    if __package__:
+        from .poi_import import import_project_pois
+    else:
+        from poi_import import import_project_pois
+    import_project_pois(visum, visum_input_dir, log=log)
+
     input_stem = input_ver.stem
     prep_ver = ver_dir / f"{input_stem}_ProcedureSequence_Debug.ver"
     try:
@@ -150,6 +172,7 @@ def run_procedure_sequence(target_project_dir=None, visum=None, log=logging.info
     try:
         log("Führe Verfahrensablauf aus...")
         visum.Procedures.Execute()
+        log("Visum-Verfahrensablauf vollständig abgeschlossen.")
         log(f"Speichere finale Modellversion: {target_ver.name}")
         visum.SaveVersion(str(target_ver))
     except Exception as exc:

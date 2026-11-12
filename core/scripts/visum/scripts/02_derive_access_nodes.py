@@ -1,6 +1,13 @@
+if __package__:
+    from .visum_logging import measured, timed_step, log_network_counts
+    from .visum_com import create_visum
+else:
+    from visum_logging import measured, timed_step, log_network_counts
+    from visum_com import create_visum
 import os
 import sys
 import logging
+from time import perf_counter
 from pathlib import Path
 import numpy as np
 import pandas as pd
@@ -10,6 +17,7 @@ import win32com.client as com
 logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
 
 
+@measured
 def get_project_paths(target_project_dir=None) -> tuple[Path, Path]:
     """Ermittelt dynamisch die Projektpfade relativ zum Skriptort oder Übergabeparameter."""
     if target_project_dir:
@@ -24,6 +32,7 @@ def get_project_paths(target_project_dir=None) -> tuple[Path, Path]:
     return base_project_dir, visum_input_dir
 
 
+@measured
 def find_helper_file(search_dir: Path, filename: str) -> Path:
     """Sucht flexibel im Projekt- oder Visum-Ordner nach einer benötigten Hilfsdatei (z.B. XML)."""
     for s_dir in [search_dir, search_dir.parent]:
@@ -48,6 +57,7 @@ def find_helper_file(search_dir: Path, filename: str) -> Path:
 
 
 class AccessNodeDeriver:
+    @measured
     def __init__(self, visum_instance, working_dir: Path):
         self.Visum = visum_instance
         self.working_dir = working_dir
@@ -59,12 +69,15 @@ class AccessNodeDeriver:
         self.edit_link_atts = self.Visum.Net.CreateEditAttributePara()
         self.edit_link_atts.SetAttValue("NETOBJECTTYPE", "LINK")
 
+    @measured
     def process_access_nodes(self, output_ver_path: Path = None, procedure_xml: Path = None):
         """Führt den gesamten Ablauf der Zugangsknotenableitung sequentiell aus."""
         logging.info("--- Visum Schritt 2: Ableitung von Zugangsknoten & Anbindungen gestartet ---")
         if procedure_xml is None:
             base_project_dir, _ = get_project_paths()
             procedure_xml = find_helper_file(base_project_dir, "20230814_1erUmlegung_TestAnbindungsknoten.xml")
+
+        log_network_counts(self.Visum, "vor Zugangsknotenableitung")
 
         # 1. Netzanpassungen (Einbahnstraßen, Fähren)
         logging.info("1/6 Preprocessing: Einbahnstraßen & Fährverbindungen...")
@@ -120,6 +133,7 @@ class AccessNodeDeriver:
                 pass
 
 
+    @measured
     def add_uda(self, netobj, uda_name: str, value_type: int, def_val, comment: str = ''):
         """Erzeugt ein benutzerdefiniertes Attribut (UDA), falls nicht vorhanden."""
         try:
@@ -134,6 +148,7 @@ class AccessNodeDeriver:
         except Exception:
             logging.debug(f"UDA '{uda_name}' existiert bereits.")
 
+    @measured
     def add_mat(self, obj_id: int, mat_code: str, mat_name: str, objecttype: int = 2, matrixtype: int = 3):
         """Erzeugt eine Visum-Matrix."""
         M = self.Visum.Net.AddMatrix(obj_id, objecttype, matrixtype)
@@ -141,19 +156,23 @@ class AccessNodeDeriver:
         M.SetAttValue("Name", mat_name if mat_name else mat_code)
         return M
 
+    @measured
     def get_multi_netobj_atts_with_id(self, netobj, atts_dict_withdtype: dict) -> pd.DataFrame:
         """Liest Attribute inkl. Visum-ID als Pandas DataFrame aus."""
+        logging.info("[Diagnose] Angeforderte Attribute: %s", list(atts_dict_withdtype))
         netobj_type = netobj._oleobj_.GetTypeInfo().GetDocumentation(-1)[0]
 
         if netobj_type != 'ILinks':
-            df_netobj = pd.DataFrame(
-                netobj.GetMultipleAttributes(list(atts_dict_withdtype.keys()), OnlyActive=True),
-                columns=atts_dict_withdtype.keys()
-            ).astype(atts_dict_withdtype)
-            df_netobj_index = pd.DataFrame(
-                netobj.GetMultiAttValues("NO", OnlyActive=False),
-                columns=["VISUM_ID", "NO"]
-            ).astype({"VISUM_ID": int, "NO": int})
+            with timed_step("Attributabruf: df_netobj (COM und DataFrame)"):
+                df_netobj = pd.DataFrame(
+                    netobj.GetMultipleAttributes(list(atts_dict_withdtype.keys()), OnlyActive=True),
+                    columns=atts_dict_withdtype.keys()
+                ).astype(atts_dict_withdtype)
+            with timed_step("Attributabruf: df_netobj_index (COM und DataFrame)"):
+                df_netobj_index = pd.DataFrame(
+                    netobj.GetMultiAttValues("NO", OnlyActive=False),
+                    columns=["VISUM_ID", "NO"]
+                ).astype({"VISUM_ID": int, "NO": int})
             df_netobj = pd.merge(df_netobj, df_netobj_index, on='NO')
             v_id = df_netobj.pop('VISUM_ID')
             df_netobj.insert(0, 'VISUM_ID', v_id)
@@ -165,23 +184,30 @@ class AccessNodeDeriver:
             x.SetAttValue("ONLYACTIVE", "0")
             x.SetAttValue("RESULTATTRNAME", "LINK_IDENTIFIER")
             x.SetAttValue("FORMULA", 'NUMTOSTR([NO],0) + "-" + NUMTOSTR([FROMNODENO],0) + "-" + NUMTOSTR([TONODENO],0)')
-            self.Visum.Net.EditAttribute(x)
+            with timed_step('self.Visum.Net.EditAttribute'):
+                self.Visum.Net.EditAttribute(x)
 
             atts_dict_withdtype['LINK_IDENTIFIER'] = str
-            df_links = pd.DataFrame(
-                netobj.GetMultipleAttributes(list(atts_dict_withdtype.keys()), OnlyActive=True),
-                columns=atts_dict_withdtype.keys()
-            ).astype(atts_dict_withdtype)
-            df_links_index = pd.DataFrame(
-                netobj.GetMultiAttValues("LINK_IDENTIFIER", OnlyActive=False),
-                columns=["VISUM_ID", "LINK_IDENTIFIER"]
-            ).astype({"VISUM_ID": int, "LINK_IDENTIFIER": str})
-            df_links = pd.merge(df_links, df_links_index, on='LINK_IDENTIFIER')
+            with timed_step("Attributabruf: df_links (COM und DataFrame)"):
+                df_links = pd.DataFrame(
+                    netobj.GetMultipleAttributes(list(atts_dict_withdtype.keys()), OnlyActive=True),
+                    columns=atts_dict_withdtype.keys()
+                ).astype(atts_dict_withdtype)
+            with timed_step("Attributabruf: df_links_index (COM und DataFrame)"):
+                df_links_index = pd.DataFrame(
+                    netobj.GetMultiAttValues("LINK_IDENTIFIER", OnlyActive=False),
+                    columns=["VISUM_ID", "LINK_IDENTIFIER"]
+                ).astype({"VISUM_ID": int, "LINK_IDENTIFIER": str})
+            logging.info("[Diagnose] Streckenabruf: %d aktive Zeilen; %d globale Kennungen für Indexzuordnung", len(df_links), len(df_links_index))
+            with timed_step("Attributabruf: globale Kennungen mit aktiven Strecken verknüpfen"):
+                df_links = pd.merge(df_links, df_links_index, on='LINK_IDENTIFIER')
             v_id = df_links.pop('VISUM_ID')
             df_links.insert(0, 'VISUM_ID', v_id)
             df_netobj = df_links.copy()
+        logging.info("[Diagnose] Attributabruf %s: %d aktive Datensätze, %d Spalten", netobj_type, len(df_netobj), len(df_netobj.columns))
         return df_netobj
 
+    @measured
     def new_object_number(self, netobject: str) -> int:
         """Ermittelt eine freie, ausreichend große Objektnummer für neue Elemente."""
         highest_no = self.Visum.Net.AttValue(rf'MAX:{netobject}\NO')
@@ -191,6 +217,7 @@ class AccessNodeDeriver:
             power *= 10
         return int(10 * power)
 
+    @measured
     def preprocess_one_way_streets(self):
         """Weist NUR den echten gesperrten Gegenrichtungen von Einbahnstraßen den Typ '0' (Blocked Oneway) zu."""
         logging.info("Weise gesperrten Einbahnstraßen-Rückrichtungen den Typ '0' (Blocked Oneway) zu...")
@@ -213,10 +240,12 @@ class AccessNodeDeriver:
             if not filtered.empty:
                 vals = filtered[['VISUM_ID']].copy()
                 vals['NEW_TYPE'] = 0
-                self.Visum.Net.Links.SetMultiAttValues("TYPENO", vals.values)
+                with timed_step("self.Visum.Net.Links.SetMultiAttValues | 'TYPENO'"):
+                    self.Visum.Net.Links.SetMultiAttValues("TYPENO", vals.values)
                 logging.info(
                     f"{len(filtered)} Einbahnstraßen-Rückrichtungen exakt als 'Blocked Oneway' (Typ 0) markiert.")
 
+    @measured
     def preprocess_ferries(self):
         """Kennzeichnet Fährknoten und bindet diese über 'Ferry_Access' an (via Pandas)."""
         logging.info("Verarbeite Fährverbindungen und Fähr-Anbindungen...")
@@ -231,7 +260,8 @@ class AccessNodeDeriver:
                 node_data['Ferry_Origin'] = node_data['NO'].isin(ferry_nodes)
                 ferry_vals = node_data[node_data['Ferry_Origin']][['VISUM_ID', 'Ferry_Origin']].copy()
                 if not ferry_vals.empty:
-                    self.Visum.Net.Nodes.SetMultiAttValues('Ferry_Origin', ferry_vals.values)
+                    with timed_step("self.Visum.Net.Nodes.SetMultiAttValues | 'Ferry_Origin'"):
+                        self.Visum.Net.Nodes.SetMultiAttValues('Ferry_Origin', ferry_vals.values)
                     logging.info(f"{len(ferry_vals)} Fähr-Knoten mit 'Ferry_Origin = 1' markiert.")
 
         ferry_access_type_no = 95
@@ -270,6 +300,7 @@ class AccessNodeDeriver:
             logging.debug(f"Fähr-Abbieger (CalculateTurns) übersprungen/nicht unterstützt: {e}")
         self.lf.Init()
 
+    @measured
     def prepare_net(self):
         """Setzt die globalen Strecken-Obertypen (GTYPE) basierend auf OSM-Namen."""
         logging.info("Setze globale Strecken-Obertypen (GTYPE) basierend auf OSM-Straßenklassen...")
@@ -289,24 +320,30 @@ class AccessNodeDeriver:
             mask = pd.Series([road_type.lower() in str(x).lower() for x in linktypes_df['NAME']], index=linktypes_df.index)
             linktypes_df.loc[mask, 'GTYPE'] = main_type
         linktypes_df.loc[pd.Series(['_link' in str(x).lower() for x in linktypes_df['NAME']], index=linktypes_df.index), 'GTYPE'] = 77
-        self.Visum.Net.LinkTypes.SetMultiAttValues("GTYPE", linktypes_df[["VISUM_ID", "GTYPE"]].values)
+        with timed_step("self.Visum.Net.LinkTypes.SetMultiAttValues | 'GTYPE'"):
+            self.Visum.Net.LinkTypes.SetMultiAttValues("GTYPE", linktypes_df[["VISUM_ID", "GTYPE"]].values)
 
         self.add_uda(self.Visum.Net.Links, uda_name='ZK_OBERTYP_UNGERICHTET', value_type=1, def_val=99)
         self.edit_link_atts.SetAttValue("ONLYACTIVE", "0")
         self.edit_link_atts.SetAttValue("RESULTATTRNAME", "ZK_OBERTYP_UNGERICHTET")
         self.edit_link_atts.SetAttValue("FORMULA", r'MIN([GTYPE], [REVERSELINK\LINKTYPE\GTYPE])')
-        self.Visum.Net.EditAttribute(self.edit_link_atts)
+        with timed_step('self.Visum.Net.EditAttribute'):
+            self.Visum.Net.EditAttribute(self.edit_link_atts)
 
+    @measured
     def preprocess_roundabouts(self, roundabout_uda: str = "OSM_ROUNDABOUT"):
         """Verarbeitet Kreisverkehre analog zu Rampen."""
         if self.Visum.Net.Links.AttrExists(roundabout_uda):
             self.edit_link_atts.SetAttValue("ONLYACTIVE", "0")
             self.edit_link_atts.SetAttValue("RESULTATTRNAME", "ZK_OBERTYP_UNGERICHTET")
             self.edit_link_atts.SetAttValue("FORMULA", f'IF([{roundabout_uda}]="1", 77, [ZK_OBERTYP_UNGERICHTET])')
-            self.Visum.Net.EditAttribute(self.edit_link_atts)
+            with timed_step('self.Visum.Net.EditAttribute'):
+                self.Visum.Net.EditAttribute(self.edit_link_atts)
         self.edit_link_atts.SetAttValue("FORMULA", 'IF([ZK_OBERTYP_UNGERICHTET] = 77, -1, [ZK_OBERTYP_UNGERICHTET])')
-        self.Visum.Net.EditAttribute(self.edit_link_atts)
+        with timed_step('self.Visum.Net.EditAttribute'):
+            self.Visum.Net.EditAttribute(self.edit_link_atts)
 
+    @measured
     def ramp_analysis(self):
         """Analysiert zusammenhängende Rampenstrukturen via NetworkX."""
         logging.info("Analysiere Rampen- und Knotenverbindungen...")
@@ -327,8 +364,11 @@ class AccessNodeDeriver:
             ).apply(lambda a: [int(x) for x in a.split(',') if x != ''])
             df_links['TFGTYPE_less5'] = df_links['TFGTYPE'].apply(lambda s: [x for x in s if 0 <= x <= 5])
 
+            graph_started = perf_counter()
             G = nx.from_pandas_edgelist(df_links, 'FROMNODENO', 'TONODENO',
                                         edge_attr=['VISUM_ID', 'NO', 'TFGTYPE_less5'], create_using=nx.DiGraph())
+            logging.info("[Diagnose] Rampengraph: %d Streckenrichtungen; %d Knoten; %d Kanten; Aufbau %.2f s (parallele Kanten ggf. zusammengefasst)", len(df_links), G.number_of_nodes(), G.number_of_edges(), perf_counter() - graph_started)
+            components_started = perf_counter()
             grouped_links = []
             for component in nx.weakly_connected_components(G):
                 subgraph = G.subgraph(component)
@@ -339,6 +379,7 @@ class AccessNodeDeriver:
                      sublist])
                 grouped_links.append({'visum_ids': ids, 'linknos': nos, 'ftgtypes': tfgtype_sorted})
 
+            logging.info("[Diagnose] Rampenkomponenten: %d; größte Komponente: %d Streckenrichtungen; Analyse %.2f s", len(grouped_links), max((len(c["visum_ids"]) for c in grouped_links), default=0), perf_counter() - components_started)
             grouped_df = pd.DataFrame(grouped_links)
             grouped_df = grouped_df[grouped_df['ftgtypes'].map(len) > 0]
             grouped_df['ZK_OBERTYP_VERSCHIEDENE'] = grouped_df['ftgtypes'].apply(
@@ -346,8 +387,10 @@ class AccessNodeDeriver:
             grouped_df.loc[grouped_df.ftgtypes.apply(lambda x: len(x) == 2), 'ZK_OBERTYP_VERSCHIEDENE'] = '6'
 
             linkids2edit = grouped_df.explode('visum_ids')[['visum_ids', 'ZK_OBERTYP_VERSCHIEDENE']]
-            self.Visum.Net.Links.SetMultiAttValues('ZK_OBERTYP_VERSCHIEDENE', linkids2edit.to_numpy())
+            with timed_step("self.Visum.Net.Links.SetMultiAttValues | 'ZK_OBERTYP_VERSCHIEDENE'"):
+                self.Visum.Net.Links.SetMultiAttValues('ZK_OBERTYP_VERSCHIEDENE', linkids2edit.to_numpy())
 
+    @measured
     def identify_uturns(self):
         """Identifiziert U-Turn-Schleifen (< 50 m auf gleichem Straßennamen)."""
         logging.info("Identifiziere U-Turns...")
@@ -388,9 +431,11 @@ class AccessNodeDeriver:
             df_links_index = pd.DataFrame(self.Visum.Net.Links.GetMultiAttValues("NO", OnlyActive=False),
                                           columns=["VISUM_ID", "NO"]).astype({"VISUM_ID": int, "NO": int})
             df_links_index['ZK_IS_UTURN'] = df_links_index["NO"].map(linksnos2edit['ZK_IS_UTURN']).fillna(0)
-            self.Visum.Net.Links.SetMultiAttValues('ZK_IS_UTURN',
-                                                   df_links_index[['VISUM_ID', 'ZK_IS_UTURN']].to_numpy())
+            with timed_step("self.Visum.Net.Links.SetMultiAttValues | 'ZK_IS_UTURN'"):
+                self.Visum.Net.Links.SetMultiAttValues('ZK_IS_UTURN',
+                                                       df_links_index[['VISUM_ID', 'ZK_IS_UTURN']].to_numpy())
 
+    @measured
     def postprocess_gtypes(self):
         """Finalisiert gerichtete und ungerichtete Obertypen."""
         self.lf.Init()
@@ -398,15 +443,18 @@ class AccessNodeDeriver:
         self.edit_link_atts.SetAttValue("ONLYACTIVE", "1")
         self.edit_link_atts.SetAttValue("RESULTATTRNAME", "ZK_OBERTYP_VERSCHIEDENE")
         self.edit_link_atts.SetAttValue("FORMULA", 'NUMTOSTR([ZK_OBERTYP_UNGERICHTET],0)')
-        self.Visum.Net.EditAttribute(self.edit_link_atts)
+        with timed_step('self.Visum.Net.EditAttribute'):
+            self.Visum.Net.EditAttribute(self.edit_link_atts)
         self.lf.Init()
 
         self.add_uda(self.Visum.Net.Links, 'ZK_OBERTYP_STRECKE', value_type=1, def_val=99)
         self.edit_link_atts.SetAttValue("ONLYACTIVE", "0")
         self.edit_link_atts.SetAttValue("RESULTATTRNAME", "ZK_OBERTYP_STRECKE")
         self.edit_link_atts.SetAttValue("FORMULA", r'IF([ZK_IS_UTURN] & [LINKTYPE\GTYPE] != 99, 88, [LINKTYPE\GTYPE])')
-        self.Visum.Net.EditAttribute(self.edit_link_atts)
+        with timed_step('self.Visum.Net.EditAttribute'):
+            self.Visum.Net.EditAttribute(self.edit_link_atts)
 
+    @measured
     def determine_nodetype(self):
         """Ermittelt Knotentypen anhand einmündender Streckenklassen."""
         logging.info("Bestimme Knotentypen der Kreuzungen...")
@@ -431,6 +479,7 @@ class AccessNodeDeriver:
             x[r"CONCATENATEACTIVE: INLINKS\ZK_OBERTYP_STRECKE"] + x[r"CONCATENATEACTIVE: OUTLINKS\ZK_OBERTYP_STRECKE"]),
                                         axis=1)
 
+        @measured
         def calc_detail_type(x):
             nums_dist = x[r"CONCATENATEACTIVE: INLINKS\ZK_OBERTYP_VERSCHIEDENE"]
             nums_dist_dir = [i for i in x["IO"] if i < 77]
@@ -446,6 +495,7 @@ class AccessNodeDeriver:
         df_nodes["Knotentyp_Detail"] = df_nodes.apply(calc_detail_type, axis=1)
         df_nodes["Knotentyp_Aggregiert"] = df_nodes["Knotentyp_Detail"].apply(lambda r: int(r.split('-')[1]))
 
+        @measured
         def filter_intersections(row):
             io = row["IO"]
             io_excl = [i for i in io if i < 88]
@@ -460,9 +510,12 @@ class AccessNodeDeriver:
         df_nodes["Knotentyp_Detail"] = df_nodes.apply(
             lambda r: r["Knotentyp_Detail"] if r["Knotentyp_Aggregiert"] < 99 else 'N-N', axis=1)
 
-        self.Visum.Net.Nodes.SetMultiAttValues("TYPENO", df_nodes[["VISUM_ID", "Knotentyp_Aggregiert"]].to_numpy())
-        self.Visum.Net.Nodes.SetMultiAttValues("ZK_TYP_DETAIL", df_nodes[["VISUM_ID", "Knotentyp_Detail"]].to_numpy())
+        with timed_step("self.Visum.Net.Nodes.SetMultiAttValues | 'TYPENO'"):
+            self.Visum.Net.Nodes.SetMultiAttValues("TYPENO", df_nodes[["VISUM_ID", "Knotentyp_Aggregiert"]].to_numpy())
+        with timed_step("self.Visum.Net.Nodes.SetMultiAttValues | 'ZK_TYP_DETAIL'"):
+            self.Visum.Net.Nodes.SetMultiAttValues("ZK_TYP_DETAIL", df_nodes[["VISUM_ID", "Knotentyp_Detail"]].to_numpy())
 
+    @measured
     def set_open_end_nodes(self):
         """Setzt Knotentypen für offene Enden von Strecken der Klasse 1 (Autobahnen)."""
         logging.info("Setze Knotentypen für offene Enden...")
@@ -475,6 +528,7 @@ class AccessNodeDeriver:
             self.Visum.Net.Nodes.SetAllAttValues("ZK_TYP_DETAIL", "1-1", OnlyActive=True)
         self.Visum.Filters.InitAll()
 
+    @measured
     def calculate_reachable_nodes(self, max_start_nodes: int = 10):
         """Ermittelt erreichbare Knoten über Isochronen für mehrere Startknoten."""
         logging.info(f"Berechne 'Reachable_Node' Attribut via Isochronen für bis zu {max_start_nodes} Startknoten...")
@@ -498,7 +552,8 @@ class AccessNodeDeriver:
             if self.Visum.Net.Zones.CountActive == 0:
                 zf.Init()
 
-            zone_coords = self.Visum.Net.Zones.GetMultipleAttributes(["XCOORD", "YCOORD"], OnlyActive=True)
+            with timed_step("self.Visum.Net.Zones.GetMultipleAttributes | ['XCOORD', 'YCOORD']"):
+                zone_coords = self.Visum.Net.Zones.GetMultipleAttributes(["XCOORD", "YCOORD"], OnlyActive=True)
             zf.Init()
 
             if zone_coords:
@@ -522,7 +577,8 @@ class AccessNodeDeriver:
                 self.nf.AddCondition("OP_AND", False, "ZK_TYP_DETAIL", "NotEqualVal", "N-N")
                 self.nf.AddCondition("OP_AND", False, "ZK_TYP_DETAIL", "NotEqualVal", "")
 
-            cand_nodes = self.Visum.Net.Nodes.GetMultipleAttributes(["NO", "COUNT:INLINKS"], OnlyActive=True)
+            with timed_step("self.Visum.Net.Nodes.GetMultipleAttributes | ['NO', 'COUNT:INLINKS']"):
+                cand_nodes = self.Visum.Net.Nodes.GetMultipleAttributes(["NO", "COUNT:INLINKS"], OnlyActive=True)
             self.nf.Init()
 
             if cand_nodes:
@@ -538,7 +594,8 @@ class AccessNodeDeriver:
 
         # Fallback falls noch nicht genug Startknoten gefunden
         if len(start_node_nos) < max_start_nodes:
-            all_nodes = self.Visum.Net.Nodes.GetMultipleAttributes(["NO", "COUNT:INLINKS"], OnlyActive=False)
+            with timed_step("self.Visum.Net.Nodes.GetMultipleAttributes | ['NO', 'COUNT:INLINKS']"):
+                all_nodes = self.Visum.Net.Nodes.GetMultipleAttributes(["NO", "COUNT:INLINKS"], OnlyActive=False)
             if all_nodes:
                 sorted_all = sorted(all_nodes, key=lambda x: x[1] if x[1] is not None else 0, reverse=True)
                 for n in sorted_all:
@@ -568,8 +625,9 @@ class AccessNodeDeriver:
                                        columns=(["NO"])).astype(int)
 
                 for dir_x, is_dest in [("O", False), ("D", True)]:
-                    self.Visum.Analysis.Isochrones.ExecutePrT(NetElms=net_elems_nodes, TSysCode="CAR", WKriterium=0,
-                                                              IsDestinationBased=is_dest)
+                    with timed_step('self.Visum.Analysis.Isochrones.ExecutePrT'):
+                        self.Visum.Analysis.Isochrones.ExecutePrT(NetElms=net_elems_nodes, TSysCode="CAR", WKriterium=0,
+                                                                  IsDestinationBased=is_dest)
                     temp_df['IcocTimePrt_' + dir_x] = pd.DataFrame(
                         self.Visum.Net.Nodes.GetMultipleAttributes(["ISOCTIMEPRT"], OnlyActive=False))
 
@@ -609,7 +667,8 @@ class AccessNodeDeriver:
         nodes_isoctimes_df.set_index("NO", inplace=True)
         n_df_outputformat = n_df_outputformat.join(nodes_isoctimes_df, how="inner")
 
-        self.Visum.Net.Nodes.SetMultiAttValues(uda_name, n_df_outputformat[['Visum_Index', uda_name]].values)
+        with timed_step('self.Visum.Net.Nodes.SetMultiAttValues | uda_name'):
+            self.Visum.Net.Nodes.SetMultiAttValues(uda_name, n_df_outputformat[['Visum_Index', uda_name]].values)
 
         self.nf.Init()
         self.nf.AddCondition("OP_NONE", False, uda_name, "EqualVal", 0)
@@ -619,6 +678,7 @@ class AccessNodeDeriver:
         self.nf.Init()
         logging.info("Erreichbarkeitsprüfung abgeschlossen.")
 
+    @measured
     def create_cluster_actnodes(self, buffer: float, uda_name: str, nodecounter: int) -> pd.DataFrame:
         """Erzeugt räumliche Knoten-Cluster über Pufferdistanzen."""
         intersect_att = self.Visum.Net.CreateIntersectAttributePara()
@@ -672,6 +732,7 @@ class AccessNodeDeriver:
                 df_nodes.loc[df_nodes['NO'].isin(cluster), 'ZK_CLUSTER_ID'] = row['cluster_id']
         return df_nodes
 
+    @measured
     def cluster_by_nodetype(self, nodetype_buffer_dict: dict):
         """Clustert Knoten je Knotentyp-Kategorie."""
         self.add_uda(self.Visum.Net.Nodes, 'ZK_NODES_INTERSECT', value_type=62, def_val='')
@@ -702,12 +763,16 @@ class AccessNodeDeriver:
                 master_df = pd.concat([master_df, df_nodes])
 
         if not master_df.empty:
-            self.Visum.Net.Nodes.SetMultiAttValues("ZK_CLUSTER_ID", master_df[["VISUM_ID", "ZK_CLUSTER_ID"]].to_numpy())
-            self.Visum.Net.Nodes.SetMultiAttValues("ZK_CLUSTER_ANZAHL_KNOTEN",
-                                                   master_df[["VISUM_ID", "ZK_CLUSTER_ANZAHL_KNOTEN"]].to_numpy())
+            with timed_step("self.Visum.Net.Nodes.SetMultiAttValues | 'ZK_CLUSTER_ID'"):
+                self.Visum.Net.Nodes.SetMultiAttValues("ZK_CLUSTER_ID", master_df[["VISUM_ID", "ZK_CLUSTER_ID"]].to_numpy())
+            with timed_step("self.Visum.Net.Nodes.SetMultiAttValues | 'ZK_CLUSTER_ANZAHL_KNOTEN'"):
+                self.Visum.Net.Nodes.SetMultiAttValues("ZK_CLUSTER_ANZAHL_KNOTEN",
+                                                       master_df[["VISUM_ID", "ZK_CLUSTER_ANZAHL_KNOTEN"]].to_numpy())
             master_df.set_index("VISUM_ID", drop=False, inplace=True)
+        logging.info("[Diagnose] Clustering: %d Kandidaten; %d Cluster", len(master_df), master_df["ZK_CLUSTER_ID"].nunique() if not master_df.empty else 0)
         self.access_nodes_df = master_df.copy()
 
+    @measured
     def prepare_and_import_helper_net(self, netfile_path: Path):
         """Erzeugt neue Zugangsknoten und Hilfsstrecken (Typ 777) als .net Datei und lädt sie."""
         logging.info("Erzeuge Zugangsknoten und Hilfsstrecken (Typ 777)...")
@@ -734,7 +799,8 @@ class AccessNodeDeriver:
         mask_1er = (zk_agg.ZK_CLUSTER_ANZAHL_KNOTEN == 1)
         df_1er = zk_agg[mask_1er]
         if not df_1er.empty:
-            self.Visum.Net.Nodes.SetMultiAttValues("ZK_TYP", df_1er.explode("VISUM_ID")[["VISUM_ID", "ZK_TYP"]].values)
+            with timed_step("self.Visum.Net.Nodes.SetMultiAttValues | 'ZK_TYP'"):
+                self.Visum.Net.Nodes.SetMultiAttValues("ZK_TYP", df_1er.explode("VISUM_ID")[["VISUM_ID", "ZK_TYP"]].values)
 
         df_newnodes = zk_agg[~mask_1er][['ZK_CLUSTER_ID', 'ZK_TYP_DETAIL', 'XCOORD', 'YCOORD', 'ZK_TYP']].copy()
         df_newnodes.rename(columns={'ZK_CLUSTER_ID': 'NO'}, inplace=True)
@@ -761,6 +827,8 @@ class AccessNodeDeriver:
         df_newlinks['TypeNo'] = 777
         df_newlinks['ZK_OBERTYP_STRECKE'] = 777
 
+        logging.info("[Diagnose] Hilfsnetz: %d Einzelknotencluster; %d neue Knoten/Hilfsbezirke; %d Hilfsstreckenrichtungen", len(df_1er), len(df_newnodes), len(df_newlinks))
+        logging.info("[Diagnose] Geplante Hilfsnachfrage: %d x %d = %d positive Matrixeinträge inkl. Diagonale", len(df_newnodes), len(df_newnodes), len(df_newnodes) ** 2)
         with open(netfile_path, "w", encoding="utf-8") as file:
             file.write("$VISION\n$VERSION:VERSNR;FILETYPE;LANGUAGE;UNIT\n15;Net;ENG;KM\n")
             file.write(f"\n* Tabelle: Knoten\n$NODE:{';'.join(df_newnodes.columns).upper()}\n")
@@ -788,7 +856,8 @@ class AccessNodeDeriver:
             file.write(f"\n* Tabelle: Anbindungen\n$CONNECTOR:{';'.join(conn_df.columns).upper()}\n")
             conn_df.to_csv(file, header=False, sep=";", index=False, lineterminator='\n')
 
-        self.Visum.IO.LoadNet(str(netfile_path), ReadAdditive=True)
+        with timed_step('self.Visum.IO.LoadNet'):
+            self.Visum.IO.LoadNet(str(netfile_path), ReadAdditive=True)
 
         # Assign Reachable_Node = True to newly created access nodes (ZK_TYP <= 5)
         self.nf.Init()
@@ -804,6 +873,7 @@ class AccessNodeDeriver:
                         break
         self.nf.Init()
 
+    @measured
     def postprocess_helper_links(self, procedure_xml_path: Path):
         """Führt eine 1er-Testumlegung aus und setzt ungenutzte Hilfsstrecken auf Typ 776."""
         logging.info("Führe Testumlegung zur Ausdünnung überflüssiger Hilfsstrecken durch...")
@@ -822,18 +892,24 @@ class AccessNodeDeriver:
         dseg.SetAttValue("NAME", "1erUmlegung_TestAnbindungsknoten")
         dseg.GetDemandDescription().SetAttValue("Matrix", 'Matrix([CODE]="1erUmlegung_TestAnbindungsknoten")')
 
-        matrix_1er.SetValuesToResultOfFormula("If(FROM[TYPENO]=99 & TO[TYPENO]=99, 1, 0)")
+        with timed_step('matrix_1er.SetValuesToResultOfFormula'):
+            matrix_1er.SetValuesToResultOfFormula("If(FROM[TYPENO]=99 & TO[TYPENO]=99, 1, 0)")
         matrix_1er.SetAttValue("DSEGCODE", "1erUmlegung_TestAnbindungsknoten")
 
-        self.Visum.Procedures.Open(str(procedure_xml_path))
+        with timed_step('self.Visum.Procedures.Open'):
+            self.Visum.Procedures.Open(str(procedure_xml_path))
+        logging.info("[Diagnose] Verfahrensdatei Hilfsnetzumlegung: %s", procedure_xml_path.resolve())
+        log_network_counts(self.Visum, "vor Hilfsnetzumlegung")
         logging.info("Starte Visum-Verfahrensablauf zur Netz-Umlegung und Hilfsstrecken-Ausdünnung (kann ca. 10–15 Minuten dauern, bitte warten...)...")
-        self.Visum.Procedures.Execute()
+        with timed_step('self.Visum.Procedures.Execute'):
+            self.Visum.Procedures.Execute()
         logging.info("Visum-Verfahrensablauf erfolgreich ausgeführt.")
 
         self.lf.Init()
         self.lf.AddCondition("OP_NONE", False, "TYPENO", "ContainedIn", "777")
         self.lf.AddCondition("OP_AND", False, "VOLVEHPRT(AP)", "EqualVal", 0)
 
+        logging.info("[Diagnose] Unbelastete Hilfsstreckenrichtungen (Typ 777, Belastung 0): %d", self.Visum.Net.Links.CountActive)
         lt776 = self.Visum.Net.AddLinkType(776)
         lt776.SetAttValue("NAME", 'ZK_Hilfsstrecken_Überflüssig')
         lt776.SetAttValue("V0PRT", 0)
@@ -845,6 +921,7 @@ class AccessNodeDeriver:
         self.Visum.Net.Links.SetAllAttValues("TYPENO", 776, OnlyActive=True)
         self.Visum.Filters.InitAll()
 
+    @measured
     def clean_up_and_save(self, output_ver_path: Path):
         """Bereinigt temporäre Elemente und speichert die Version."""
         logging.info("Räume temporäre Objekte auf...")
@@ -869,9 +946,11 @@ class AccessNodeDeriver:
 
         self.Visum.Filters.InitAll()
         logging.info(f"Speichere abgeleitete Zugangsknoten unter: {output_ver_path.name}")
-        self.Visum.SaveVersion(str(output_ver_path))
+        with timed_step('self.Visum.SaveVersion'):
+            self.Visum.SaveVersion(str(output_ver_path))
 
 
+@measured
 def run_access_node_derivation(target_project_dir=None, visum=None):
     base_project_dir, visum_input_dir = get_project_paths(target_project_dir)
 
@@ -892,7 +971,7 @@ def run_access_node_derivation(target_project_dir=None, visum=None):
             sys.exit(1)
 
         logging.info(f"Starte Visum und lade: {input_ver.name}")
-        visum = com.Dispatch("Visum.Visum.250")
+        visum = create_visum()
         visum.Graphic.ShowMaximized()
         visum.LoadVersion(str(input_ver))
 

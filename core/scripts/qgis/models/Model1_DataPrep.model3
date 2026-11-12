@@ -228,13 +228,13 @@
         <Option name="component_pos_x" type="double" value="3375"/>
         <Option name="component_pos_y" type="double" value="3700"/>
         <Option name="component_width" type="double" value="100"/>
-        <Option name="outputs_collapsed" type="bool" value="true"/>
-        <Option name="parameters_collapsed" type="bool" value="true"/>
+        <Option name="outputs_collapsed" type="bool" value="false"/>
+        <Option name="parameters_collapsed" type="bool" value="false"/>
       </Option>
       <Option name="component_description" type="QString" value="Clip raster by mask layer: Final corrected POP Layer"/>
       <Option name="component_height" type="double" value="30"/>
       <Option name="component_pos_x" type="double" value="580"/>
-      <Option name="component_pos_y" type="double" value="3255"/>
+      <Option name="component_pos_y" type="double" value="3315"/>
       <Option name="component_width" type="double" value="200"/>
       <Option name="dependencies"/>
       <Option name="id" type="QString" value="gdal:cliprasterbymasklayer_1"/>
@@ -255,7 +255,7 @@
           <Option name="component_description" type="QString" value="POP_Raster_Corr"/>
           <Option name="component_height" type="double" value="30"/>
           <Option name="component_pos_x" type="double" value="790"/>
-          <Option name="component_pos_y" type="double" value="3315"/>
+          <Option name="component_pos_y" type="double" value="3405"/>
           <Option name="component_width" type="double" value="200"/>
           <Option name="default_value" type="Map">
             <Option name="class" type="QString" value="QgsProcessingOutputLayerDefinition"/>
@@ -305,12 +305,12 @@
         <Option name="EXTRA" type="List">
           <Option type="Map">
             <Option name="source" type="int" value="2"/>
-            <Option name="static_value" type="invalid"/>
+            <Option name="static_value" type="QString" value=""/>
           </Option>
         </Option>
         <Option name="INPUT" type="List">
           <Option type="Map">
-            <Option name="child_id" type="QString" value="gdal:merge_2"/>
+            <Option name="child_id" type="QString" value="gdal:rastercalculator_4"/>
             <Option name="output_name" type="QString" value="OUTPUT"/>
             <Option name="source" type="int" value="1"/>
           </Option>
@@ -496,8 +496,8 @@
         <Option name="component_pos_x" type="double" value="4415.580072958276"/>
         <Option name="component_pos_y" type="double" value="5008.680133402699"/>
         <Option name="component_width" type="double" value="100"/>
-        <Option name="outputs_collapsed" type="bool" value="true"/>
-        <Option name="parameters_collapsed" type="bool" value="true"/>
+        <Option name="outputs_collapsed" type="bool" value="false"/>
+        <Option name="parameters_collapsed" type="bool" value="false"/>
       </Option>
       <Option name="component_description" type="QString" value="Merge: Corrected POP Layer"/>
       <Option name="component_height" type="double" value="30"/>
@@ -525,7 +525,7 @@
         <Option name="EXTRA" type="List">
           <Option type="Map">
             <Option name="source" type="int" value="2"/>
-            <Option name="static_value" type="invalid"/>
+            <Option name="static_value" type="QString" value=""/>
           </Option>
         </Option>
         <Option name="INPUT" type="List">
@@ -543,7 +543,7 @@
         <Option name="NODATA_INPUT" type="List">
           <Option type="Map">
             <Option name="source" type="int" value="2"/>
-            <Option name="static_value" type="double" value="0"/>
+            <Option name="static_value" type="double" value="-9999"/>
           </Option>
         </Option>
         <Option name="NODATA_OUTPUT" type="List">
@@ -982,6 +982,149 @@
           <Option type="Map">
             <Option name="source" type="int" value="2"/>
             <Option name="static_value" type="double" value="-9999"/>
+          </Option>
+        </Option>
+        <Option name="PROJWIN" type="List">
+          <Option type="Map">
+            <Option name="source" type="int" value="2"/>
+            <Option name="static_value" type="invalid"/>
+          </Option>
+        </Option>
+        <Option name="RTYPE" type="List">
+          <Option type="Map">
+            <Option name="source" type="int" value="2"/>
+            <Option name="static_value" type="int" value="5"/>
+          </Option>
+        </Option>
+      </Option>
+    </Option>
+    <Option name="gdal:rastercalculator_4" type="Map">
+      <Option name="active" type="bool" value="true"/>
+      <Option name="alg_config"/>
+      <Option name="alg_id" type="QString" value="gdal:rastercalculator"/>
+      <Option name="color" type="QString" value=""/>
+      <Option name="comment" type="Map">
+        <Option name="color" type="QString" value=""/>
+        <Option name="component_description" type="QString" value=""/>
+        <Option name="component_height" type="double" value="60"/>
+        <Option name="component_pos_x" type="double" value="2415"/>
+        <Option name="component_pos_y" type="double" value="3880"/>
+        <Option name="component_width" type="double" value="100"/>
+        <Option name="outputs_collapsed" type="bool" value="false"/>
+        <Option name="parameters_collapsed" type="bool" value="false"/>
+      </Option>
+      <Option name="component_description" type="QString" value="Raster calculator: NoData fix v2"/>
+      <Option name="component_height" type="double" value="30"/>
+      <Option name="component_pos_x" type="double" value="580"/>
+      <Option name="component_pos_y" type="double" value="3255"/>
+      <Option name="component_width" type="double" value="200"/>
+      <Option name="dependencies"/>
+      <Option name="id" type="QString" value="gdal:rastercalculator_4"/>
+      <Option name="outputs"/>
+      <Option name="outputs_collapsed" type="bool" value="true"/>
+      <Option name="parameters_collapsed" type="bool" value="true"/>
+      <Option name="params" type="Map">
+        <Option name="BAND_A" type="List">
+          <Option type="Map">
+            <Option name="source" type="int" value="2"/>
+            <Option name="static_value" type="QString" value="1"/>
+          </Option>
+        </Option>
+        <Option name="BAND_B" type="List">
+          <Option type="Map">
+            <Option name="source" type="int" value="2"/>
+            <Option name="static_value" type="invalid"/>
+          </Option>
+        </Option>
+        <Option name="BAND_C" type="List">
+          <Option type="Map">
+            <Option name="source" type="int" value="2"/>
+            <Option name="static_value" type="invalid"/>
+          </Option>
+        </Option>
+        <Option name="BAND_D" type="List">
+          <Option type="Map">
+            <Option name="source" type="int" value="2"/>
+            <Option name="static_value" type="invalid"/>
+          </Option>
+        </Option>
+        <Option name="BAND_E" type="List">
+          <Option type="Map">
+            <Option name="source" type="int" value="2"/>
+            <Option name="static_value" type="invalid"/>
+          </Option>
+        </Option>
+        <Option name="BAND_F" type="List">
+          <Option type="Map">
+            <Option name="source" type="int" value="2"/>
+            <Option name="static_value" type="invalid"/>
+          </Option>
+        </Option>
+        <Option name="CREATION_OPTIONS" type="List">
+          <Option type="Map">
+            <Option name="source" type="int" value="2"/>
+            <Option name="static_value" type="invalid"/>
+          </Option>
+        </Option>
+        <Option name="EXTENT_OPT" type="List">
+          <Option type="Map">
+            <Option name="source" type="int" value="2"/>
+            <Option name="static_value" type="int" value="0"/>
+          </Option>
+        </Option>
+        <Option name="EXTRA" type="List">
+          <Option type="Map">
+            <Option name="source" type="int" value="2"/>
+            <Option name="static_value" type="QString" value=""/>
+          </Option>
+        </Option>
+        <Option name="FORMULA" type="List">
+          <Option type="Map">
+            <Option name="source" type="int" value="2"/>
+            <Option name="static_value" type="QString" value="A * (A != 0) * (A != -9999)"/>
+          </Option>
+        </Option>
+        <Option name="INPUT_A" type="List">
+          <Option type="Map">
+            <Option name="child_id" type="QString" value="gdal:merge_2"/>
+            <Option name="output_name" type="QString" value="OUTPUT"/>
+            <Option name="source" type="int" value="1"/>
+          </Option>
+        </Option>
+        <Option name="INPUT_B" type="List">
+          <Option type="Map">
+            <Option name="source" type="int" value="2"/>
+            <Option name="static_value" type="invalid"/>
+          </Option>
+        </Option>
+        <Option name="INPUT_C" type="List">
+          <Option type="Map">
+            <Option name="source" type="int" value="2"/>
+            <Option name="static_value" type="invalid"/>
+          </Option>
+        </Option>
+        <Option name="INPUT_D" type="List">
+          <Option type="Map">
+            <Option name="source" type="int" value="2"/>
+            <Option name="static_value" type="invalid"/>
+          </Option>
+        </Option>
+        <Option name="INPUT_E" type="List">
+          <Option type="Map">
+            <Option name="source" type="int" value="2"/>
+            <Option name="static_value" type="invalid"/>
+          </Option>
+        </Option>
+        <Option name="INPUT_F" type="List">
+          <Option type="Map">
+            <Option name="source" type="int" value="2"/>
+            <Option name="static_value" type="invalid"/>
+          </Option>
+        </Option>
+        <Option name="NO_DATA" type="List">
+          <Option type="Map">
+            <Option name="source" type="int" value="2"/>
+            <Option name="static_value" type="double" value="0"/>
           </Option>
         </Option>
         <Option name="PROJWIN" type="List">
@@ -4913,8 +5056,8 @@
         </Option>
       </Option>
     </Option>
-    <Option name="iso_country_code_iso_31661_3_symbols_commaseperated_eg_phl_idn_tha" type="QString" value="DEU, CHE"/>
-    <Option name="pop_ghspop_raster_data_worldwide_wgs84_3_arcsec" type="QString" value="GHS_POP_E2020_GLOBE_compressed_a18ef812_0a69_4158_b745_3195db09224f"/>
+    <Option name="iso_country_code_iso_31661_3_symbols_commaseperated_eg_phl_idn_tha" type="QString" value="PHL"/>
+    <Option name="pop_ghspop_raster_data_worldwide_wgs84_3_arcsec" type="QString" value="ghs_pop_global_ca445faf_3500_45d7_9c1a_796f1ded0b22"/>
     <Option name="pop_raster_corr" type="QgsProcessingOutputLayerDefinition">
       <Option type="Map">
         <Option name="create_options" type="Map">
@@ -4927,33 +5070,21 @@
         </Option>
       </Option>
     </Option>
-    <Option name="pop_raster_corr_areas" type="QgsProcessingOutputLayerDefinition">
-      <Option type="Map">
-        <Option name="create_options" type="Map">
-          <Option name="fileEncoding" type="QString" value="windows-1252"/>
-        </Option>
-        <Option name="sink" type="Map">
-          <Option name="active" type="bool" value="true"/>
-          <Option name="type" type="int" value="1"/>
-          <Option name="val" type="QString" value="TEMPORARY_OUTPUT"/>
-        </Option>
-      </Option>
-    </Option>
-    <Option name="pop_reference_for_district_level_correction_eg_barangaytambon_level" type="QString" value="POP_0___pop_ref_79a29424_5d4d_42ef_b084_0c289a557dd3"/>
-    <Option name="pop_uninhabited_from_overpass_query" type="QString" value="osm_pop_0_1_76bc85b1_c43d_48d9_b19b_84b8983dc627"/>
-    <Option name="select_pop_field_from_reference_layer" type="QString" value="pop"/>
-    <Option name="world_shapefile_adm0" type="QString" value="GADM_World___ADM_0_0503d380_48b8_4ff2_afc6_9321a53ab53d"/>
-    <Option name="world_shapefile_adm1" type="QString" value="GADM_World___ADM_1_056758f9_6501_469a_904b_4ce5ed5d54a2"/>
-    <Option name="world_shapefile_adm2" type="QString" value="GADM_World___ADM_2_6477278f_cd63_41ef_b5b3_a8dee67cf210"/>
-    <Option name="world_shapefile_adm3" type="QString" value="GADM_World___ADM_3_8f978143_d5a3_477a_87bf_5e889143bc4f"/>
+    <Option name="pop_reference_for_district_level_correction_eg_barangaytambon_level" type="QString" value="bac_brgy_admin_boundary_dfbafde8_5d31_4fe5_b081_ca0c1047998c"/>
+    <Option name="pop_uninhabited_from_overpass_query" type="QString" value="pop_zero_osm_2bfced5d_1071_4c6c_8ea8_473ce39453db"/>
+    <Option name="select_pop_field_from_reference_layer" type="QString" value="2020_Pop"/>
+    <Option name="world_shapefile_adm0" type="QString" value="gadm_adm0_feefe199_df45_43b5_ac63_84c0f91a0359"/>
+    <Option name="world_shapefile_adm1" type="QString" value="gadm_adm1_585d7d42_3fd2_4adc_9a82_780cc862edb6"/>
+    <Option name="world_shapefile_adm2" type="QString" value="gadm_adm2_af5bb3d0_fb92_43c0_8bde_803c8a33a8ac"/>
+    <Option name="world_shapefile_adm3" type="QString" value="gadm_adm3_57449d1c_2faf_456b_99d4_63693d6886bc"/>
   </Option>
   <Option name="groupBoxes" type="List">
     <Option type="Map">
       <Option name="color" type="QString" value="255,0,0,109,rgb:1,0,0,0.4263218"/>
       <Option name="component_description" type="QString" value="Output Corrected Data"/>
-      <Option name="component_height" type="double" value="210"/>
+      <Option name="component_height" type="double" value="300"/>
       <Option name="component_pos_x" type="double" value="585.0000000000002"/>
-      <Option name="component_pos_y" type="double" value="3255"/>
+      <Option name="component_pos_y" type="double" value="3300"/>
       <Option name="component_width" type="double" value="750.0000000000005"/>
       <Option name="outputs_collapsed" type="bool" value="true"/>
       <Option name="parameters_collapsed" type="bool" value="true"/>

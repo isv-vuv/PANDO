@@ -152,6 +152,7 @@ class HelpPanelWidget(_Q_WIDGET_BASE):
             StepId.PROCESSING: "help_step4_body",
             StepId.VISUM: "help_step5_body",
             StepId.RESULTS: "help_step6_body",
+            StepId.REPORT: "help_step7_body",
         }
         key = help_key_by_step.get(step_id, f"help_step{int(step_id)}_body")
 

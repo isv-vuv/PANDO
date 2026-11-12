@@ -58,7 +58,7 @@ class Step0WelcomeWidget(_Q_WIDGET_BASE):
         header, _title_label, step_label = create_step_header(
             self.localizer.get_string("step0_title"),
             current_step=0,
-            total_steps=6,
+            total_steps=7,
             localizer=self.localizer,
             parent=container,
         )

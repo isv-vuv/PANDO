@@ -658,7 +658,7 @@ class Step2DataWidget(_Q_WIDGET_BASE):
         header, _title_label, _step_label = create_step_header(
             self.localizer.get_string("step2_title", default="Schritt 2: Projektordner und Geodaten-Setup"),
             current_step=2,
-            total_steps=6,
+            total_steps=7,
             localizer=self.localizer,
             parent=self,
         )
@@ -1105,7 +1105,9 @@ class Step2DataWidget(_Q_WIDGET_BASE):
 
     def open_project_folder(self) -> None:
         if self.project_path and os.path.exists(self.project_path):
-            webbrowser.open(os.path.normpath(self.project_path))
+            QtGui.QDesktopServices.openUrl(
+                QtCore.QUrl.fromLocalFile(os.path.abspath(self.project_path))
+            )
         else:
             Dialogs.warning(
                 self,

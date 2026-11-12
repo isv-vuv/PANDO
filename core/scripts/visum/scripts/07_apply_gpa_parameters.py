@@ -1,3 +1,7 @@
+if __package__:
+    from .visum_com import create_visum
+else:
+    from visum_com import create_visum
 import logging
 import os
 import re
@@ -393,7 +397,7 @@ def apply_gpa_parameters_to_visum(target_project_dir=None, visum=None, log=loggi
 
         if cand_ver and cand_ver.exists():
             log(f"Lade Version: {cand_ver.name}")
-            visum = com.Dispatch("Visum.Visum.250")
+            visum = create_visum()
             visum.Graphic.ShowMaximized()
             visum.LoadVersion(str(cand_ver))
         else:

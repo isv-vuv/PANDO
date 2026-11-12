@@ -1,3 +1,9 @@
+if __package__:
+    from .visum_logging import measured, timed_step, log_network_counts
+    from .visum_com import create_visum
+else:
+    from visum_logging import measured, timed_step, log_network_counts
+    from visum_com import create_visum
 import os
 import sys
 import logging
@@ -29,11 +35,12 @@ def get_project_paths(target_project_dir=None) -> tuple[Path, Path]:
 
 def open_visum():
     logging.info("Initialisiere Visum-Instanz...")
-    visum = com.Dispatch("Visum.Visum.250")
+    visum = create_visum()
     visum.Graphic.ShowMaximized()
     return visum
 
 
+@measured
 def run_restructure_link_types(target_project_dir=None, visum=None):
     logging.info("--- Visum Schritt 3: Umstrukturierung der Streckentypen gestartet ---")
     base_project_dir, visum_input_dir = get_project_paths(target_project_dir)
@@ -79,7 +86,8 @@ def run_restructure_link_types(target_project_dir=None, visum=None):
     logging.info("Phase 0: Lösche überflüssige Hilfsstrecken ('ZK_Hilfsstrecken_Überflüssig')...")
     lf = visum.Filters.LinkFilter()
     try:
-        old_link_types = visum.Net.LinkTypes.GetMultipleAttributes(["NO", "NAME"])
+        with timed_step('visum.Net.LinkTypes.GetMultipleAttributes'):
+            old_link_types = visum.Net.LinkTypes.GetMultipleAttributes(["NO", "NAME"])
         typeno_to_delete = next((no for no, name in old_link_types if name == "ZK_Hilfsstrecken_Überflüssig"), None)
         if typeno_to_delete is not None:
             lf.Init()
@@ -97,10 +105,12 @@ def run_restructure_link_types(target_project_dir=None, visum=None):
 
     # Phase 1: Master-Streckentypen einlesen und Regelwerk aufbauen
     logging.info("Phase 1: Lade Ziel-Streckentypen aus Master-Netzdatei...")
-    visum.IO.LoadNet(str(master_net_path), True)
+    with timed_step('visum.IO.LoadNet'):
+        visum.IO.LoadNet(str(master_net_path), True)
 
     master_attributes = ["NO", "NAME", "NUMLANES", "V0PRT"]
-    all_types_data = visum.Net.LinkTypes.GetMultipleAttributes(master_attributes)
+    with timed_step('visum.Net.LinkTypes.GetMultipleAttributes'):
+        all_types_data = visum.Net.LinkTypes.GetMultipleAttributes(master_attributes)
     df_all_types = pd.DataFrame(all_types_data, columns=["TYPENO", "NAME", "NUMLANES", "V0PRT"])
 
     df_new_types = df_all_types[df_all_types['TYPENO'] >= 100].copy()
@@ -259,7 +269,8 @@ def run_restructure_link_types(target_project_dir=None, visum=None):
 
     lf.Init()
     logging.info(f"Speichere neu strukturierte Version unter: {output_ver.name}")
-    visum.SaveVersion(str(output_ver))
+    with timed_step('visum.SaveVersion'):
+        visum.SaveVersion(str(output_ver))
 
     return visum
 

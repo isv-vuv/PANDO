@@ -6,13 +6,14 @@ import json
 import os
 import webbrowser
 
+# Establish the QGIS DLLs before project/update modules load hashlib and SSL.
+from core.app.app_qt.qt_base import APP_NAME, BaseMainWindow, Dialogs, Qt, QtCore, QtGui, QtWidgets, QTimer, app_font, pyqtSignal, qfont_bold, qt_enum
 from core.locales import localizer
 from core.app.app_core.project import PROJECT_CONFIG_FILENAME, PROJECT_METADATA_FILENAME, tool_root
 from core.app.app_core.settings import load_app_settings, save_app_settings
 from core.app.app_core.update_checker import check_for_updates, perform_git_pull
 from core.app.app_qt.app_state import AppState, StepId, previous_step_id, progress_percent_for_step
 from core.app.app_qt.help_panel import HelpPanelWidget
-from core.app.app_qt.qt_base import APP_NAME, BaseMainWindow, Dialogs, Qt, QtCore, QtGui, QtWidgets, QTimer, app_font, pyqtSignal, qfont_bold, qt_enum
 from core.app.app_qt.steps.step0_welcome import Step0WelcomeWidget
 from core.app.app_qt.steps.step1_search import Step1SearchWidget
 from core.app.app_qt.steps.step2_data import Step2DataWidget
@@ -20,6 +21,7 @@ from core.app.app_qt.steps.step3_grid_area import Step3GridAreaWidget
 from core.app.app_qt.steps.step4_processing import Step4ProcessingWidget
 from core.app.app_qt.steps.step5_visum import Step5VisumWidget
 from core.app.app_qt.steps.step6_results import Step6ResultsWidget
+from core.app.app_qt.steps.step7_report import Step7ReportWidget
 
 
 USER_AGENT = "PANDO V1.0 (Urban-Act Tool)"
@@ -237,7 +239,11 @@ class UrbanActQtMainWindow(BaseMainWindow):
         self._set_step1_search_enabled(True)
 
     def _get_default_projects_dir(self) -> str:
-        """Determines the default projects directory for opening existing projects/config files."""
+        """Prefer this installation's projects over a remembered workspace."""
+        p_dir = os.path.join(tool_root(), "projects")
+        if os.path.isdir(p_dir):
+            return p_dir
+
         if self.app_settings.last_workspace_path:
             p_dir = os.path.join(self.app_settings.last_workspace_path, "projects")
             if os.path.isdir(p_dir):
@@ -245,9 +251,6 @@ class UrbanActQtMainWindow(BaseMainWindow):
             if os.path.isdir(self.app_settings.last_workspace_path):
                 return self.app_settings.last_workspace_path
 
-        p_dir = os.path.join(tool_root(), "projects")
-        if os.path.isdir(p_dir):
-            return p_dir
         return tool_root()
 
     def _handle_open_project_folder_requested(self) -> None:
@@ -302,6 +305,9 @@ class UrbanActQtMainWindow(BaseMainWindow):
     def _load_existing_project(self, project_path_or_file: str) -> None:
         try:
             step_id = self.state.load_project(project_path_or_file)
+            session = getattr(self, '_centrality_edit_session', None)
+            if session is not None and os.path.normcase(str(session.root)) != os.path.normcase(os.path.abspath(self.state.project_path)):
+                self._centrality_edit_session = None
             if self.state.language:
                 localizer.set_language(self.state.language)
             self._persist_app_settings(
@@ -394,12 +400,67 @@ class UrbanActQtMainWindow(BaseMainWindow):
         self._save_project_metadata_if_possible()
         self._show_step4()
 
+    def _home_navigation_busy(self) -> bool:
+        if self._geocode_thread is not None:
+            return True
+        widget = self._current_step_widget
+        session = getattr(self, "_centrality_edit_session", None)
+        if getattr(session, "busy", False):
+            return True
+        if callable(getattr(widget, "is_running", None)) and widget.is_running():
+            return True
+        if getattr(widget, "process", None) is not None:
+            return True
+        for name in ("_thread", "_search_thread", "_verify_thread", "_download_thread",
+                     "_global_download_thread", "_index_update_thread"):
+            thread = getattr(widget, name, None)
+            if thread is not None and thread.isRunning():
+                return True
+        return False
+
+    def _handle_home_requested(self) -> None:
+        if self.state.current_step == StepId.WELCOME:
+            return
+        if self._home_navigation_busy():
+            Dialogs.info(self, localizer.get_string("button_home"),
+                         localizer.get_string("home_navigation_busy"))
+            return
+        try:
+            if self.state.has_project_context():
+                self.state.save_project_metadata()
+            widget = self._current_step_widget
+            for name in ("cancel_all_workers", "cancel_region_search", "cancel_processing",
+                         "stop_visum_pipeline", "stop_pipeline", "release_resources"):
+                cleanup = getattr(widget, name, None)
+                if callable(cleanup):
+                    cleanup()
+        except Exception as exc:
+            Dialogs.error(self, localizer.get_string("button_home"),
+                          localizer.get_string("home_navigation_error", error_details=str(exc)))
+            return
+        self._centrality_edit_session = None
+        self.state = AppState(language=localizer.get_current_language())
+        self.state.set_project_context(tool_root())
+        # Resources have already been released against the old project state.
+        self._current_step_widget = None
+        self._show_step0()
+
     def _handle_back_requested(self) -> None:
+        widget = self._current_step_widget
+        if getattr(widget, 'selective_update', False) and widget.is_running():
+            return
         target_step = previous_step_id(self.state.current_step)
         if target_step is None:
             return
+        if isinstance(widget, Step7ReportWidget) and widget.process is not None:
+            self._back_button.setEnabled(False)
+            widget.generation_finished.connect(
+                self._finish_report_back_navigation, Qt.ConnectionType.QueuedConnection
+            )
+            widget.cancel()
+            return
         if self._current_step_widget is not None:
-            for cancel_fn_name in ("cancel_all_workers", "cancel_region_search", "cancel_processing", "stop_visum_pipeline", "stop_pipeline"):
+            for cancel_fn_name in ("cancel_all_workers", "cancel_region_search", "cancel_processing", "stop_visum_pipeline", "stop_pipeline", "release_resources"):
                 cancel_fn = getattr(self._current_step_widget, cancel_fn_name, None)
                 if callable(cancel_fn):
                     try:
@@ -407,6 +468,10 @@ class UrbanActQtMainWindow(BaseMainWindow):
                     except Exception:
                         pass
         self._show_step_by_id(target_step)
+
+    def _finish_report_back_navigation(self) -> None:
+        if self.sender() is self._current_step_widget and self.isVisible():
+            self._handle_back_requested()
 
     def _cancel_pbf_region_search(self) -> None:
         if isinstance(self._current_step_widget, Step2DataWidget):
@@ -427,6 +492,8 @@ class UrbanActQtMainWindow(BaseMainWindow):
             self._show_step5()
         elif step_id == StepId.RESULTS:
             self._show_step6()
+        elif step_id == StepId.REPORT:
+            self._show_step7()
         else:
             raise ValueError(f"Unsupported step: {step_id}")
 
@@ -502,9 +569,11 @@ class UrbanActQtMainWindow(BaseMainWindow):
             is_done = getattr(self._current_step_widget, "is_pipeline_completed", lambda: False)()
             self._next_button.setEnabled(is_done)
 
-    def _show_step5(self) -> None:
+    def _show_step5(self, selective=False) -> None:
         project_path = self.state.project_path or self.state.step4_data.get("project_path") or ""
         step5_widget = Step5VisumWidget(localizer, self, project_path=project_path)
+        if selective:
+            step5_widget.prepare_centrality_update()
         step5_widget.finished.connect(lambda ok, msg: self._show_step6() if ok else None)
         if hasattr(step5_widget, "running_state_changed") and step5_widget.running_state_changed is not None:
             step5_widget.running_state_changed.connect(self._handle_step5_running_state_changed)
@@ -517,15 +586,35 @@ class UrbanActQtMainWindow(BaseMainWindow):
     def _handle_step5_running_state_changed(self, is_running: bool) -> None:
         if self._next_button is not None and self.state.current_step == StepId.VISUM:
             self._next_button.setEnabled(not is_running)
+        if self._back_button is not None and getattr(self._current_step_widget, 'selective_update', False):
+            self._back_button.setEnabled(not is_running)
+
+    def closeEvent(self, event):
+        widget = self._current_step_widget
+        if getattr(widget, 'selective_update', False) and widget.is_running():
+            event.ignore()
+            widget.stop_visum_pipeline()
+            QtCore.QTimer.singleShot(250, self.close)
+            return
+        release = getattr(widget, "release_resources", None)
+        if callable(release):
+            release()
+        super().closeEvent(event)
 
     def _show_step6(self) -> None:
         project_path = self.state.project_path or self.state.step4_data.get("project_path") or ""
         step6_widget = Step6ResultsWidget(localizer, self, project_path=project_path)
+        step6_widget.recalculate_requested.connect(lambda: self._show_step5(selective=True))
         self._show_step(
             StepId.RESULTS,
             step6_widget,
-            localizer.get_string("step7_title", default="Schritt 6: Ergebnisse & Auswertung") + f": {project_path}",
+            localizer.get_string("step6_title", default="Schritt 6: Ergebnisse & Auswertung") + f": {project_path}",
         )
+
+    def _show_step7(self) -> None:
+        project_path = self.state.project_path or self.state.step4_data.get("project_path") or ""
+        widget = Step7ReportWidget(localizer, self, project_path=project_path)
+        self._show_step(StepId.REPORT, widget, localizer.get_string("step7_title"))
 
     def show_copyright_dialog(self, force: bool = False) -> bool:
         if getattr(self, "_licenses_accepted_this_session", False) and not force:
@@ -548,7 +637,7 @@ class UrbanActQtMainWindow(BaseMainWindow):
 
     def _show_step(self, step_id: StepId, widget, status_message: str | None = None) -> None:
         if self._current_step_widget is not None and self._current_step_widget != widget:
-            for cancel_fn_name in ("cancel_all_workers", "cancel_region_search", "cancel_processing", "stop_visum_pipeline", "stop_pipeline"):
+            for cancel_fn_name in ("cancel_all_workers", "cancel_region_search", "cancel_processing", "stop_visum_pipeline", "stop_pipeline", "release_resources"):
                 cancel_fn = getattr(self._current_step_widget, cancel_fn_name, None)
                 if callable(cancel_fn):
                     try:
@@ -568,6 +657,9 @@ class UrbanActQtMainWindow(BaseMainWindow):
     def _handle_next_requested(self) -> None:
         widget = self._current_step_widget
         if widget is None:
+            return
+        if self.state.current_step == StepId.RESULTS:
+            self._show_step7()
             return
         if self.state.current_step == StepId.VISUM:
             self._show_step6()
@@ -654,6 +746,24 @@ class UrbanActQtMainWindow(BaseMainWindow):
         self._btn_github_repo.clicked.connect(lambda: webbrowser.open("https://github.com/isv-vuv/PANDO"))
         nav_layout.addWidget(self._btn_github_repo)
 
+        self._home_button = QtWidgets.QToolButton(nav)
+        self._home_button.setObjectName("home_button")
+        self._home_button.setAccessibleName(localizer.get_string("button_home"))
+        self._home_button.setToolTip(localizer.get_string("button_home_tooltip"))
+        self._home_button.setShortcut(QtGui.QKeySequence("Alt+Home"))
+        self._home_button.setFixedSize(32, 32)
+        icon_path = os.path.join(tool_root(), "core", "app", "icons", "home.svg")
+        self._home_button.setIcon(QtGui.QIcon(icon_path))
+        self._home_button.setIconSize(QtCore.QSize(18, 18))
+        self._home_button.setStyleSheet(
+            "QToolButton { border: none; border-radius: 4px; background: transparent; } "
+            "QToolButton:hover { background: #e2e8f0; } "
+            "QToolButton:pressed { background: #cbd5e1; } "
+            "QToolButton:focus { border: 1px solid #94a3b8; }"
+        )
+        self._home_button.clicked.connect(self._handle_home_requested)
+        nav_layout.addWidget(self._home_button)
+
         self._back_button = QtWidgets.QPushButton(localizer.get_string("button_back"), nav)
         self._back_button.setStyleSheet(standard_btn_style)
         self._back_button.clicked.connect(self._handle_back_requested)
@@ -715,6 +825,7 @@ class UrbanActQtMainWindow(BaseMainWindow):
         if self._progress_bar is not None:
             self._progress_bar.setValue(progress_percent_for_step(step_id))
         is_welcome = (step_id == StepId.WELCOME)
+        self._home_button.setVisible(not is_welcome)
 
         if getattr(self, "_update_status_label", None) is not None:
             self._update_status_label.setVisible(is_welcome)
@@ -729,7 +840,7 @@ class UrbanActQtMainWindow(BaseMainWindow):
             self._back_button.setVisible(not is_welcome)
         if self._next_button is not None:
             self._next_button.setText(localizer.get_string("button_next"))
-            if is_welcome or step_id == StepId.RESULTS:
+            if is_welcome or step_id == StepId.REPORT:
                 self._next_button.setVisible(False)
             else:
                 self._next_button.setVisible(True)

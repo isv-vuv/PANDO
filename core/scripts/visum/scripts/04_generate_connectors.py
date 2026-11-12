@@ -1,3 +1,9 @@
+if __package__:
+    from .visum_logging import measured, timed_step, log_network_counts
+    from .visum_com import create_visum
+else:
+    from visum_logging import measured, timed_step, log_network_counts
+    from visum_com import create_visum
 import os
 import sys
 import logging
@@ -58,7 +64,7 @@ def find_helper_file(helper_dir: Path, base_dir: Path, filename: str) -> Path | 
 
 def open_visum():
     logging.info("Initialisiere Visum-Instanz...")
-    visum = com.Dispatch("Visum.Visum.250")
+    visum = create_visum()
     visum.Graphic.ShowMaximized()
     return visum
 
@@ -134,7 +140,8 @@ def calculate_zone_distances(visum, nf, use_island_logic: bool = False):
     if use_island_logic and visum.Net.Zones.AttrExists("Island_ID"):
         zone_attributes.append("Island_ID")
 
-    zone_data = visum.Net.Zones.GetMultipleAttributes(zone_attributes)
+    with timed_step('visum.Net.Zones.GetMultipleAttributes'):
+        zone_data = visum.Net.Zones.GetMultipleAttributes(zone_attributes)
     if not zone_data:
         logging.warning("Keine Bezirksdaten für Distanzberechnung gefunden.")
         nf.Init()
@@ -165,18 +172,22 @@ def calculate_zone_distances(visum, nf, use_island_logic: bool = False):
     results_df.columns = [uda_dist_name, uda_island_match_name]
     df_zones = pd.concat([df_zones, results_df], axis=1)
 
-    visum_ids_data = visum.Net.Zones.GetMultiAttValues("NO")
+    with timed_step('visum.Net.Zones.GetMultiAttValues'):
+        visum_ids_data = visum.Net.Zones.GetMultiAttValues("NO")
     df_visum_ids = pd.DataFrame(visum_ids_data, columns=["VisumID", "NO"])
     df_zones_final = pd.merge(df_zones, df_visum_ids, on="NO")
 
-    visum.Net.Zones.SetMultiAttValues(uda_dist_name, df_zones_final[['VisumID', uda_dist_name]].values.tolist())
-    visum.Net.Zones.SetMultiAttValues(uda_island_match_name,
-                                      df_zones_final[['VisumID', uda_island_match_name]].values.tolist())
+    with timed_step('visum.Net.Zones.SetMultiAttValues'):
+        visum.Net.Zones.SetMultiAttValues(uda_dist_name, df_zones_final[['VisumID', uda_dist_name]].values.tolist())
+    with timed_step('visum.Net.Zones.SetMultiAttValues'):
+        visum.Net.Zones.SetMultiAttValues(uda_island_match_name,
+                                          df_zones_final[['VisumID', uda_island_match_name]].values.tolist())
 
     nf.Init()
     logging.info("Distanzberechnung abgeschlossen und Ergebnisse nach Visum geschrieben.")
 
 
+@measured
 def run_generate_connectors(target_project_dir=None, visum=None):
     logging.info("--- Visum Schritt 4: Anbindungserzeugung gestartet ---")
     base_project_dir, visum_input_dir, visum_helper_dir = get_project_paths(target_project_dir)
@@ -272,7 +283,8 @@ def run_generate_connectors(target_project_dir=None, visum=None):
     dseg_1erumlegung = visum.Net.AddDemandSegment(dseg_1erumlegung_name, pkw_code)
     dseg_1erumlegung.SetAttValue("NAME", dseg_1erumlegung_name)
     dseg_1erumlegung.GetDemandDescription().SetAttValue("Matrix", 'Matrix([CODE]="' + dseg_1erumlegung_name + '")')
-    visum.Procedures.Open(str(procedure_xml))
+    with timed_step('visum.Procedures.Open'):
+        visum.Procedures.Open(str(procedure_xml))
 
     add_uda(netobj=visum.Net.Zones, uda_name='Zone_Connected', value_type=9, def_val=False,
             comment='Temporary attribute: Is the zone connected in the current step?')
@@ -366,11 +378,13 @@ def run_generate_connectors(target_project_dir=None, visum=None):
 
         # 5. 1er-Testumlegung zur Ausdünnung
         formel = "If(FROM[Zone_Connected]=1 & TO[Zone_Connected]=1, 1, 0)"
-        matrix_1er.SetValuesToResultOfFormula(formel)
+        with timed_step('matrix_1er.SetValuesToResultOfFormula'):
+            matrix_1er.SetValuesToResultOfFormula(formel)
 
         umlegung_erfolgreich = False
         try:
-            visum.Procedures.Execute()
+            with timed_step('visum.Procedures.Execute'):
+                visum.Procedures.Execute()
             umlegung_erfolgreich = True
         except Exception as proc_exc:
             logging.info(f"Hinweis bei Anbindungstest-Umlegung (Typ {anb_typeno}): {proc_exc}")
@@ -394,8 +408,9 @@ def run_generate_connectors(target_project_dir=None, visum=None):
 
         if merge_netfile_before_save and merge_netfile_before_save.exists():
             logging.info(f"Führe Anbindungen aus '{merge_netfile_before_save.name}' vor dem Speichern hinzu.")
-            visum.IO.LoadNet(NetFile=str(merge_netfile_before_save), ReadAdditive=True,
-                             AddNetRead=addnetread_anbindungen)
+            with timed_step('visum.IO.LoadNet'):
+                visum.IO.LoadNet(NetFile=str(merge_netfile_before_save), ReadAdditive=True,
+                                 AddNetRead=addnetread_anbindungen)
 
         cf.Init()
         cf.AddCondition("OP_NONE", False, "TYPENO", "EqualVal", anb_typeno)
@@ -456,7 +471,8 @@ def run_generate_connectors(target_project_dir=None, visum=None):
     for anb_typeno in read_anb_typenos:
         path_anb_type = output_connectors_dir / f'Anbindungen_Typ{anb_typeno}.net'
         if path_anb_type.exists():
-            visum.IO.LoadNet(NetFile=str(path_anb_type), ReadAdditive=True, AddNetRead=addnetread_anbindungen)
+            with timed_step('visum.IO.LoadNet'):
+                visum.IO.LoadNet(NetFile=str(path_anb_type), ReadAdditive=True, AddNetRead=addnetread_anbindungen)
 
     for anb_typeno in read_anb_typenos:
         path_anb_type_att = output_connectors_dir / f'Anbindungen_Typ{anb_typeno}.att'
@@ -465,9 +481,11 @@ def run_generate_connectors(target_project_dir=None, visum=None):
 
     # 6. Finale 1:1 Prüfung über das gesamte Netz
     logging.info("Finale Prüfung: Full 1-to-1 Assignment...")
-    matrix_1er.SetValuesToResultOfFormula("1")
+    with timed_step('matrix_1er.SetValuesToResultOfFormula'):
+        matrix_1er.SetValuesToResultOfFormula("1")
     try:
-        visum.Procedures.Execute()
+        with timed_step('visum.Procedures.Execute'):
+            visum.Procedures.Execute()
         logging.info("Finale Zuordnung erfolgreich. Alle Bezirke sind vollständig angebunden.")
     except Exception as exc:
         logging.info(f"Test-Umlegung durchgeführt (Hinweis: {exc})")
@@ -488,14 +506,17 @@ def run_generate_connectors(target_project_dir=None, visum=None):
     init_xml = find_helper_file(visum_helper_dir, base_project_dir, "init.xml")
     if init_xml:
         try:
-            visum.Procedures.Open(str(init_xml))
-            visum.Procedures.Execute()
+            with timed_step('visum.Procedures.Open'):
+                visum.Procedures.Open(str(init_xml))
+            with timed_step('visum.Procedures.Execute'):
+                visum.Procedures.Execute()
             logging.info("Init.xml erfolgreich ausgeführt.")
         except Exception as e:
             logging.debug(f"Init.xml Hinweis: {e}")
 
     logging.info(f"Speichere finale Version unter: {output_ver.name}")
-    visum.SaveVersion(str(output_ver))
+    with timed_step('visum.SaveVersion'):
+        visum.SaveVersion(str(output_ver))
 
     return visum
 

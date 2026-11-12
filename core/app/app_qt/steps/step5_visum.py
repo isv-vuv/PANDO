@@ -51,7 +51,9 @@ class VisumWorker(_Q_OBJECT_BASE):
             mod = importlib.import_module("core.scripts.visum.scripts.00_run_all_visum_scripts")
             run_visum_postprocessing_chain = mod.run_visum_postprocessing_chain
         except Exception:
-            script_file = Path(__file__).resolve().parents[2] / "scripts" / "visum" / "scripts" / "00_run_all_visum_scripts.py"
+            script_file = Path(__file__).resolve().parents[3] / "scripts" / "visum" / "scripts" / "00_run_all_visum_scripts.py"
+            if str(script_file.parent) not in sys.path:
+                sys.path.insert(0, str(script_file.parent))
             spec = importlib.util.spec_from_file_location("run_all_visum", script_file)
             if spec is None or spec.loader is None:
                 raise ImportError(f"Could not load 00_run_all_visum_scripts.py from {script_file}")
@@ -171,7 +173,10 @@ class VisumWorker(_Q_OBJECT_BASE):
             ("Demand segment 'W'", "Schritt 6/7: Verfahrensablauf ausführen", "Nachfragesegmente anlegen", 39, 93),
             ("Linked 'CFL", "Schritt 6/7: Verfahrensablauf ausführen", "Nachfragematrizen verknüpfen", 40, 93),
             ("[Operation] Set DSeg", "Schritt 6/7: Verfahrensablauf ausführen", "Verfahrensablauf-Operationen belegen", 41, 93),
+            ("Starte POI-Import", "Schritt 6/7: POIs und Verwaltungsflächen importieren", "POI-Daten laden und importieren", 42, 93),
+            ("POI-Import abgeschlossen:", "Schritt 6/7: POIs und Verwaltungsflächen importieren", "POI-Import abgeschlossen", 44, 93),
             ("Führe Verfahrensablauf aus...", "Schritt 6/7: Verfahrensablauf ausführen", "Visum-Verfahrensablauf berechnen (Umlegungen)", 45, 93),
+            ("Visum-Verfahrensablauf vollständig abgeschlossen.", "Schritt 6/7: Verfahrensablauf abgeschlossen", "Modellversion vorbereiten", 95, 98),
             ("Speichere finale Modellversion:", "Schritt 6/7: Verfahrensablauf ausführen", "Modellversion speichern", 96, 98),
             ("Schritt 6 abgeschlossen:", "Schritt 6/7: Verfahrensablauf ausführen", "Schritt 6 abgeschlossen", 100, 99),
 
@@ -220,7 +225,7 @@ class VisumWorker(_Q_OBJECT_BASE):
                 if success:
                     self.finished.emit(True, localizer.get_string("step5_status_visum_success", default="Visum-Verarbeitung erfolgreich abgeschlossen."))
                 else:
-                    self.finished.emit(False, localizer.get_string("step5_status_visum_failed", default="Visum-Verarbeitung abgebrochen oder fehlerhaft."))
+                    self.finished.emit(False, getattr(mod, 'LAST_ERROR', None) or localizer.get_string("step5_status_visum_failed", default="Visum-Verarbeitung abgebrochen oder fehlerhaft."))
         except Exception as exc:
             self._active_visum = getattr(mod, "_ACTIVE_VISUM_INSTANCE", None)
             if self.log_ready:
@@ -230,11 +235,29 @@ class VisumWorker(_Q_OBJECT_BASE):
                 self.finished.emit(False, str(exc))
 
 
+class CentralityUpdateWorker(VisumWorker):
+    def __init__(self, session):
+        super().__init__(str(session.root))
+        from threading import Event
+        self.session = session
+        self.stop_event = Event()
+
+    def run(self):
+        from core.app.app_core.centrality_update import run_update
+        try:
+            run_update(self.session, log=self.log_ready.emit, stop_event=self.stop_event)
+            self.finished.emit(True, localizer.get_string('centres_update_done'))
+        except BaseException as exc:
+            # Legacy Visum scripts may raise SystemExit; a worker must report it.
+            self.session.busy = False
+            self.finished.emit(False, str(exc))
+
+
 class Step5VisumWidget(_Q_WIDGET_BASE):
     """Step 5 Widget for executing and watching Visum post-processing."""
 
     run_requested = pyqtSignal() if pyqtSignal is not None else None
-    finished = pyqtSignal() if pyqtSignal is not None else None
+    finished = pyqtSignal(bool, str) if pyqtSignal is not None else None
     running_state_changed = pyqtSignal(bool) if pyqtSignal is not None else None
 
     def is_running(self) -> bool:
@@ -247,6 +270,9 @@ class Step5VisumWidget(_Q_WIDGET_BASE):
         super().__init__(parent)
         self.localizer = localizer_obj
         self.project_path = project_path
+        from core.app.app_core.centrality_edits import project_session
+        self.edit_session = project_session(parent, project_path)
+        self.selective_update = False
         self._thread = None
         self._worker = None
         self._visum_seconds = 0
@@ -257,6 +283,8 @@ class Step5VisumWidget(_Q_WIDGET_BASE):
             self._visum_timer.timeout.connect(self._update_visum_status_timer)
 
         self._setup_ui()
+        if self.edit_session.pending():
+            self.prepare_centrality_update()
 
     def _setup_ui(self) -> None:
         main_layout = QtWidgets.QVBoxLayout(self)
@@ -266,7 +294,7 @@ class Step5VisumWidget(_Q_WIDGET_BASE):
         self.header, _title_label, _step_label = create_step_header(
             self.localizer.get_string("step5_title", default="Schritt 5: Visum-Import und Verarbeitung"),
             current_step=5,
-            total_steps=6,
+            total_steps=7,
             localizer=self.localizer,
             parent=self,
         )
@@ -284,6 +312,11 @@ class Step5VisumWidget(_Q_WIDGET_BASE):
         self.desc_label.setWordWrap(True)
         self.desc_label.setStyleSheet("color: #475569; padding: 2px 2px;")
         main_layout.addWidget(self.desc_label)
+        self.update_summary = QtWidgets.QLabel(self)
+        self.update_summary.setWordWrap(True)
+        self.update_summary.setStyleSheet('background: #fef3c7; color: #713f12; padding: 10px;')
+        self.update_summary.hide()
+        main_layout.addWidget(self.update_summary)
 
         # Unified Control & Execution Box (consistent with Step 4 styling)
         self.execution_group = QtWidgets.QGroupBox(
@@ -356,6 +389,12 @@ class Step5VisumWidget(_Q_WIDGET_BASE):
         self.stop_button.clicked.connect(self.stop_visum_pipeline)
 
         self.start_button = QtWidgets.QPushButton(self.localizer.get_string("step5_button_start_visum", default="Visum-Verarbeitung starten"), self.execution_group)
+        self.start_button.setStyleSheet(
+            "QPushButton:enabled { background-color: #dcfce7; color: #166534; "
+            "border: 1px solid #86efac; border-radius: 4px; padding: 5px 14px; } "
+            "QPushButton:enabled:hover { background-color: #bbf7d0; } "
+            "QPushButton:enabled:pressed { background-color: #86efac; }"
+        )
         self.start_button.clicked.connect(self.start_visum_pipeline)
 
         button_row.addStretch()
@@ -402,12 +441,30 @@ class Step5VisumWidget(_Q_WIDGET_BASE):
         self.execution_group.setTitle(escape_mnemonic(self.localizer.get_string("step5_group_execution", default="Visum-Steuerung und Ausführung")))
         self.stop_button.setText(self.localizer.get_string("step5_button_stop", default="Stopp"))
         self.start_button.setText(self.localizer.get_string("step5_button_start_visum", default="Visum-Verarbeitung starten"))
-        self.log_group.setTitle(escape_mnemonic(self.localizer.get_string("step5_group_log", default="Verarbeitungs-Protokoll (Log)")))
+        self._update_log_title()
         if self._thread is None:
             self.phase_label.setText(self.localizer.get_string("step4_label_ready", default="Bereit zum Starten"))
+        if self.selective_update:
+            self.prepare_centrality_update()
 
     def set_project_path(self, path: str) -> None:
         self.project_path = path
+        from core.app.app_core.centrality_edits import project_session
+        self.edit_session = project_session(self.parent(), path)
+        if self.selective_update:
+            self.prepare_centrality_update()
+
+    def prepare_centrality_update(self):
+        self.selective_update = True
+        pending = self.edit_session.pending()
+        names = [self.localizer.get_string('centres_product_' + name) for name in pending]
+        self.update_summary.setText(self.localizer.get_string('centres_update_mode') + '\n' +
+            self.localizer.get_string('centres_update_products') + ': ' + ', '.join(names) + '\n' +
+            self.localizer.get_string('centres_update_reuse'))
+        self.update_summary.show()
+        self.step_combo.setEnabled(False)
+        self.start_button.setText(self.localizer.get_string('centres_update_start'))
+        self.start_button.setEnabled(bool(pending) and not self.is_running())
 
     def start_visum_pipeline(self) -> None:
         if not self.project_path:
@@ -417,6 +474,14 @@ class Step5VisumWidget(_Q_WIDGET_BASE):
                 self.localizer.get_string("step5_err_no_project_msg", default="Kein gültiger Projektpfad angegeben.")
             )
             return
+
+        if self.selective_update:
+            try:
+                from core.app.app_core.centrality_update import preflight
+                preflight(self.edit_session)
+            except Exception as exc:
+                Dialogs.error(self, self.localizer.get_string('centres_error'), str(exc))
+                return
 
         start_step = self.step_combo.currentIndex() + 1
 
@@ -435,10 +500,14 @@ class Step5VisumWidget(_Q_WIDGET_BASE):
 
         self.phase_label.setText(self.localizer.get_string("step5_status_running", default="Visum-Verarbeitung läuft..."))
         self.log_edit.clear()
+        self._log_import_phase = None
+        self._update_log_title()
         self.append_log(self.localizer.get_string("step5_log_starting", project_path=self.project_path, start_step=start_step))
 
         self._thread = QtCore.QThread()
-        self._worker = VisumWorker(self.project_path, start_step=start_step)
+        self._worker = CentralityUpdateWorker(self.edit_session) if self.selective_update else VisumWorker(self.project_path, start_step=start_step)
+        if self.selective_update:
+            self.edit_session.busy = True
         self._worker.moveToThread(self._thread)
 
         self._thread.started.connect(self._worker.run)
@@ -455,6 +524,11 @@ class Step5VisumWidget(_Q_WIDGET_BASE):
         self._thread.start()
 
     def stop_visum_pipeline(self) -> None:
+        if self.selective_update and self._thread is not None:
+            self._worker.stop_event.set()
+            self.stop_button.setEnabled(False)
+            self.append_log(self.localizer.get_string('centres_update_stopping'))
+            return
         self.append_log(self.localizer.get_string("step5_log_stopping", default="Visum-Verarbeitung wird abgebrochen und COM-Verbindung getrennt..."))
         if self._visum_timer is not None and self._visum_timer.isActive():
             self._visum_timer.stop()
@@ -490,7 +564,16 @@ class Step5VisumWidget(_Q_WIDGET_BASE):
         self.phase_label.setText(self.localizer.get_string("step5_status_stopped", default="Status: Durch Benutzer abgebrochen"))
         self.append_log(self.localizer.get_string("step5_log_stopped", default="Visum-Verarbeitung wurde abgebrochen."))
 
+    def _update_log_title(self) -> None:
+        title = self.localizer.get_string("step5_group_log", default="Verarbeitungs-Protokoll (Log)")
+        phase = getattr(self, "_log_import_phase", None)
+        if phase:
+            title = f"{title} ({phase})"
+        self.log_group.setTitle(escape_mnemonic(title))
+
     def _on_phase_started(self, phase_name: str) -> None:
+        self._log_import_phase = phase_name
+        self._update_log_title()
         self.phase_label.setText(phase_name)
         if hasattr(self.phase_progress, "start_animation"):
             self.phase_progress.start_animation()
@@ -530,6 +613,9 @@ class Step5VisumWidget(_Q_WIDGET_BASE):
         self.start_button.setEnabled(True)
         self.stop_button.setEnabled(False)
         self.step_combo.setEnabled(True)
+        if self.selective_update:
+            self.edit_session.busy = False
+            self.prepare_centrality_update()
         if self.running_state_changed:
             self.running_state_changed.emit(False)
 
@@ -545,6 +631,7 @@ class Step5VisumWidget(_Q_WIDGET_BASE):
             title = self.localizer.get_string("step5_title_success", default="Erfolg")
             msg = self.localizer.get_string("step5_msg_success", default=message)
             Dialogs.info(self, title, msg)
+            self.finished.emit(True, message)
         else:
             try:
                 WindowsTaskbarProgress.get_instance().set_error()

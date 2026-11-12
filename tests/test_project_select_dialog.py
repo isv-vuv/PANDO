@@ -2,6 +2,8 @@ import os
 import tempfile
 import unittest
 from datetime import datetime
+from types import SimpleNamespace
+from unittest.mock import patch
 
 from core.app.app_core.project import (
     build_project_metadata,
@@ -17,6 +19,45 @@ from core.app.app_qt.dialogs.project_select_dialog import (
 
 
 class ProjectSelectDialogTests(unittest.TestCase):
+    def test_project_picker_prefers_current_installation_over_saved_workspace(self):
+        from core.app.app_qt.main_window import UrbanActQtMainWindow
+
+        with tempfile.TemporaryDirectory() as root:
+            installation = os.path.join(root, "current")
+            remembered = os.path.join(root, "old")
+            for workspace, names in (
+                (installation, ("stockholm", "stockholm_2", "stuttgart")),
+                (remembered, ("stockholm",)),
+            ):
+                for name in names:
+                    project_path = os.path.join(workspace, "projects", name)
+                    save_project_metadata(project_path, build_project_metadata(
+                        workspace_path=workspace, project_path=project_path,
+                    ))
+            window = SimpleNamespace(app_settings=SimpleNamespace(last_workspace_path=remembered))
+            with patch("core.app.app_qt.main_window.tool_root", return_value=installation):
+                selected_dir = UrbanActQtMainWindow._get_default_projects_dir(window)
+
+            self.assertEqual(selected_dir, os.path.join(installation, "projects"))
+            self.assertEqual(
+                {project["name"] for project in scan_and_sort_projects(selected_dir)},
+                {"stockholm", "stockholm_2", "stuttgart"},
+            )
+
+    def test_project_picker_falls_back_when_local_projects_folder_is_missing(self):
+        from core.app.app_qt.main_window import UrbanActQtMainWindow
+
+        with tempfile.TemporaryDirectory() as root:
+            installation = os.path.join(root, "current")
+            remembered = os.path.join(root, "old")
+            os.makedirs(os.path.join(remembered, "projects"))
+            window = SimpleNamespace(app_settings=SimpleNamespace(last_workspace_path=remembered))
+            with patch("core.app.app_qt.main_window.tool_root", return_value=installation):
+                self.assertEqual(
+                    UrbanActQtMainWindow._get_default_projects_dir(window),
+                    os.path.join(remembered, "projects"),
+                )
+
     def test_format_helpers(self):
         # DateTime formatting
         dt = datetime(2026, 8, 28, 10, 15, 0)

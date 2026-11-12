@@ -27,13 +27,15 @@ def step4_payload(**overrides):
 class AppStateTests(unittest.TestCase):
     def test_step_progress_maps_current_step_to_percent(self):
         self.assertEqual(progress_percent_for_step(StepId.WELCOME), 0)
-        self.assertEqual(progress_percent_for_step(StepId.SEARCH), 17)
-        self.assertEqual(progress_percent_for_step(StepId.CITY_SELECTION), 17)
-        self.assertEqual(progress_percent_for_step(StepId.PROJECT_PBF), 33)
-        self.assertEqual(progress_percent_for_step(StepId.GRID_AREA), 50)
-        self.assertEqual(progress_percent_for_step(StepId.PROCESSING), 67)
-        self.assertEqual(progress_percent_for_step(StepId.VISUM), 83)
-        self.assertEqual(progress_percent_for_step(StepId.RESULTS), 100)
+        self.assertEqual(progress_percent_for_step(StepId.SEARCH), 14)
+        self.assertEqual(progress_percent_for_step(StepId.CITY_SELECTION), 14)
+        self.assertEqual(progress_percent_for_step(StepId.PROJECT_PBF), 29)
+        self.assertEqual(progress_percent_for_step(StepId.GRID_AREA), 43)
+        self.assertEqual(progress_percent_for_step(StepId.PROCESSING), 57)
+        self.assertEqual(progress_percent_for_step(StepId.VISUM), 71)
+        self.assertEqual(progress_percent_for_step(StepId.RESULTS), 86)
+        self.assertEqual(progress_percent_for_step(StepId.REPORT), 100)
+        self.assertEqual(previous_step_id(StepId.REPORT), StepId.RESULTS)
 
     def test_previous_step_id_walks_back_without_mutating_state(self):
         state = AppState(current_step=StepId.PROJECT_PBF, search_city="Berlin")

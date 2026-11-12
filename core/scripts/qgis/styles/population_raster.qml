@@ -122,7 +122,7 @@
     <provider>
       <resampling enabled="false" maxOversampling="2" zoomedInResamplingMethod="bilinear" zoomedOutResamplingMethod="bilinear"/>
     </provider>
-    <rasterrenderer band="1" classificationMax="250" classificationMin="0" opacity="0.75" type="singlebandpseudocolor">
+    <rasterrenderer band="1" classificationMax="500" classificationMin="0" opacity="0.75" type="singlebandpseudocolor">
       <rasterTransparency/>
       <minMaxOrigin>
         <limits>None</limits>
@@ -136,23 +136,23 @@
         <colorrampshader classificationMode="1" clip="0" colorRampType="INTERPOLATED" labelPrecision="1" maximumValue="500" minimumValue="0">
           <colorramp name="[source]" type="gradient">
             <Option type="Map">
-              <Option name="color1" type="QString" value="255,255,229,0"/>
-              <Option name="color2" type="QString" value="102,0,0,255"/>
+              <Option name="color1" type="QString" value="68,1,84,255"/>
+              <Option name="color2" type="QString" value="253,231,37,255"/>
               <Option name="discrete" type="QString" value="0"/>
               <Option name="rampType" type="QString" value="gradient"/>
-              <Option name="stops" type="QString" value="0.002;255,255,229,140:0.004;255,247,188,165:0.02;254,227,145,185:0.06;254,196,79,205:0.12;254,153,41,225:0.24;236,112,20,240:0.48;204,76,2,250:0.75;153,0,0,255"/>
+              <Option name="stops" type="QString" value="0.125;72,40,120,255:0.25;62,73,137,255:0.375;49,104,142,255:0.5;38,130,142,255:0.625;31,158,137,255:0.75;53,183,121,255:0.875;110,206,88,255"/>
             </Option>
           </colorramp>
           <item alpha="0" color="#ffffff" label="0 Einw. (unbewohnt)" value="0"/>
-          <item alpha="140" color="#ffffe5" label="0.1 - 1 Einw./ha (sehr gering)" value="0.1"/>
-          <item alpha="165" color="#fff7bc" label="1 Einw./ha (Median)" value="1"/>
-          <item alpha="185" color="#fee391" label="5 Einw./ha" value="5"/>
-          <item alpha="205" color="#fec44f" label="15 Einw./ha (dicht)" value="15"/>
-          <item alpha="225" color="#fe9929" label="30 Einw./ha (urban)" value="30"/>
-          <item alpha="240" color="#ec7014" label="60 Einw./ha (sehr dicht)" value="60"/>
-          <item alpha="250" color="#cc4c02" label="120 Einw./ha" value="120"/>
-          <item alpha="255" color="#990000" label="250 Einw./ha (Kernstadt)" value="250"/>
-          <item alpha="255" color="#660000" label="> 500 Einw./ha (Hochverdichtet)" value="500"/>
+          <item alpha="255" color="#440154" label="0.1 - 1 Einw./Rasterzelle (sehr gering)" value="0.1"/>
+          <item alpha="255" color="#482878" label="1 Einw./Rasterzelle (Median)" value="1"/>
+          <item alpha="255" color="#3e4989" label="5 Einw./Rasterzelle" value="5"/>
+          <item alpha="255" color="#31688e" label="15 Einw./Rasterzelle (dicht)" value="15"/>
+          <item alpha="255" color="#26828e" label="30 Einw./Rasterzelle (urban)" value="30"/>
+          <item alpha="255" color="#1f9e89" label="60 Einw./Rasterzelle (sehr dicht)" value="60"/>
+          <item alpha="255" color="#35b779" label="120 Einw./Rasterzelle" value="120"/>
+          <item alpha="255" color="#6ece58" label="250 Einw./Rasterzelle (Kernstadt)" value="250"/>
+          <item alpha="255" color="#fde725" label="> 500 Einw./Rasterzelle (Hochverdichtet)" value="500"/>
           <rampLegendSettings direction="0" maximumLabel="" minimumLabel="" orientation="2" prefix="" suffix="" useContinuousLegend="1">
             <numericFormat id="basic">
               <Option type="Map">

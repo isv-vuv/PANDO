@@ -1,5 +1,5 @@
 @echo off
-setlocal enabledelayedexpansion
+setlocal
 title PANDO
 
 echo ======================================================================
@@ -7,47 +7,55 @@ echo  PANDO - Automated Startup Script
 echo ======================================================================
 echo.
 
+set "SCRIPT_DIR=%~dp0"
+set "REQ=%SCRIPT_DIR%requirements.txt"
+
 :SEARCH_QGIS
-set "QGIS_BAT="
+set "QGIS_PYTHON="
 
-:: 1. Check LOCALAPPDATA OSGeo4W
-if exist "%LOCALAPPDATA%\Programs\OSGeo4W\bin\python-qgis.bat" (
-    set "QGIS_BAT=%LOCALAPPDATA%\Programs\OSGeo4W\bin\python-qgis.bat"
-    goto :FOUND
+:: Prefer an explicitly configured launcher.
+if defined PANDO_QGIS_PYTHON if exist "%PANDO_QGIS_PYTHON%" (
+    call :TRY_QGIS "%PANDO_QGIS_PYTHON%"
+    if defined QGIS_PYTHON goto :FOUND
 )
 
-:: 2. Check C:\OSGeo4W
-if exist "C:\OSGeo4W\bin\python-qgis.bat" (
-    set "QGIS_BAT=C:\OSGeo4W\bin\python-qgis.bat"
-    goto :FOUND
-)
-
-:: 3. Check C:\OSGeo4W64
-if exist "C:\OSGeo4W64\bin\python-qgis.bat" (
-    set "QGIS_BAT=C:\OSGeo4W64\bin\python-qgis.bat"
-    goto :FOUND
-)
-
-:: 4. Search in Program Files for QGIS 4 / QGIS
-for /d %%D in ("C:\Program Files\QGIS*") do (
-    if exist "%%D\bin\python-qgis.bat" (
-        set "QGIS_BAT=%%D\bin\python-qgis.bat"
-        goto :FOUND
+:: Search per-user and system-wide OSGeo4W installations.
+for %%D in ("%LOCALAPPDATA%\Programs\OSGeo4W" "%SystemDrive%\OSGeo4W" "%SystemDrive%\OSGeo4W64") do (
+    if exist "%%~fD\bin\python-qgis.bat" (
+        call :TRY_QGIS "%%~fD\bin\python-qgis.bat"
+        if defined QGIS_PYTHON goto :FOUND
     )
 )
 
-:: 5. Search in PATH
-for /f "tokens=*" %%i in ('where python-qgis.bat 2^>nul') do (
-    set "QGIS_BAT=%%i"
-    goto :FOUND
+:: Search a standalone QGIS installation installed by winget.
+for /d %%D in ("%ProgramFiles%\QGIS*") do (
+    if exist "%%~fD\bin\python-qgis.bat" (
+        call :TRY_QGIS "%%~fD\bin\python-qgis.bat"
+        if defined QGIS_PYTHON goto :FOUND
+    )
 )
 
+:: Also accept a QGIS launcher already available through PATH.
+for /f "delims=" %%I in ('where python-qgis.bat 2^>nul') do (
+    call :TRY_QGIS "%%~fI"
+    if defined QGIS_PYTHON goto :FOUND
+)
+
+goto :NOT_FOUND
+
 :NOT_FOUND
-echo [WARNING] QGIS 4 environment (python-qgis.bat) was not found.
+echo [WARNING] A QGIS 4 Python environment was not found.
 echo.
-echo QGIS 4 does not appear to be installed or is located in a non-standard directory.
-echo (Note: If you currently have QGIS 3 installed, please note that QGIS 4 is required).
+echo QGIS 4 can be installed as a standalone application via winget.
+echo No separate OSGeo4W installation is required.
 echo.
+where winget >nul 2>&1
+if errorlevel 1 (
+    echo [ERROR] winget is not available. Install QGIS 4 manually from qgis.org.
+    pause
+    exit /b 1
+)
+
 set /p INSTALL_CHOICE="Would you like to install QGIS 4 automatically via winget now? (Y/N): "
 if /i "%INSTALL_CHOICE%"=="Y" goto :DO_INSTALL
 if /i "%INSTALL_CHOICE%"=="YES" goto :DO_INSTALL
@@ -55,64 +63,57 @@ goto :NO_INSTALL
 
 :DO_INSTALL
 echo.
-echo Starting QGIS 4 installation via winget...
-winget install -e --id OSGeo.QGIS
-if %ERRORLEVEL% NEQ 0 (
+echo Starting standalone QGIS 4 installation via winget...
+winget install --exact --id OSGeo.QGIS --accept-package-agreements --accept-source-agreements
+if errorlevel 1 (
     echo.
     echo [ERROR] Installation failed or was canceled.
     pause
-    exit /b %ERRORLEVEL%
+    exit /b 1
 )
 
 echo.
-echo Installation completed successfully. Rescanning for QGIS 4 environment...
+echo Installation completed successfully. Rescanning for QGIS 4...
 echo.
 goto :SEARCH_QGIS
 
 :NO_INSTALL
 echo.
-echo Please install QGIS 4 manually (for example using OSGEO4W) or ensure python-qgis.bat is available in your PATH.
+echo Please install QGIS 4 manually or set PANDO_QGIS_PYTHON to its Python launcher.
 pause
 exit /b 1
 
 :FOUND
 echo [OK] QGIS 4 Python environment found:
-echo      "%QGIS_BAT%"
+echo      "%QGIS_PYTHON%"
 echo.
 
-set "STAMP=%~dp0.deps_ok"
-set "REQ=%~dp0requirements.txt"
-set "NEED_DEPS=0"
-
-if not exist "%STAMP%" set "NEED_DEPS=1"
-if exist "%REQ%" (
-    if not exist "%STAMP%" (
-        set "NEED_DEPS=1"
-    ) else (
-        for /f %%i in ('powershell -NoProfile -Command "(Get-Item '%REQ%').LastWriteTime -gt (Get-Item '%STAMP%' -ErrorAction SilentlyContinue).LastWriteTime"') do (
-            if /i "%%i"=="True" set "NEED_DEPS=1"
-        )
-    )
-)
-
-if "%NEED_DEPS%"=="1" (
-    echo [1/2] Verifying Python dependencies...
-    if exist "%REQ%" (
-        call "%QGIS_BAT%" "%~dp0core\app\app_core\check_deps.py" "%REQ%"
-        if !ERRORLEVEL! NEQ 0 (
-            echo.
-            echo [ERROR] Error occurred during installation of Python requirements.
-            pause
-            exit /b !ERRORLEVEL!
-        )
-        type nul > "%STAMP%"
-    )
-) else (
-    echo [OK] Python dependencies verified.
+echo [1/2] Verifying Python dependencies...
+call "%QGIS_PYTHON%" "%SCRIPT_DIR%core\app\app_core\check_deps.py" "%REQ%"
+if errorlevel 1 (
+    echo.
+    echo [ERROR] Error occurred during installation of Python requirements.
+    pause
+    exit /b 1
 )
 
 echo.
-echo Starting PANDO Application (MainQt.py)...
-call "%QGIS_BAT%" "%~dp0MainQt.py"
+echo [2/2] Starting PANDO Application (MainQt.py)...
+call "%QGIS_PYTHON%" "%SCRIPT_DIR%MainQt.py"
+set "APP_EXIT_CODE=%ERRORLEVEL%"
 
+if not "%APP_EXIT_CODE%"=="0" echo [ERROR] PANDO exited with code %APP_EXIT_CODE%.
 pause
+exit /b %APP_EXIT_CODE%
+
+:TRY_QGIS
+:: Keep environment changes from rejected launchers out of subsequent checks.
+setlocal
+call "%~1" -c "from qgis.PyQt import QtCore, QtGui, QtWidgets; from qgis.core import Qgis; raise SystemExit(0 if Qgis.QGIS_VERSION_INT >= 40000 else 1)" >nul 2>&1
+if errorlevel 1 (
+    echo [WARNING] Skipping launcher without a working QGIS 4 environment: "%~1"
+    endlocal
+    exit /b 0
+)
+endlocal & set "QGIS_PYTHON=%~1"
+exit /b 0

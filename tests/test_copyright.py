@@ -13,7 +13,7 @@ from core.app.app_qt.dialogs.copyright_dialog import (
 
 class CopyrightTests(unittest.TestCase):
     def test_copyright_sources_priority_order_and_file_existence(self):
-        expected_ids = ["gadm", "ghs_pop", "osm", "osmium", "qgis", "visum"]
+        expected_ids = ["gadm", "ghs_pop", "osm", "osmium", "qgis", "visum", "report"]
         self.assertEqual(REQUIRED_SOURCE_IDS, expected_ids)
 
         root = tool_root()
@@ -72,7 +72,7 @@ class CopyrightTests(unittest.TestCase):
 
         dialog.accept_all_button.click()
         accepted_map = dialog.get_accepted_result()
-        self.assertEqual(len(accepted_map), 6)
+        self.assertEqual(len(accepted_map), len(REQUIRED_SOURCE_IDS))
         for src_id in REQUIRED_SOURCE_IDS:
             self.assertIn(src_id, accepted_map)
 

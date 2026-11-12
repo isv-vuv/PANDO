@@ -2,6 +2,10 @@
 
 from __future__ import annotations
 
+if __package__:
+    from .visum_com import create_visum, get_visum_appdata_dir
+else:
+    from visum_com import create_visum, get_visum_appdata_dir
 import os
 import sys
 import logging
@@ -14,6 +18,7 @@ logger = logging.getLogger(__name__)
 
 
 _ACTIVE_VISUM_INSTANCE = None
+LAST_ERROR = None
 
 
 def disconnect_active_visum(close_app: bool = False, log=print) -> None:
@@ -42,18 +47,13 @@ def disconnect_active_visum(close_app: bool = False, log=print) -> None:
 
 
 def deploy_visum_importer_to_appdata(log=print) -> Path:
-    """Verifies PTV Visum 2025 installation and deploys the OSM importer folder without renaming or splitting."""
+    """Resolves the registered PTV Visum version and deploys the OSM importer folder without renaming or splitting."""
     appdata = os.environ.get("APPDATA")
     if not appdata:
         raise RuntimeError("Umgebungsvariable APPDATA ist nicht vorhanden.")
 
-    visum_2025_base = Path(appdata) / "PTV Vision" / "PTV Visum 2025"
-    if not visum_2025_base.exists():
-        msg = f"Fehler: PTV Visum 2025 ist nicht unter '{visum_2025_base}' installiert."
-        log(msg)
-        raise FileNotFoundError(msg)
-
-    importer_target_dir = visum_2025_base / "Importer" / "PANDO_Importer"
+    visum_base = get_visum_appdata_dir()
+    importer_target_dir = visum_base / "Importer" / "PANDO_Importer"
     importer_target_dir.mkdir(parents=True, exist_ok=True)
 
     script_dir = Path(__file__).resolve().parent
@@ -168,7 +168,8 @@ def populate_visum_filter_files(visum_dir: Path, log=print) -> list[Path]:
 
 def run_visum_postprocessing_chain(project_path: str | Path, *, start_step: int = 1, log=print) -> bool:
     """Executes Visum scripts starting from start_step (1 to 5) in automated sequence."""
-    global _ACTIVE_VISUM_INSTANCE
+    global _ACTIVE_VISUM_INSTANCE, LAST_ERROR
+    LAST_ERROR = None
 
     base_dir = Path(project_path).resolve()
     visum_dir = base_dir / "processed" / "visum"
@@ -184,7 +185,7 @@ def run_visum_postprocessing_chain(project_path: str | Path, *, start_step: int 
     visum = None
     try:
         # Step 0: Deploy Importer & Populate Procedures / GPA / Filter files
-        log("Prüfe Visum 2025 Installation und kopiere Importer-Dateien...")
+        log("Prüfe registrierte Visum-Version und kopiere Importer-Dateien...")
         deploy_visum_importer_to_appdata(log=log)
         populate_visum_procedure_files(visum_dir, log=log)
         populate_visum_gpa_files(visum_dir, log=log)
@@ -220,7 +221,7 @@ def run_visum_postprocessing_chain(project_path: str | Path, *, start_step: int 
 
             if start_ver_file and start_ver_file.exists():
                 log(f"Überspringe Schritte 1 bis {start_step - 1}. Lade vorhandene Version: {start_ver_file.name}")
-                visum = com.Dispatch("Visum.Visum.250")
+                visum = create_visum()
                 visum.Graphic.ShowMaximized()
                 visum.LoadVersion(str(start_ver_file))
                 try:
@@ -316,6 +317,7 @@ def run_visum_postprocessing_chain(project_path: str | Path, *, start_step: int 
         return True
 
     except Exception as e:
+        LAST_ERROR = str(e)
         log(f"Fehler während der Visum-Verarbeitungskette: {e}")
         if visum is not None:
             try:
@@ -329,7 +331,9 @@ def run_visum_postprocessing_chain(project_path: str | Path, *, start_step: int 
             except Exception:
                 pass
             _ACTIVE_VISUM_INSTANCE = visum
-        log("Visum bleibt geöffnet, damit der Zustand im Programm überprüft werden kann.")
+            log("Visum bleibt geöffnet, damit der Zustand im Programm überprüft werden kann.")
+        else:
+            log("Keine Visum-Instanz verfügbar; Visum konnte nicht gestartet werden oder wurde nicht zurückgegeben.")
         return False
 
 

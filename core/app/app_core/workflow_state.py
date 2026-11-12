@@ -57,9 +57,10 @@ class StepId(IntEnum):
     PROCESSING = 5
     VISUM = 6
     RESULTS = 7
+    REPORT = 8
 
 
-STEP_COUNT = 6  # Active process steps (1 to 6)
+STEP_COUNT = 7  # Active process steps (1 to 7)
 
 
 def coerce_step_id(value: StepId | int) -> StepId:
@@ -86,7 +87,7 @@ def progress_percent_for_step(step_id: StepId | int) -> int:
     step_num = int(step)
     if step_num >= 2:
         step_num -= 1
-    return round(min(6, step_num) / STEP_COUNT * 100)
+    return round(min(STEP_COUNT, step_num) / STEP_COUNT * 100)
 
 
 @dataclass

@@ -2005,7 +2005,7 @@
         <Option name="FORMULA" type="List">
           <Option type="Map">
             <Option name="source" type="int" value="2"/>
-            <Option name="static_value" type="QString" value="IF(&#xd;&#xa;  &quot;total_intensity&quot; >= @minimum_intensity_threshold_for_level_3_centralities_total_intensity_values_range_from_0_to_25 AND &#xd;&#xa;  aggregate(&#xd;&#xa;    layer:=@layer, &#xd;&#xa;    aggregate:='count', &#xd;&#xa;    expression:=$id, &#xd;&#xa;    filter:=&quot;total_intensity&quot; >= @minimum_intensity_threshold_for_level_3_centralities_total_intensity_values_range_from_0_to_25 &#xd;&#xa;            AND distance($geometry, geometry(@parent)) &lt;= @minimum_distance_between_level_3_centralities_if_grid_seperation_is_insufficient_m &#xd;&#xa;            AND &quot;total_intensity&quot; > attribute(@parent, 'total_intensity')&#xd;&#xa;  ) = 0, &#xd;&#xa;  1, &#xd;&#xa;  0&#xd;&#xa;)"/>
+            <Option name="static_value" type="QString" value="IF(&#13;&#10;  &quot;total_intensity&quot; &gt;= @minimum_intensity_threshold_for_level_3_centralities_total_intensity_values_range_from_0_to_25 AND &#13;&#10;  aggregate(&#13;&#10;    layer:=@layer, &#13;&#10;    aggregate:='count', &#13;&#10;    expression:=$id, &#13;&#10;    filter:=&quot;total_intensity&quot; &gt;= @minimum_intensity_threshold_for_level_3_centralities_total_intensity_values_range_from_0_to_25 &#13;&#10;            AND distance($geometry, geometry(@parent)) &lt;= @minimum_distance_between_level_3_centralities_if_grid_seperation_is_insufficient_m &#13;&#10;            AND &quot;total_intensity&quot; &gt; attribute(@parent, 'total_intensity')&#13;&#10;  ) = 0, &#13;&#10;  1, &#13;&#10;  0&#13;&#10;)"/>
           </Option>
         </Option>
         <Option name="INPUT" type="List">
@@ -2070,7 +2070,7 @@
         <Option name="FORMULA" type="List">
           <Option type="Map">
             <Option name="source" type="int" value="2"/>
-            <Option name="static_value" type="QString" value="IF(&#xd;&#xa;  &quot;potential_l3&quot; = 1 AND &#xd;&#xa;  &quot;total_intensity&quot; = aggregate(&#xd;&#xa;    layer:=@layer, &#xd;&#xa;    aggregate:='max', &#xd;&#xa;    expression:=&quot;total_intensity&quot;, &#xd;&#xa;    filter:=&quot;potential_l3&quot; = 1 AND &quot;NO_E0&quot; = attribute(@parent, 'NO_E0')&#xd;&#xa;  ), &#xd;&#xa;  1, &#xd;&#xa;  0&#xd;&#xa;)"/>
+            <Option name="static_value" type="QString" value="IF(&#13;&#10;  &quot;potential_l3&quot; = 1 AND &#13;&#10;  &quot;total_intensity&quot; = aggregate(&#13;&#10;    layer:=@layer, &#13;&#10;    aggregate:='max', &#13;&#10;    expression:=&quot;total_intensity&quot;, &#13;&#10;    filter:=&quot;potential_l3&quot; = 1 AND &quot;NO_E0&quot; = attribute(@parent, 'NO_E0')&#13;&#10;  ), &#13;&#10;  1, &#13;&#10;  0&#13;&#10;)"/>
           </Option>
         </Option>
         <Option name="INPUT" type="List">
@@ -2135,7 +2135,7 @@
         <Option name="FORMULA" type="List">
           <Option type="Map">
             <Option name="source" type="int" value="2"/>
-            <Option name="static_value" type="QString" value="IF(&#xd;&#xa;  &quot;is_l3&quot; = 1,&#xd;&#xa;  0,&#xd;&#xa;  IF(&#xd;&#xa;    aggregate(&#xd;&#xa;      layer:=@layer,&#xd;&#xa;      aggregate:='count',&#xd;&#xa;      expression:=$id,&#xd;&#xa;      filter:=&quot;is_l3&quot; = 1 AND distance($geometry, geometry(@parent)) &lt;= @minimum_distance_between_level_3_and_level_4_centralities_m&#xd;&#xa;    ) = 0 &#xd;&#xa;    AND &#xd;&#xa;    aggregate(&#xd;&#xa;      layer:=@layer,&#xd;&#xa;      aggregate:='count',&#xd;&#xa;      expression:=$id,&#xd;&#xa;      filter:=&quot;is_l3&quot; = 0 &#xd;&#xa;              AND distance($geometry, geometry(@parent)) &lt;= @minimum_distance_between_level_4_centralities_if_grid_seperation_is_insufficient_m &#xd;&#xa;              AND &quot;total_intensity&quot; > attribute(@parent, 'total_intensity')&#xd;&#xa;    ) = 0,&#xd;&#xa;    1,&#xd;&#xa;    0&#xd;&#xa;  )&#xd;&#xa;)"/>
+            <Option name="static_value" type="QString" value="IF(&#13;&#10;  &quot;is_l3&quot; = 1,&#13;&#10;  0,&#13;&#10;  IF(&#13;&#10;    aggregate(&#13;&#10;      layer:=@layer,&#13;&#10;      aggregate:='count',&#13;&#10;      expression:=$id,&#13;&#10;      filter:=&quot;is_l3&quot; = 1 AND distance($geometry, geometry(@parent)) &lt;= @minimum_distance_between_level_3_and_level_4_centralities_m&#13;&#10;    ) = 0 &#13;&#10;    AND &#13;&#10;    aggregate(&#13;&#10;      layer:=@layer,&#13;&#10;      aggregate:='count',&#13;&#10;      expression:=$id,&#13;&#10;      filter:=&quot;is_l3&quot; = 0 &#13;&#10;              AND distance($geometry, geometry(@parent)) &lt;= @minimum_distance_between_level_4_centralities_if_grid_seperation_is_insufficient_m &#13;&#10;              AND &quot;total_intensity&quot; &gt; attribute(@parent, 'total_intensity')&#13;&#10;    ) = 0,&#13;&#10;    1,&#13;&#10;    0&#13;&#10;  )&#13;&#10;)"/>
           </Option>
         </Option>
         <Option name="INPUT" type="List">
@@ -2200,7 +2200,7 @@
         <Option name="FORMULA" type="List">
           <Option type="Map">
             <Option name="source" type="int" value="2"/>
-            <Option name="static_value" type="QString" value="IF(&#xd;&#xa;  aggregate(&#xd;&#xa;    layer:=@layer,&#xd;&#xa;    aggregate:='max',&#xd;&#xa;    expression:=&quot;is_l3&quot;,&#xd;&#xa;    filter:=&quot;NO_E1&quot; = attribute(@parent, 'NO_E1')&#xd;&#xa;  ) = 0 &#xd;&#xa;  AND &#xd;&#xa;  &quot;potential_l4&quot; = 1 &#xd;&#xa;  AND &#xd;&#xa;  &quot;total_intensity&quot; = aggregate(&#xd;&#xa;    layer:=@layer,&#xd;&#xa;    aggregate:='max',&#xd;&#xa;    expression:=&quot;total_intensity&quot;,&#xd;&#xa;    filter:=&quot;potential_l4&quot; = 1 AND &quot;NO_E1&quot; = attribute(@parent, 'NO_E1')&#xd;&#xa;  ),&#xd;&#xa;  1,&#xd;&#xa;  0&#xd;&#xa;)"/>
+            <Option name="static_value" type="QString" value="IF(&#13;&#10;  aggregate(&#13;&#10;    layer:=@layer,&#13;&#10;    aggregate:='max',&#13;&#10;    expression:=&quot;is_l3&quot;,&#13;&#10;    filter:=&quot;NO_E1&quot; = attribute(@parent, 'NO_E1')&#13;&#10;  ) = 0 &#13;&#10;  AND &#13;&#10;  &quot;potential_l4&quot; = 1 &#13;&#10;  AND &#13;&#10;  &quot;total_intensity&quot; = aggregate(&#13;&#10;    layer:=@layer,&#13;&#10;    aggregate:='max',&#13;&#10;    expression:=&quot;total_intensity&quot;,&#13;&#10;    filter:=&quot;potential_l4&quot; = 1 AND &quot;NO_E1&quot; = attribute(@parent, 'NO_E1')&#13;&#10;  ),&#13;&#10;  1,&#13;&#10;  0&#13;&#10;)"/>
           </Option>
         </Option>
         <Option name="INPUT" type="List">
@@ -2706,14 +2706,14 @@
         </Option>
         <Option name="INPUT" type="List">
           <Option type="Map">
-            <Option name="child_id" type="QString" value="native:refactorfields_3"/>
+            <Option name="child_id" type="QString" value="native:createspatialindex_1"/>
             <Option name="output_name" type="QString" value="OUTPUT"/>
             <Option name="source" type="int" value="1"/>
           </Option>
         </Option>
         <Option name="JOIN" type="List">
           <Option type="Map">
-            <Option name="child_id" type="QString" value="native:reprojectlayer_3"/>
+            <Option name="child_id" type="QString" value="native:createspatialindex_2"/>
             <Option name="output_name" type="QString" value="OUTPUT"/>
             <Option name="source" type="int" value="1"/>
           </Option>
@@ -2783,14 +2783,14 @@
         </Option>
         <Option name="INPUT" type="List">
           <Option type="Map">
-            <Option name="child_id" type="QString" value="native:reprojectlayer_3"/>
+            <Option name="child_id" type="QString" value="native:createspatialindex_2"/>
             <Option name="output_name" type="QString" value="OUTPUT"/>
             <Option name="source" type="int" value="1"/>
           </Option>
         </Option>
         <Option name="JOIN" type="List">
           <Option type="Map">
-            <Option name="child_id" type="QString" value="native:fieldcalculator_8"/>
+            <Option name="child_id" type="QString" value="native:createspatialindex_3"/>
             <Option name="output_name" type="QString" value="OUTPUT"/>
             <Option name="source" type="int" value="1"/>
           </Option>
@@ -2859,14 +2859,14 @@
         </Option>
         <Option name="INPUT" type="List">
           <Option type="Map">
-            <Option name="child_id" type="QString" value="native:mergevectorlayers_8"/>
+            <Option name="child_id" type="QString" value="native:createspatialindex_4"/>
             <Option name="output_name" type="QString" value="OUTPUT"/>
             <Option name="source" type="int" value="1"/>
           </Option>
         </Option>
         <Option name="JOIN" type="List">
           <Option type="Map">
-            <Option name="child_id" type="QString" value="native:joinattributesbylocation_2"/>
+            <Option name="child_id" type="QString" value="native:createspatialindex_5"/>
             <Option name="output_name" type="QString" value="OUTPUT"/>
             <Option name="source" type="int" value="1"/>
           </Option>
@@ -4058,7 +4058,7 @@
               <Option type="Map">
                 <Option name="alias" type="invalid"/>
                 <Option name="comment" type="invalid"/>
-                <Option name="expression" type="QString" value="round(- ( &#xa;  IF(&quot;p_government&quot; > 0, &quot;p_government&quot; * ln(&quot;p_government&quot;), 0) +&#xa;  IF(&quot;p_education&quot; > 0, &quot;p_education&quot; * ln(&quot;p_education&quot;), 0) +&#xa;  IF(&quot;p_retail&quot; > 0, &quot;p_retail&quot; * ln(&quot;p_retail&quot;), 0) +&#xa;  IF(&quot;p_leisure&quot; > 0, &quot;p_leisure&quot; * ln(&quot;p_leisure&quot;), 0) +&#xa;  IF(&quot;p_healthcare&quot; > 0, &quot;p_healthcare&quot; * ln(&quot;p_healthcare&quot;), 0)&#xa;), 3)"/>
+                <Option name="expression" type="QString" value="round(- ( &#10;  IF(&quot;p_government&quot; &gt; 0, &quot;p_government&quot; * ln(&quot;p_government&quot;), 0) +&#10;  IF(&quot;p_education&quot; &gt; 0, &quot;p_education&quot; * ln(&quot;p_education&quot;), 0) +&#10;  IF(&quot;p_retail&quot; &gt; 0, &quot;p_retail&quot; * ln(&quot;p_retail&quot;), 0) +&#10;  IF(&quot;p_leisure&quot; &gt; 0, &quot;p_leisure&quot; * ln(&quot;p_leisure&quot;), 0) +&#10;  IF(&quot;p_healthcare&quot; &gt; 0, &quot;p_healthcare&quot; * ln(&quot;p_healthcare&quot;), 0)&#10;), 3)"/>
                 <Option name="length" type="int" value="0"/>
                 <Option name="name" type="QString" value="entropy"/>
                 <Option name="precision" type="int" value="2"/>
@@ -4069,7 +4069,7 @@
               <Option type="Map">
                 <Option name="alias" type="invalid"/>
                 <Option name="comment" type="invalid"/>
-                <Option name="expression" type="QString" value="round(round(- ( &#xa;  IF(&quot;p_government&quot; > 0, &quot;p_government&quot; * ln(&quot;p_government&quot;), 0) +&#xa;  IF(&quot;p_education&quot; > 0, &quot;p_education&quot; * ln(&quot;p_education&quot;), 0) +&#xa;  IF(&quot;p_retail&quot; > 0, &quot;p_retail&quot; * ln(&quot;p_retail&quot;), 0) +&#xa;  IF(&quot;p_leisure&quot; > 0, &quot;p_leisure&quot; * ln(&quot;p_leisure&quot;), 0) +&#xa;  IF(&quot;p_healthcare&quot; > 0, &quot;p_healthcare&quot; * ln(&quot;p_healthcare&quot;), 0)&#xa;), 3) / ln(5), 3)"/>
+                <Option name="expression" type="QString" value="round(round(- ( &#10;  IF(&quot;p_government&quot; &gt; 0, &quot;p_government&quot; * ln(&quot;p_government&quot;), 0) +&#10;  IF(&quot;p_education&quot; &gt; 0, &quot;p_education&quot; * ln(&quot;p_education&quot;), 0) +&#10;  IF(&quot;p_retail&quot; &gt; 0, &quot;p_retail&quot; * ln(&quot;p_retail&quot;), 0) +&#10;  IF(&quot;p_leisure&quot; &gt; 0, &quot;p_leisure&quot; * ln(&quot;p_leisure&quot;), 0) +&#10;  IF(&quot;p_healthcare&quot; &gt; 0, &quot;p_healthcare&quot; * ln(&quot;p_healthcare&quot;), 0)&#10;), 3) / ln(5), 3)"/>
                 <Option name="length" type="int" value="0"/>
                 <Option name="name" type="QString" value="entropy_index"/>
                 <Option name="precision" type="int" value="2"/>
@@ -4488,7 +4488,7 @@
         <Option name="INPUT_QUERY" type="List">
           <Option type="Map">
             <Option name="source" type="int" value="2"/>
-            <Option name="static_value" type="QString" value="SELECT &#xa;  g.geometry AS geometry,&#xa;  g.fid AS fid,&#xa;  g.NO AS ZONENO,&#xa;  g.NAME AS Name,&#xa;  g.MAINZONENO AS MAINZONENO,&#xa;  COALESCE(g.TypeNo_2, g.TYPENO) AS TypeNo,&#xa;  g.POP AS POP,&#xa;  g.NO_E2 AS NO_E2,&#xa;  g.NO_E1 AS NO_E1,&#xa;  g.NO_E0 AS NO_E0,&#xa;  g.&quot;Zone Type&quot; AS Zone_Type,&#xa;  COALESCE(g.XCoord, ST_X(ST_Centroid(g.geometry))) AS XCoord,&#xa;  COALESCE(g.YCoord, ST_Y(ST_Centroid(g.geometry))) AS YCoord,&#xa;  g.total_intensity AS Total_Intensity,&#xa;  g.healthcare AS Healthcare,&#xa;  g.leisure AS Leisure,&#xa;  g.retail AS Retail,&#xa;  g.education AS Education,&#xa;  g.government AS Government,&#xa;  g.p_healthcare AS P_Healthcare,&#xa;  g.p_leisure AS P_Leisure,&#xa;  g.p_retail AS P_Retail,&#xa;  g.p_education AS P_Education,&#xa;  g.p_government AS P_Government,&#xa;  g.entropy AS Entropy,&#xa;  g.entropy_index AS Entropy_Index,&#xa;  COALESCE(p.Num_Healthcare, 0) AS Num_Healthcare,&#xa;  COALESCE(p.Num_Healthcare_O, 0) AS Num_Healthcare_O,&#xa;  COALESCE(p.Num_Healthcare_N, 0) AS Num_Healthcare_N,&#xa;  COALESCE(p.Num_Healthcare_M, 0) AS Num_Healthcare_M,&#xa;  COALESCE(p.Num_Government, 0) AS Num_Government,&#xa;  COALESCE(p.Num_Government_C, 0) AS Num_Government_C,&#xa;  COALESCE(p.Num_Government_B, 0) AS Num_Government_B,&#xa;  COALESCE(p.Num_Government_A, 0) AS Num_Government_A,&#xa;  COALESCE(p.Num_Education, 0) AS Num_Education,&#xa;  COALESCE(p.Num_Education_F, 0) AS Num_Education_F,&#xa;  COALESCE(p.Num_Education_E, 0) AS Num_Education_E,&#xa;  COALESCE(p.Num_Education_D, 0) AS Num_Education_D,&#xa;  COALESCE(p.Num_Retail, 0) AS Num_Retail,&#xa;  COALESCE(p.Num_Retail_T, 0) AS Num_Retail_T,&#xa;  COALESCE(p.Num_Retail_S, 0) AS Num_Retail_S,&#xa;  COALESCE(p.Num_Retail_R, 0) AS Num_Retail_R,&#xa;  COALESCE(p.Num_Leisure, 0) AS Num_Leisure,&#xa;  COALESCE(p.Num_Leisure_L, 0) AS Num_Leisure_L,&#xa;  COALESCE(p.Num_Leisure_K, 0) AS Num_Leisure_K,&#xa;  COALESCE(p.Num_Leisure_J, 0) AS Num_Leisure_J&#xa;FROM input1 g&#xa;LEFT JOIN (&#xa;  SELECT &#xa;    NO,&#xa;    COUNT(CASE WHEN sector = 'HEALTHCARE' THEN 1 END) AS Num_Healthcare,&#xa;    COUNT(CASE WHEN sector = 'HEALTHCARE' AND classification = 'O' THEN 1 END) AS Num_Healthcare_O,&#xa;    COUNT(CASE WHEN sector = 'HEALTHCARE' AND classification = 'N' THEN 1 END) AS Num_Healthcare_N,&#xa;    COUNT(CASE WHEN sector = 'HEALTHCARE' AND classification = 'M' THEN 1 END) AS Num_Healthcare_M,&#xa;    COUNT(CASE WHEN sector = 'GOVERNMENT' THEN 1 END) AS Num_Government,&#xa;    COUNT(CASE WHEN sector = 'GOVERNMENT' AND classification = 'C' THEN 1 END) AS Num_Government_C,&#xa;    COUNT(CASE WHEN sector = 'GOVERNMENT' AND classification = 'B' THEN 1 END) AS Num_Government_B,&#xa;    COUNT(CASE WHEN sector = 'GOVERNMENT' AND classification = 'A' THEN 1 END) AS Num_Government_A,&#xa;    COUNT(CASE WHEN sector = 'EDUCATION' THEN 1 END) AS Num_Education,&#xa;    COUNT(CASE WHEN sector = 'EDUCATION' AND classification = 'F' THEN 1 END) AS Num_Education_F,&#xa;    COUNT(CASE WHEN sector = 'EDUCATION' AND classification = 'E' THEN 1 END) AS Num_Education_E,&#xa;    COUNT(CASE WHEN sector = 'EDUCATION' AND classification = 'D' THEN 1 END) AS Num_Education_D,&#xa;    COUNT(CASE WHEN sector = 'RETAIL' THEN 1 END) AS Num_Retail,&#xa;    COUNT(CASE WHEN sector = 'RETAIL' AND classification = 'T' THEN 1 END) AS Num_Retail_T,&#xa;    COUNT(CASE WHEN sector = 'RETAIL' AND classification = 'S' THEN 1 END) AS Num_Retail_S,&#xa;    COUNT(CASE WHEN sector = 'RETAIL' AND classification = 'R' THEN 1 END) AS Num_Retail_R,&#xa;    COUNT(CASE WHEN sector = 'LEISURE' THEN 1 END) AS Num_Leisure,&#xa;    COUNT(CASE WHEN sector = 'LEISURE' AND classification = 'L' THEN 1 END) AS Num_Leisure_L,&#xa;    COUNT(CASE WHEN sector = 'LEISURE' AND classification = 'K' THEN 1 END) AS Num_Leisure_K,&#xa;    COUNT(CASE WHEN sector = 'LEISURE' AND classification = 'J' THEN 1 END) AS Num_Leisure_J&#xa;  FROM input2&#xa;  GROUP BY NO&#xa;) p ON g.NO = p.NO"/>
+            <Option name="static_value" type="QString" value="SELECT &#10;  g.geometry AS geometry,&#10;  g.fid AS fid,&#10;  g.NO AS ZONENO,&#10;  g.NAME AS Name,&#10;  g.MAINZONENO AS MAINZONENO,&#10;  COALESCE(g.TypeNo_2, g.TYPENO) AS TypeNo,&#10;  g.POP AS POP,&#10;  g.NO_E2 AS NO_E2,&#10;  g.NO_E1 AS NO_E1,&#10;  g.NO_E0 AS NO_E0,&#10;  g.&quot;Zone Type&quot; AS Zone_Type,&#10;  COALESCE(g.XCoord, ST_X(ST_Centroid(g.geometry))) AS XCoord,&#10;  COALESCE(g.YCoord, ST_Y(ST_Centroid(g.geometry))) AS YCoord,&#10;  g.total_intensity AS Total_Intensity,&#10;  g.healthcare AS Healthcare,&#10;  g.leisure AS Leisure,&#10;  g.retail AS Retail,&#10;  g.education AS Education,&#10;  g.government AS Government,&#10;  g.p_healthcare AS P_Healthcare,&#10;  g.p_leisure AS P_Leisure,&#10;  g.p_retail AS P_Retail,&#10;  g.p_education AS P_Education,&#10;  g.p_government AS P_Government,&#10;  g.entropy AS Entropy,&#10;  g.entropy_index AS Entropy_Index,&#10;  COALESCE(p.Num_Healthcare, 0) AS Num_Healthcare,&#10;  COALESCE(p.Num_Healthcare_O, 0) AS Num_Healthcare_O,&#10;  COALESCE(p.Num_Healthcare_N, 0) AS Num_Healthcare_N,&#10;  COALESCE(p.Num_Healthcare_M, 0) AS Num_Healthcare_M,&#10;  COALESCE(p.Num_Government, 0) AS Num_Government,&#10;  COALESCE(p.Num_Government_C, 0) AS Num_Government_C,&#10;  COALESCE(p.Num_Government_B, 0) AS Num_Government_B,&#10;  COALESCE(p.Num_Government_A, 0) AS Num_Government_A,&#10;  COALESCE(p.Num_Education, 0) AS Num_Education,&#10;  COALESCE(p.Num_Education_F, 0) AS Num_Education_F,&#10;  COALESCE(p.Num_Education_E, 0) AS Num_Education_E,&#10;  COALESCE(p.Num_Education_D, 0) AS Num_Education_D,&#10;  COALESCE(p.Num_Retail, 0) AS Num_Retail,&#10;  COALESCE(p.Num_Retail_T, 0) AS Num_Retail_T,&#10;  COALESCE(p.Num_Retail_S, 0) AS Num_Retail_S,&#10;  COALESCE(p.Num_Retail_R, 0) AS Num_Retail_R,&#10;  COALESCE(p.Num_Leisure, 0) AS Num_Leisure,&#10;  COALESCE(p.Num_Leisure_L, 0) AS Num_Leisure_L,&#10;  COALESCE(p.Num_Leisure_K, 0) AS Num_Leisure_K,&#10;  COALESCE(p.Num_Leisure_J, 0) AS Num_Leisure_J&#10;FROM input1 g&#10;LEFT JOIN (&#10;  SELECT &#10;    NO,&#10;    COUNT(CASE WHEN sector = 'HEALTHCARE' THEN 1 END) AS Num_Healthcare,&#10;    COUNT(CASE WHEN sector = 'HEALTHCARE' AND classification = 'O' THEN 1 END) AS Num_Healthcare_O,&#10;    COUNT(CASE WHEN sector = 'HEALTHCARE' AND classification = 'N' THEN 1 END) AS Num_Healthcare_N,&#10;    COUNT(CASE WHEN sector = 'HEALTHCARE' AND classification = 'M' THEN 1 END) AS Num_Healthcare_M,&#10;    COUNT(CASE WHEN sector = 'GOVERNMENT' THEN 1 END) AS Num_Government,&#10;    COUNT(CASE WHEN sector = 'GOVERNMENT' AND classification = 'C' THEN 1 END) AS Num_Government_C,&#10;    COUNT(CASE WHEN sector = 'GOVERNMENT' AND classification = 'B' THEN 1 END) AS Num_Government_B,&#10;    COUNT(CASE WHEN sector = 'GOVERNMENT' AND classification = 'A' THEN 1 END) AS Num_Government_A,&#10;    COUNT(CASE WHEN sector = 'EDUCATION' THEN 1 END) AS Num_Education,&#10;    COUNT(CASE WHEN sector = 'EDUCATION' AND classification = 'F' THEN 1 END) AS Num_Education_F,&#10;    COUNT(CASE WHEN sector = 'EDUCATION' AND classification = 'E' THEN 1 END) AS Num_Education_E,&#10;    COUNT(CASE WHEN sector = 'EDUCATION' AND classification = 'D' THEN 1 END) AS Num_Education_D,&#10;    COUNT(CASE WHEN sector = 'RETAIL' THEN 1 END) AS Num_Retail,&#10;    COUNT(CASE WHEN sector = 'RETAIL' AND classification = 'T' THEN 1 END) AS Num_Retail_T,&#10;    COUNT(CASE WHEN sector = 'RETAIL' AND classification = 'S' THEN 1 END) AS Num_Retail_S,&#10;    COUNT(CASE WHEN sector = 'RETAIL' AND classification = 'R' THEN 1 END) AS Num_Retail_R,&#10;    COUNT(CASE WHEN sector = 'LEISURE' THEN 1 END) AS Num_Leisure,&#10;    COUNT(CASE WHEN sector = 'LEISURE' AND classification = 'L' THEN 1 END) AS Num_Leisure_L,&#10;    COUNT(CASE WHEN sector = 'LEISURE' AND classification = 'K' THEN 1 END) AS Num_Leisure_K,&#10;    COUNT(CASE WHEN sector = 'LEISURE' AND classification = 'J' THEN 1 END) AS Num_Leisure_J&#10;  FROM input2&#10;  GROUP BY NO&#10;) p ON g.NO = p.NO"/>
           </Option>
         </Option>
         <Option name="INPUT_UID_FIELD" type="List">
@@ -4931,6 +4931,181 @@
         </Option>
       </Option>
     </Option>
+    <Option name="native:createspatialindex_1" type="Map">
+      <Option name="active" type="bool" value="true"/>
+      <Option name="alg_config"/>
+      <Option name="alg_id" type="QString" value="native:createspatialindex"/>
+      <Option name="color" type="QString" value=""/>
+      <Option name="comment" type="Map">
+        <Option name="color" type="QString" value=""/>
+        <Option name="component_description" type="QString" value=""/>
+        <Option name="component_height" type="double" value="60"/>
+        <Option name="component_pos_x" type="double" value="2420"/>
+        <Option name="component_pos_y" type="double" value="1725"/>
+        <Option name="component_width" type="double" value="100"/>
+        <Option name="outputs_collapsed" type="bool" value="true"/>
+        <Option name="parameters_collapsed" type="bool" value="true"/>
+      </Option>
+      <Option name="component_description" type="QString" value="Create spatial index"/>
+      <Option name="component_height" type="double" value="30"/>
+      <Option name="component_pos_x" type="double" value="150"/>
+      <Option name="component_pos_y" type="double" value="2200"/>
+      <Option name="component_width" type="double" value="200"/>
+      <Option name="dependencies"/>
+      <Option name="id" type="QString" value="native:createspatialindex_1"/>
+      <Option name="outputs"/>
+      <Option name="outputs_collapsed" type="bool" value="true"/>
+      <Option name="parameters_collapsed" type="bool" value="true"/>
+      <Option name="params" type="Map">
+        <Option name="INPUT" type="List">
+          <Option type="Map">
+            <Option name="child_id" type="QString" value="native:refactorfields_3"/>
+            <Option name="output_name" type="QString" value="OUTPUT"/>
+            <Option name="source" type="int" value="1"/>
+          </Option>
+        </Option>
+      </Option>
+    </Option>
+    <Option name="native:createspatialindex_2" type="Map">
+      <Option name="active" type="bool" value="true"/>
+      <Option name="alg_config"/>
+      <Option name="alg_id" type="QString" value="native:createspatialindex"/>
+      <Option name="color" type="QString" value=""/>
+      <Option name="comment" type="Map">
+        <Option name="color" type="QString" value=""/>
+        <Option name="component_description" type="QString" value=""/>
+        <Option name="component_height" type="double" value="60"/>
+        <Option name="component_pos_x" type="double" value="2420"/>
+        <Option name="component_pos_y" type="double" value="1725"/>
+        <Option name="component_width" type="double" value="100"/>
+        <Option name="outputs_collapsed" type="bool" value="true"/>
+        <Option name="parameters_collapsed" type="bool" value="true"/>
+      </Option>
+      <Option name="component_description" type="QString" value="Create spatial index"/>
+      <Option name="component_height" type="double" value="30"/>
+      <Option name="component_pos_x" type="double" value="380"/>
+      <Option name="component_pos_y" type="double" value="2200"/>
+      <Option name="component_width" type="double" value="200"/>
+      <Option name="dependencies"/>
+      <Option name="id" type="QString" value="native:createspatialindex_2"/>
+      <Option name="outputs"/>
+      <Option name="outputs_collapsed" type="bool" value="true"/>
+      <Option name="parameters_collapsed" type="bool" value="true"/>
+      <Option name="params" type="Map">
+        <Option name="INPUT" type="List">
+          <Option type="Map">
+            <Option name="child_id" type="QString" value="native:reprojectlayer_3"/>
+            <Option name="output_name" type="QString" value="OUTPUT"/>
+            <Option name="source" type="int" value="1"/>
+          </Option>
+        </Option>
+      </Option>
+    </Option>
+    <Option name="native:createspatialindex_3" type="Map">
+      <Option name="active" type="bool" value="true"/>
+      <Option name="alg_config"/>
+      <Option name="alg_id" type="QString" value="native:createspatialindex"/>
+      <Option name="color" type="QString" value=""/>
+      <Option name="comment" type="Map">
+        <Option name="color" type="QString" value=""/>
+        <Option name="component_description" type="QString" value=""/>
+        <Option name="component_height" type="double" value="60"/>
+        <Option name="component_pos_x" type="double" value="2420"/>
+        <Option name="component_pos_y" type="double" value="1725"/>
+        <Option name="component_width" type="double" value="100"/>
+        <Option name="outputs_collapsed" type="bool" value="true"/>
+        <Option name="parameters_collapsed" type="bool" value="true"/>
+      </Option>
+      <Option name="component_description" type="QString" value="Create spatial index"/>
+      <Option name="component_height" type="double" value="30"/>
+      <Option name="component_pos_x" type="double" value="610"/>
+      <Option name="component_pos_y" type="double" value="2200"/>
+      <Option name="component_width" type="double" value="200"/>
+      <Option name="dependencies"/>
+      <Option name="id" type="QString" value="native:createspatialindex_3"/>
+      <Option name="outputs"/>
+      <Option name="outputs_collapsed" type="bool" value="true"/>
+      <Option name="parameters_collapsed" type="bool" value="true"/>
+      <Option name="params" type="Map">
+        <Option name="INPUT" type="List">
+          <Option type="Map">
+            <Option name="child_id" type="QString" value="native:fieldcalculator_8"/>
+            <Option name="output_name" type="QString" value="OUTPUT"/>
+            <Option name="source" type="int" value="1"/>
+          </Option>
+        </Option>
+      </Option>
+    </Option>
+    <Option name="native:createspatialindex_4" type="Map">
+      <Option name="active" type="bool" value="true"/>
+      <Option name="alg_config"/>
+      <Option name="alg_id" type="QString" value="native:createspatialindex"/>
+      <Option name="color" type="QString" value=""/>
+      <Option name="comment" type="Map">
+        <Option name="color" type="QString" value=""/>
+        <Option name="component_description" type="QString" value=""/>
+        <Option name="component_height" type="double" value="60"/>
+        <Option name="component_pos_x" type="double" value="2420"/>
+        <Option name="component_pos_y" type="double" value="1725"/>
+        <Option name="component_width" type="double" value="100"/>
+        <Option name="outputs_collapsed" type="bool" value="true"/>
+        <Option name="parameters_collapsed" type="bool" value="true"/>
+      </Option>
+      <Option name="component_description" type="QString" value="Create spatial index"/>
+      <Option name="component_height" type="double" value="30"/>
+      <Option name="component_pos_x" type="double" value="840"/>
+      <Option name="component_pos_y" type="double" value="2200"/>
+      <Option name="component_width" type="double" value="200"/>
+      <Option name="dependencies"/>
+      <Option name="id" type="QString" value="native:createspatialindex_4"/>
+      <Option name="outputs"/>
+      <Option name="outputs_collapsed" type="bool" value="true"/>
+      <Option name="parameters_collapsed" type="bool" value="true"/>
+      <Option name="params" type="Map">
+        <Option name="INPUT" type="List">
+          <Option type="Map">
+            <Option name="child_id" type="QString" value="native:mergevectorlayers_8"/>
+            <Option name="output_name" type="QString" value="OUTPUT"/>
+            <Option name="source" type="int" value="1"/>
+          </Option>
+        </Option>
+      </Option>
+    </Option>
+    <Option name="native:createspatialindex_5" type="Map">
+      <Option name="active" type="bool" value="true"/>
+      <Option name="alg_config"/>
+      <Option name="alg_id" type="QString" value="native:createspatialindex"/>
+      <Option name="color" type="QString" value=""/>
+      <Option name="comment" type="Map">
+        <Option name="color" type="QString" value=""/>
+        <Option name="component_description" type="QString" value=""/>
+        <Option name="component_height" type="double" value="60"/>
+        <Option name="component_pos_x" type="double" value="2420"/>
+        <Option name="component_pos_y" type="double" value="1725"/>
+        <Option name="component_width" type="double" value="100"/>
+        <Option name="outputs_collapsed" type="bool" value="true"/>
+        <Option name="parameters_collapsed" type="bool" value="true"/>
+      </Option>
+      <Option name="component_description" type="QString" value="Create spatial index"/>
+      <Option name="component_height" type="double" value="30"/>
+      <Option name="component_pos_x" type="double" value="1070"/>
+      <Option name="component_pos_y" type="double" value="2200"/>
+      <Option name="component_width" type="double" value="200"/>
+      <Option name="dependencies"/>
+      <Option name="id" type="QString" value="native:createspatialindex_5"/>
+      <Option name="outputs"/>
+      <Option name="outputs_collapsed" type="bool" value="true"/>
+      <Option name="parameters_collapsed" type="bool" value="true"/>
+      <Option name="params" type="Map">
+        <Option name="INPUT" type="List">
+          <Option type="Map">
+            <Option name="child_id" type="QString" value="native:joinattributesbylocation_2"/>
+            <Option name="output_name" type="QString" value="OUTPUT"/>
+            <Option name="source" type="int" value="1"/>
+          </Option>
+        </Option>
+      </Option>
+    </Option>
   </Option>
   <Option name="designerParameterValues" type="Map">
     <Option name="grid_cells_zone_pa_ia1_ia2" type="QString" value="Grid_Zone_PA_IA1_IA2_a53b5624_fc71_433b_91a9_e1d40339d7d3"/>
@@ -5129,7 +5304,7 @@
     </Option>
     <Option type="Map">
       <Option name="color" type="QString" value="189,227,198,255,hsv:0.37280556559562683,0.16580453515052795,0.89019608497619629,1"/>
-      <Option name="component_description" type="QString" value="Intensity Analysis&#xa;      ------>"/>
+      <Option name="component_description" type="QString" value="Intensity Analysis&#10;      ------&gt;"/>
       <Option name="component_height" type="double" value="569.9999999999999"/>
       <Option name="component_pos_x" type="double" value="1875"/>
       <Option name="component_pos_y" type="double" value="1005"/>
@@ -5230,7 +5405,7 @@
       <Option name="help" type="QString" value=""/>
       <Option name="max" type="double" value="1.7976931348623157e+308"/>
       <Option name="metadata"/>
-      <Option name="min" type="double" value="400"/>
+      <Option name="min" type="double" value="200"/>
       <Option name="name" type="QString" value="minimum_distance_between_level_4_centralities_if_grid_seperation_is_insufficient_m"/>
       <Option name="parameter_type" type="QString" value="number"/>
     </Option>
@@ -5589,7 +5764,7 @@
       <Option name="color" type="QString" value=""/>
       <Option name="comment" type="Map">
         <Option name="color" type="QString" value="250,255,197,255,hsv:0.17983333766460419,0.22798503935337067,1,1"/>
-        <Option name="component_description" type="QString" value="Zone selector from https://mangomap.com/robertyoung/maps/69585/what-utm-zone-am-i-in-#&#xa;or: https://mapscaping.com/utm-zone-finder/&#xa;or: https://upload.wikimedia.org/wikipedia/commons/b/b7/Universal_Transverse_Mercator_zones.svg&#xa;&#xa;PHL: 51N&#xa;THA: 47N&#xa;IND: 43N"/>
+        <Option name="component_description" type="QString" value="Zone selector from https://mangomap.com/robertyoung/maps/69585/what-utm-zone-am-i-in-#&#10;or: https://mapscaping.com/utm-zone-finder/&#10;or: https://upload.wikimedia.org/wikipedia/commons/b/b7/Universal_Transverse_Mercator_zones.svg&#10;&#10;PHL: 51N&#10;THA: 47N&#10;IND: 43N"/>
         <Option name="component_height" type="double" value="30"/>
         <Option name="component_pos_x" type="double" value="225"/>
         <Option name="component_pos_y" type="double" value="765"/>

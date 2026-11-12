@@ -822,14 +822,16 @@
       <Option name="params" type="Map">
         <Option name="INPUT" type="List">
           <Option type="Map">
-            <Option name="parameter_name" type="QString" value="zone_adm2_typeno_model2"/>
-            <Option name="source" type="int" value="0"/>
+            <Option name="child_id" type="QString" value="native:createspatialindex_4"/>
+            <Option name="output_name" type="QString" value="OUTPUT"/>
+            <Option name="source" type="int" value="1"/>
           </Option>
         </Option>
         <Option name="INTERSECT" type="List">
           <Option type="Map">
-            <Option name="parameter_name" type="QString" value="zone_paia1ia2_model5"/>
-            <Option name="source" type="int" value="0"/>
+            <Option name="child_id" type="QString" value="native:createspatialindex_5"/>
+            <Option name="output_name" type="QString" value="OUTPUT"/>
+            <Option name="source" type="int" value="1"/>
           </Option>
         </Option>
         <Option name="PREDICATE" type="List">
@@ -960,7 +962,7 @@
         <Option name="FORMULA" type="List">
           <Option type="Map">
             <Option name="source" type="int" value="2"/>
-            <Option name="static_value" type="QString" value="CASE&#xd;&#xa;  -- 1. GRID COMPETITION: Grid cells compete via Total_Intensity within 50km&#xd;&#xa;  WHEN &quot;Point_Src&quot; = 'Grid' AND &quot;Target_Tier&quot; = 0 AND &#xd;&#xa;       aggregate(&#xd;&#xa;         layer:=@layer,&#xd;&#xa;         aggregate:='count',&#xd;&#xa;         expression:=&quot;ZONENO&quot;,&#xd;&#xa;         filter:=&quot;Point_Src&quot; = 'Grid' AND &quot;Target_Tier&quot; = 0 AND &quot;Total_Intensity&quot; > attribute(@parent, 'Total_Intensity') AND distance($geometry, geometry(@parent)) &lt;= 50000&#xd;&#xa;       ) = 0&#xd;&#xa;  THEN 0&#xd;&#xa;  &#xd;&#xa;  -- 2. ADM PROXIMITY BLOCK: ADM points drop to Tier 1 if ANY Grid cell within 50km wants Tier 0&#xd;&#xa;  WHEN &quot;Point_Src&quot; = 'ADM' AND &quot;Target_Tier&quot; = 0 AND&#xd;&#xa;       aggregate(&#xd;&#xa;         layer:=@layer,&#xd;&#xa;         aggregate:='count',&#xd;&#xa;         expression:=&quot;ZONENO&quot;,&#xd;&#xa;         filter:=&quot;Point_Src&quot; = 'Grid' AND &quot;Target_Tier&quot; = 0 AND distance($geometry, geometry(@parent)) &lt;= 50000&#xd;&#xa;       ) > 0&#xd;&#xa;  THEN 1 -- Automatic downgrade to Tier 1&#xd;&#xa;  &#xd;&#xa;  -- 3. ADM WINNER: ADM point wins Tier 0 if no Grid cells compete within 50km&#xd;&#xa;  WHEN &quot;Point_Src&quot; = 'ADM' AND &quot;Target_Tier&quot; = 0&#xd;&#xa;  THEN 0&#xd;&#xa;  &#xd;&#xa;  ELSE &quot;TypeNo&quot;&#xd;&#xa;END"/>
+            <Option name="static_value" type="QString" value="CASE&#13;&#10;  -- 1. GRID COMPETITION: Grid cells compete via Total_Intensity within 50km&#13;&#10;  WHEN &quot;Point_Src&quot; = 'Grid' AND &quot;Target_Tier&quot; = 0 AND &#13;&#10;       aggregate(&#13;&#10;         layer:=@layer,&#13;&#10;         aggregate:='count',&#13;&#10;         expression:=&quot;ZONENO&quot;,&#13;&#10;         filter:=&quot;Point_Src&quot; = 'Grid' AND &quot;Target_Tier&quot; = 0 AND &quot;Total_Intensity&quot; &gt; attribute(@parent, 'Total_Intensity') AND distance($geometry, geometry(@parent)) &lt;= 50000&#13;&#10;       ) = 0&#13;&#10;  THEN 0&#13;&#10;  &#13;&#10;  -- 2. ADM PROXIMITY BLOCK: ADM points drop to Tier 1 if ANY Grid cell within 50km wants Tier 0&#13;&#10;  WHEN &quot;Point_Src&quot; = 'ADM' AND &quot;Target_Tier&quot; = 0 AND&#13;&#10;       aggregate(&#13;&#10;         layer:=@layer,&#13;&#10;         aggregate:='count',&#13;&#10;         expression:=&quot;ZONENO&quot;,&#13;&#10;         filter:=&quot;Point_Src&quot; = 'Grid' AND &quot;Target_Tier&quot; = 0 AND distance($geometry, geometry(@parent)) &lt;= 50000&#13;&#10;       ) &gt; 0&#13;&#10;  THEN 1 -- Automatic downgrade to Tier 1&#13;&#10;  &#13;&#10;  -- 3. ADM WINNER: ADM point wins Tier 0 if no Grid cells compete within 50km&#13;&#10;  WHEN &quot;Point_Src&quot; = 'ADM' AND &quot;Target_Tier&quot; = 0&#13;&#10;  THEN 0&#13;&#10;  &#13;&#10;  ELSE &quot;TypeNo&quot;&#13;&#10;END"/>
           </Option>
         </Option>
         <Option name="INPUT" type="List">
@@ -1025,7 +1027,7 @@
         <Option name="FORMULA" type="List">
           <Option type="Map">
             <Option name="source" type="int" value="2"/>
-            <Option name="static_value" type="QString" value="CASE&#xd;&#xa;  -- 1. GRID COMPETITION: Grid cells check for finalized Tier 0 blocks (50km) and stronger Tier 1 Grid cells (30km)&#xd;&#xa;  WHEN &quot;Point_Src&quot; = 'Grid' AND &quot;Target_Tier&quot; = 1 AND&#xd;&#xa;       aggregate(layer:=@layer, aggregate:='count', expression:=&quot;ZONENO&quot;, filter:=&quot;TypeNo&quot; = 0 AND distance($geometry, geometry(@parent)) &lt;= 50000) = 0 AND&#xd;&#xa;       aggregate(layer:=@layer, aggregate:='count', expression:=&quot;ZONENO&quot;, filter:=&quot;Point_Src&quot; = 'Grid' AND &quot;Target_Tier&quot; = 1 AND &quot;Total_Intensity&quot; > attribute(@parent, 'Total_Intensity') AND distance($geometry, geometry(@parent)) &lt;= 30000) = 0&#xd;&#xa;  THEN 1&#xd;&#xa;  &#xd;&#xa;  -- 2. ADM PROXIMITY BLOCK: ADM point drops to Tier 2 if a final Tier 0 is within 50km, ANY Grid cell wants Tier 1 within 30km, or it hits the 1.5km layout buffer&#xd;&#xa;  WHEN &quot;Point_Src&quot; = 'ADM' AND &quot;TypeNo&quot; = 1 AND&#xd;&#xa;       (&#xd;&#xa;         aggregate(layer:=@layer, aggregate:='count', expression:=&quot;ZONENO&quot;, filter:=&quot;TypeNo&quot; = 0 AND distance($geometry, geometry(@parent)) &lt;= 50000) > 0 OR&#xd;&#xa;         aggregate(layer:=@layer, aggregate:='count', expression:=&quot;ZONENO&quot;, filter:=&quot;Point_Src&quot; = 'Grid' AND &quot;Target_Tier&quot; = 1 AND distance($geometry, geometry(@parent)) &lt;= 30000) > 0 OR&#xd;&#xa;         aggregate(layer:=@layer, aggregate:='count', expression:=&quot;ZONENO&quot;, filter:=&quot;Point_Src&quot; = 'Grid' AND distance($geometry, geometry(@parent)) &lt;= 1500) > 0&#xd;&#xa;       )&#xd;&#xa;  THEN 2 -- Automatic downgrade to Tier 2&#xd;&#xa;  &#xd;&#xa;  -- 3. ADM WINNER: ADM point retains Tier 1 if all Grid blocks are cleared&#xd;&#xa;  WHEN &quot;Point_Src&quot; = 'ADM' AND &quot;TypeNo&quot; = 1&#xd;&#xa;  THEN 1&#xd;&#xa;  &#xd;&#xa;  ELSE &quot;TypeNo&quot;&#xd;&#xa;END"/>
+            <Option name="static_value" type="QString" value="CASE&#13;&#10;  -- 1. GRID COMPETITION: Grid cells check for finalized Tier 0 blocks (50km) and stronger Tier 1 Grid cells (30km)&#13;&#10;  WHEN &quot;Point_Src&quot; = 'Grid' AND &quot;Target_Tier&quot; = 1 AND&#13;&#10;       aggregate(layer:=@layer, aggregate:='count', expression:=&quot;ZONENO&quot;, filter:=&quot;TypeNo&quot; = 0 AND distance($geometry, geometry(@parent)) &lt;= 50000) = 0 AND&#13;&#10;       aggregate(layer:=@layer, aggregate:='count', expression:=&quot;ZONENO&quot;, filter:=&quot;Point_Src&quot; = 'Grid' AND &quot;Target_Tier&quot; = 1 AND &quot;Total_Intensity&quot; &gt; attribute(@parent, 'Total_Intensity') AND distance($geometry, geometry(@parent)) &lt;= 30000) = 0&#13;&#10;  THEN 1&#13;&#10;  &#13;&#10;  -- 2. ADM PROXIMITY BLOCK: ADM point drops to Tier 2 if a final Tier 0 is within 50km, ANY Grid cell wants Tier 1 within 30km, or it hits the 1.5km layout buffer&#13;&#10;  WHEN &quot;Point_Src&quot; = 'ADM' AND &quot;TypeNo&quot; = 1 AND&#13;&#10;       (&#13;&#10;         aggregate(layer:=@layer, aggregate:='count', expression:=&quot;ZONENO&quot;, filter:=&quot;TypeNo&quot; = 0 AND distance($geometry, geometry(@parent)) &lt;= 50000) &gt; 0 OR&#13;&#10;         aggregate(layer:=@layer, aggregate:='count', expression:=&quot;ZONENO&quot;, filter:=&quot;Point_Src&quot; = 'Grid' AND &quot;Target_Tier&quot; = 1 AND distance($geometry, geometry(@parent)) &lt;= 30000) &gt; 0 OR&#13;&#10;         aggregate(layer:=@layer, aggregate:='count', expression:=&quot;ZONENO&quot;, filter:=&quot;Point_Src&quot; = 'Grid' AND distance($geometry, geometry(@parent)) &lt;= 1500) &gt; 0&#13;&#10;       )&#13;&#10;  THEN 2 -- Automatic downgrade to Tier 2&#13;&#10;  &#13;&#10;  -- 3. ADM WINNER: ADM point retains Tier 1 if all Grid blocks are cleared&#13;&#10;  WHEN &quot;Point_Src&quot; = 'ADM' AND &quot;TypeNo&quot; = 1&#13;&#10;  THEN 1&#13;&#10;  &#13;&#10;  ELSE &quot;TypeNo&quot;&#13;&#10;END"/>
           </Option>
         </Option>
         <Option name="INPUT" type="List">
@@ -1090,7 +1092,7 @@
         <Option name="FORMULA" type="List">
           <Option type="Map">
             <Option name="source" type="int" value="2"/>
-            <Option name="static_value" type="QString" value="CASE&#xd;&#xa;  -- 1. GRID COMPETITION: Grid cells check for Tier 1 blocks (30km) and stronger Tier 2 competitors (10km)&#xd;&#xa;  WHEN &quot;Point_Src&quot; = 'Grid' AND (&quot;Target_Tier&quot; = 2 OR (&quot;Target_Tier&quot; = 1 AND &quot;TypeNo&quot; > 1)) AND&#xd;&#xa;       aggregate(layer:=@layer, aggregate:='count', expression:=&quot;ZONENO&quot;, filter:=&quot;TypeNo&quot; = 1 AND distance($geometry, geometry(@parent)) &lt;= 30000) = 0 AND&#xd;&#xa;       aggregate(layer:=@layer, aggregate:='count', expression:=&quot;ZONENO&quot;, filter:=&quot;Point_Src&quot; = 'Grid' AND &quot;Target_Tier&quot; IN (1, 2) AND &quot;Total_Intensity&quot; > attribute(@parent, 'Total_Intensity') AND distance($geometry, geometry(@parent)) &lt;= 10000) = 0&#xd;&#xa;  THEN 2&#xd;&#xa;  &#xd;&#xa;  -- 2. ADM PROXIMITY BLOCK: ADM point drops to Tier 3 if a final Tier 1 is within 30km, ANY Grid cell wants Tier 1/2 within 10km, or it hits the 1.5km layout buffer&#xd;&#xa;  WHEN &quot;Point_Src&quot; = 'ADM' AND &quot;TypeNo&quot; = 2 AND&#xd;&#xa;       (&#xd;&#xa;         aggregate(layer:=@layer, aggregate:='count', expression:=&quot;ZONENO&quot;, filter:=&quot;TypeNo&quot; = 1 AND distance($geometry, geometry(@parent)) &lt;= 30000) > 0 OR&#xd;&#xa;         aggregate(layer:=@layer, aggregate:='count', expression:=&quot;ZONENO&quot;, filter:=&quot;Point_Src&quot; = 'Grid' AND &quot;Target_Tier&quot; IN (1, 2) AND distance($geometry, geometry(@parent)) &lt;= 10000) > 0 OR&#xd;&#xa;         aggregate(layer:=@layer, aggregate:='count', expression:=&quot;ZONENO&quot;, filter:=&quot;Point_Src&quot; = 'Grid' AND distance($geometry, geometry(@parent)) &lt;= 1500) > 0&#xd;&#xa;       )&#xd;&#xa;  THEN 3 -- Automatic downgrade to Tier 3&#xd;&#xa;  &#xd;&#xa;  -- 3. ADM WINNER: ADM point retains Tier 2 if all Grid blocks are cleared&#xd;&#xa;  WHEN &quot;Point_Src&quot; = 'ADM' AND &quot;TypeNo&quot; = 2&#xd;&#xa;  THEN 2&#xd;&#xa;  &#xd;&#xa;  ELSE &quot;TypeNo&quot;&#xd;&#xa;END"/>
+            <Option name="static_value" type="QString" value="CASE&#13;&#10;  -- 1. GRID COMPETITION: Grid cells check for Tier 1 blocks (30km) and stronger Tier 2 competitors (10km)&#13;&#10;  WHEN &quot;Point_Src&quot; = 'Grid' AND (&quot;Target_Tier&quot; = 2 OR (&quot;Target_Tier&quot; = 1 AND &quot;TypeNo&quot; &gt; 1)) AND&#13;&#10;       aggregate(layer:=@layer, aggregate:='count', expression:=&quot;ZONENO&quot;, filter:=&quot;TypeNo&quot; = 1 AND distance($geometry, geometry(@parent)) &lt;= 30000) = 0 AND&#13;&#10;       aggregate(layer:=@layer, aggregate:='count', expression:=&quot;ZONENO&quot;, filter:=&quot;Point_Src&quot; = 'Grid' AND &quot;Target_Tier&quot; IN (1, 2) AND &quot;Total_Intensity&quot; &gt; attribute(@parent, 'Total_Intensity') AND distance($geometry, geometry(@parent)) &lt;= 10000) = 0&#13;&#10;  THEN 2&#13;&#10;  &#13;&#10;  -- 2. ADM PROXIMITY BLOCK: ADM point drops to Tier 3 if a final Tier 1 is within 30km, ANY Grid cell wants Tier 1/2 within 10km, or it hits the 1.5km layout buffer&#13;&#10;  WHEN &quot;Point_Src&quot; = 'ADM' AND &quot;TypeNo&quot; = 2 AND&#13;&#10;       (&#13;&#10;         aggregate(layer:=@layer, aggregate:='count', expression:=&quot;ZONENO&quot;, filter:=&quot;TypeNo&quot; = 1 AND distance($geometry, geometry(@parent)) &lt;= 30000) &gt; 0 OR&#13;&#10;         aggregate(layer:=@layer, aggregate:='count', expression:=&quot;ZONENO&quot;, filter:=&quot;Point_Src&quot; = 'Grid' AND &quot;Target_Tier&quot; IN (1, 2) AND distance($geometry, geometry(@parent)) &lt;= 10000) &gt; 0 OR&#13;&#10;         aggregate(layer:=@layer, aggregate:='count', expression:=&quot;ZONENO&quot;, filter:=&quot;Point_Src&quot; = 'Grid' AND distance($geometry, geometry(@parent)) &lt;= 1500) &gt; 0&#13;&#10;       )&#13;&#10;  THEN 3 -- Automatic downgrade to Tier 3&#13;&#10;  &#13;&#10;  -- 3. ADM WINNER: ADM point retains Tier 2 if all Grid blocks are cleared&#13;&#10;  WHEN &quot;Point_Src&quot; = 'ADM' AND &quot;TypeNo&quot; = 2&#13;&#10;  THEN 2&#13;&#10;  &#13;&#10;  ELSE &quot;TypeNo&quot;&#13;&#10;END"/>
           </Option>
         </Option>
         <Option name="INPUT" type="List">
@@ -1155,7 +1157,7 @@
         <Option name="FORMULA" type="List">
           <Option type="Map">
             <Option name="source" type="int" value="2"/>
-            <Option name="static_value" type="QString" value="CASE&#xd;&#xa;  -- 1. GRID WINNER: Becomes Tier 3 if it passes all spatial filters AND is the absolute intensity king within its NO_E0 zone&#xd;&#xa;  WHEN &quot;Point_Src&quot; = 'Grid' AND (&quot;Target_Tier&quot; = 3 OR (&quot;Target_Tier&quot; IN (1, 2) AND &quot;TypeNo&quot; > 2)) AND&#xd;&#xa;       -- Spatial blocks (10km from Tier 2, 2km from stronger Tier 3 Grid cells)&#xd;&#xa;       aggregate(layer:=@layer, aggregate:='count', expression:=&quot;ZONENO&quot;, filter:=&quot;TypeNo&quot; = 2 AND distance($geometry, geometry(@parent)) &lt;= 10000) = 0 AND&#xd;&#xa;       aggregate(layer:=@layer, aggregate:='count', expression:=&quot;ZONENO&quot;, filter:=&quot;Point_Src&quot; = 'Grid' AND &quot;Target_Tier&quot; IN (1, 2, 3) AND &quot;Total_Intensity&quot; > attribute(@parent, 'Total_Intensity') AND distance($geometry, geometry(@parent)) &lt;= 2000) = 0 AND&#xd;&#xa;       -- NEW NO_E0 INTRA-ZONE COMPETITION: Blocked if another cell in the same NO_E0 already achieved Tier 0, 1, or 2&#xd;&#xa;       aggregate(layer:=@layer, aggregate:='count', expression:=&quot;ZONENO&quot;, filter:=&quot;NO_E0&quot; = attribute(@parent, 'NO_E0') AND &quot;TypeNo&quot; IN (0, 1, 2)) = 0 AND&#xd;&#xa;       -- NEW NO_E0 INTRA-ZONE COMPETITION: Blocked if another Grid cell in the same NO_E0 has a higher intensity&#xd;&#xa;       aggregate(layer:=@layer, aggregate:='count', expression:=&quot;ZONENO&quot;, filter:=&quot;Point_Src&quot; = 'Grid' AND &quot;NO_E0&quot; = attribute(@parent, 'NO_E0') AND &quot;Total_Intensity&quot; > attribute(@parent, 'Total_Intensity') AND (&quot;Target_Tier&quot; = 3 OR (&quot;Target_Tier&quot; IN (1, 2) AND &quot;TypeNo&quot; > 2))) = 0&#xd;&#xa;  THEN 3&#xd;&#xa;&#xd;&#xa;  -- 2. GRID LOSER: If a Grid cell wanted to be Tier 3 but lost the internal NO_E0 intensity competition, it is demoted to Tier 4&#xd;&#xa;  WHEN &quot;Point_Src&quot; = 'Grid' AND (&quot;Target_Tier&quot; = 3 OR (&quot;Target_Tier&quot; IN (1, 2) AND &quot;TypeNo&quot; > 2))&#xd;&#xa;  THEN 4&#xd;&#xa;&#xd;&#xa;  -- 3. ADM PROXIMITY &amp; NO_E0 BLOCK: ADM point drops to Tier 4 if blocked by proximity OR if ANY valid Grid center exists in the same NO_E0 zone&#xd;&#xa;  WHEN &quot;Point_Src&quot; = 'ADM' AND &quot;TypeNo&quot; = 3 AND&#xd;&#xa;       (&#xd;&#xa;         -- Proximity blocks (10km Tier 2, 2km Grid Tier 3, 1.5km Grid buffer)&#xd;&#xa;         aggregate(layer:=@layer, aggregate:='count', expression:=&quot;ZONENO&quot;, filter:=&quot;TypeNo&quot; = 2 AND distance($geometry, geometry(@parent)) &lt;= 10000) > 0 OR&#xd;&#xa;         aggregate(layer:=@layer, aggregate:='count', expression:=&quot;ZONENO&quot;, filter:=&quot;Point_Src&quot; = 'Grid' AND &quot;Target_Tier&quot; IN (1, 2, 3) AND distance($geometry, geometry(@parent)) &lt;= 2000) > 0 OR&#xd;&#xa;         aggregate(layer:=@layer, aggregate:='count', expression:=&quot;ZONENO&quot;, filter:=&quot;Point_Src&quot; = 'Grid' AND distance($geometry, geometry(@parent)) &lt;= 1500) > 0 OR&#xd;&#xa;         -- ABSOLUTE GRID PRIORITY: Blocked if ANY Grid point in the same NO_E0 zone is Tier 3 or better (either already finalized or currently winning)&#xd;&#xa;         aggregate(layer:=@layer, aggregate:='count', expression:=&quot;ZONENO&quot;, filter:=&quot;Point_Src&quot; = 'Grid' AND &quot;NO_E0&quot; = attribute(@parent, 'NO_E0') AND (&quot;TypeNo&quot; IN (0, 1, 2) OR &quot;Target_Tier&quot; = 3 OR (&quot;Target_Tier&quot; IN (1, 2) AND &quot;TypeNo&quot; > 2))) > 0&#xd;&#xa;       )&#xd;&#xa;  THEN 4 -- Demoted to Tier 4&#xd;&#xa;&#xd;&#xa;  -- 4. ADM WINNER: ADM point retains Tier 3 if the entire NO_E0 zone is completely clear of any urban Grid centers&#xd;&#xa;  WHEN &quot;Point_Src&quot; = 'ADM' AND &quot;TypeNo&quot; = 3&#xd;&#xa;  THEN 3&#xd;&#xa;&#xd;&#xa;  ELSE &quot;TypeNo&quot;&#xd;&#xa;END"/>
+            <Option name="static_value" type="QString" value="CASE&#13;&#10;  -- 1. GRID WINNER: Becomes Tier 3 if it passes all spatial filters AND is the absolute intensity king within its NO_E0 zone&#13;&#10;  WHEN &quot;Point_Src&quot; = 'Grid' AND (&quot;Target_Tier&quot; = 3 OR (&quot;Target_Tier&quot; IN (1, 2) AND &quot;TypeNo&quot; &gt; 2)) AND&#13;&#10;       -- Spatial blocks (10km from Tier 2, 2km from stronger Tier 3 Grid cells)&#13;&#10;       aggregate(layer:=@layer, aggregate:='count', expression:=&quot;ZONENO&quot;, filter:=&quot;TypeNo&quot; = 2 AND distance($geometry, geometry(@parent)) &lt;= 10000) = 0 AND&#13;&#10;       aggregate(layer:=@layer, aggregate:='count', expression:=&quot;ZONENO&quot;, filter:=&quot;Point_Src&quot; = 'Grid' AND &quot;Target_Tier&quot; IN (1, 2, 3) AND &quot;Total_Intensity&quot; &gt; attribute(@parent, 'Total_Intensity') AND distance($geometry, geometry(@parent)) &lt;= 2000) = 0 AND&#13;&#10;       -- NEW NO_E0 INTRA-ZONE COMPETITION: Blocked if another cell in the same NO_E0 already achieved Tier 0, 1, or 2&#13;&#10;       aggregate(layer:=@layer, aggregate:='count', expression:=&quot;ZONENO&quot;, filter:=&quot;NO_E0&quot; = attribute(@parent, 'NO_E0') AND &quot;TypeNo&quot; IN (0, 1, 2)) = 0 AND&#13;&#10;       -- NEW NO_E0 INTRA-ZONE COMPETITION: Blocked if another Grid cell in the same NO_E0 has a higher intensity&#13;&#10;       aggregate(layer:=@layer, aggregate:='count', expression:=&quot;ZONENO&quot;, filter:=&quot;Point_Src&quot; = 'Grid' AND &quot;NO_E0&quot; = attribute(@parent, 'NO_E0') AND &quot;Total_Intensity&quot; &gt; attribute(@parent, 'Total_Intensity') AND (&quot;Target_Tier&quot; = 3 OR (&quot;Target_Tier&quot; IN (1, 2) AND &quot;TypeNo&quot; &gt; 2))) = 0&#13;&#10;  THEN 3&#13;&#10;&#13;&#10;  -- 2. GRID LOSER: If a Grid cell wanted to be Tier 3 but lost the internal NO_E0 intensity competition, it is demoted to Tier 4&#13;&#10;  WHEN &quot;Point_Src&quot; = 'Grid' AND (&quot;Target_Tier&quot; = 3 OR (&quot;Target_Tier&quot; IN (1, 2) AND &quot;TypeNo&quot; &gt; 2))&#13;&#10;  THEN 4&#13;&#10;&#13;&#10;  -- 3. ADM PROXIMITY &amp; NO_E0 BLOCK: ADM point drops to Tier 4 if blocked by proximity OR if ANY valid Grid center exists in the same NO_E0 zone&#13;&#10;  WHEN &quot;Point_Src&quot; = 'ADM' AND &quot;TypeNo&quot; = 3 AND&#13;&#10;       (&#13;&#10;         -- Proximity blocks (10km Tier 2, 2km Grid Tier 3, 1.5km Grid buffer)&#13;&#10;         aggregate(layer:=@layer, aggregate:='count', expression:=&quot;ZONENO&quot;, filter:=&quot;TypeNo&quot; = 2 AND distance($geometry, geometry(@parent)) &lt;= 10000) &gt; 0 OR&#13;&#10;         aggregate(layer:=@layer, aggregate:='count', expression:=&quot;ZONENO&quot;, filter:=&quot;Point_Src&quot; = 'Grid' AND &quot;Target_Tier&quot; IN (1, 2, 3) AND distance($geometry, geometry(@parent)) &lt;= 2000) &gt; 0 OR&#13;&#10;         aggregate(layer:=@layer, aggregate:='count', expression:=&quot;ZONENO&quot;, filter:=&quot;Point_Src&quot; = 'Grid' AND distance($geometry, geometry(@parent)) &lt;= 1500) &gt; 0 OR&#13;&#10;         -- ABSOLUTE GRID PRIORITY: Blocked if ANY Grid point in the same NO_E0 zone is Tier 3 or better (either already finalized or currently winning)&#13;&#10;         aggregate(layer:=@layer, aggregate:='count', expression:=&quot;ZONENO&quot;, filter:=&quot;Point_Src&quot; = 'Grid' AND &quot;NO_E0&quot; = attribute(@parent, 'NO_E0') AND (&quot;TypeNo&quot; IN (0, 1, 2) OR &quot;Target_Tier&quot; = 3 OR (&quot;Target_Tier&quot; IN (1, 2) AND &quot;TypeNo&quot; &gt; 2))) &gt; 0&#13;&#10;       )&#13;&#10;  THEN 4 -- Demoted to Tier 4&#13;&#10;&#13;&#10;  -- 4. ADM WINNER: ADM point retains Tier 3 if the entire NO_E0 zone is completely clear of any urban Grid centers&#13;&#10;  WHEN &quot;Point_Src&quot; = 'ADM' AND &quot;TypeNo&quot; = 3&#13;&#10;  THEN 3&#13;&#10;&#13;&#10;  ELSE &quot;TypeNo&quot;&#13;&#10;END"/>
           </Option>
         </Option>
         <Option name="INPUT" type="List">
@@ -1659,14 +1661,14 @@
         </Option>
         <Option name="INPUT" type="List">
           <Option type="Map">
-            <Option name="child_id" type="QString" value="native:reprojectlayer_3"/>
+            <Option name="child_id" type="QString" value="native:createspatialindex_6"/>
             <Option name="output_name" type="QString" value="OUTPUT"/>
             <Option name="source" type="int" value="1"/>
           </Option>
         </Option>
         <Option name="JOIN" type="List">
           <Option type="Map">
-            <Option name="child_id" type="QString" value="native:difference_3"/>
+            <Option name="child_id" type="QString" value="native:createspatialindex_7"/>
             <Option name="output_name" type="QString" value="OUTPUT"/>
             <Option name="source" type="int" value="1"/>
           </Option>
@@ -1735,14 +1737,14 @@
         </Option>
         <Option name="INPUT" type="List">
           <Option type="Map">
-            <Option name="child_id" type="QString" value="native:joinattributestable_2"/>
+            <Option name="child_id" type="QString" value="native:createspatialindex_8"/>
             <Option name="output_name" type="QString" value="OUTPUT"/>
             <Option name="source" type="int" value="1"/>
           </Option>
         </Option>
         <Option name="JOIN" type="List">
           <Option type="Map">
-            <Option name="child_id" type="QString" value="native:extractbylocation_4"/>
+            <Option name="child_id" type="QString" value="native:createspatialindex_9"/>
             <Option name="output_name" type="QString" value="OUTPUT"/>
             <Option name="source" type="int" value="1"/>
           </Option>
@@ -1816,13 +1818,14 @@
         </Option>
         <Option name="INPUT" type="List">
           <Option type="Map">
-            <Option name="parameter_name" type="QString" value="zone_paia1ia2_model5"/>
-            <Option name="source" type="int" value="0"/>
+            <Option name="child_id" type="QString" value="native:createspatialindex_5"/>
+            <Option name="output_name" type="QString" value="OUTPUT"/>
+            <Option name="source" type="int" value="1"/>
           </Option>
         </Option>
         <Option name="JOIN" type="List">
           <Option type="Map">
-            <Option name="child_id" type="QString" value="native:buffer_3"/>
+            <Option name="child_id" type="QString" value="native:createspatialindex_10"/>
             <Option name="output_name" type="QString" value="OUTPUT"/>
             <Option name="source" type="int" value="1"/>
           </Option>
@@ -2804,7 +2807,7 @@
               <Option type="Map">
                 <Option name="alias" type="invalid"/>
                 <Option name="comment" type="invalid"/>
-                <Option name="expression" type="QString" value="aggregate(&#xa;  layer:= @layer,&#xa;  aggregate:= 'max',&#xa;  expression:= &quot;POP_sum&quot;,&#xa;  filter:= &quot;ZONENO&quot; = attribute(@parent, 'ZONENO')&#xa;)"/>
+                <Option name="expression" type="QString" value="aggregate(&#10;  layer:= @layer,&#10;  aggregate:= 'max',&#10;  expression:= &quot;POP_sum&quot;,&#10;  filter:= &quot;ZONENO&quot; = attribute(@parent, 'ZONENO')&#10;)"/>
                 <Option name="length" type="int" value="0"/>
                 <Option name="name" type="QString" value="POP"/>
                 <Option name="precision" type="int" value="0"/>
@@ -4963,6 +4966,249 @@
           <Option type="Map">
             <Option name="source" type="int" value="2"/>
             <Option name="static_value" type="QString" value="VALUE"/>
+          </Option>
+        </Option>
+      </Option>
+    </Option>
+    <Option name="native:createspatialindex_4" type="Map">
+      <Option name="active" type="bool" value="true"/>
+      <Option name="alg_config"/>
+      <Option name="alg_id" type="QString" value="native:createspatialindex"/>
+      <Option name="color" type="QString" value=""/>
+      <Option name="comment" type="Map">
+        <Option name="color" type="QString" value=""/>
+        <Option name="component_description" type="QString" value=""/>
+        <Option name="component_height" type="double" value="60"/>
+        <Option name="component_pos_x" type="double" value="2420"/>
+        <Option name="component_pos_y" type="double" value="1725"/>
+        <Option name="component_width" type="double" value="100"/>
+        <Option name="outputs_collapsed" type="bool" value="true"/>
+        <Option name="parameters_collapsed" type="bool" value="true"/>
+      </Option>
+      <Option name="component_description" type="QString" value="Create spatial index"/>
+      <Option name="component_height" type="double" value="30"/>
+      <Option name="component_pos_x" type="double" value="150"/>
+      <Option name="component_pos_y" type="double" value="2200"/>
+      <Option name="component_width" type="double" value="200"/>
+      <Option name="dependencies"/>
+      <Option name="id" type="QString" value="native:createspatialindex_4"/>
+      <Option name="outputs"/>
+      <Option name="outputs_collapsed" type="bool" value="true"/>
+      <Option name="parameters_collapsed" type="bool" value="true"/>
+      <Option name="params" type="Map">
+        <Option name="INPUT" type="List">
+          <Option type="Map">
+            <Option name="parameter_name" type="QString" value="zone_adm2_typeno_model2"/>
+            <Option name="source" type="int" value="0"/>
+          </Option>
+        </Option>
+      </Option>
+    </Option>
+    <Option name="native:createspatialindex_5" type="Map">
+      <Option name="active" type="bool" value="true"/>
+      <Option name="alg_config"/>
+      <Option name="alg_id" type="QString" value="native:createspatialindex"/>
+      <Option name="color" type="QString" value=""/>
+      <Option name="comment" type="Map">
+        <Option name="color" type="QString" value=""/>
+        <Option name="component_description" type="QString" value=""/>
+        <Option name="component_height" type="double" value="60"/>
+        <Option name="component_pos_x" type="double" value="2420"/>
+        <Option name="component_pos_y" type="double" value="1725"/>
+        <Option name="component_width" type="double" value="100"/>
+        <Option name="outputs_collapsed" type="bool" value="true"/>
+        <Option name="parameters_collapsed" type="bool" value="true"/>
+      </Option>
+      <Option name="component_description" type="QString" value="Create spatial index"/>
+      <Option name="component_height" type="double" value="30"/>
+      <Option name="component_pos_x" type="double" value="380"/>
+      <Option name="component_pos_y" type="double" value="2200"/>
+      <Option name="component_width" type="double" value="200"/>
+      <Option name="dependencies"/>
+      <Option name="id" type="QString" value="native:createspatialindex_5"/>
+      <Option name="outputs"/>
+      <Option name="outputs_collapsed" type="bool" value="true"/>
+      <Option name="parameters_collapsed" type="bool" value="true"/>
+      <Option name="params" type="Map">
+        <Option name="INPUT" type="List">
+          <Option type="Map">
+            <Option name="parameter_name" type="QString" value="zone_paia1ia2_model5"/>
+            <Option name="source" type="int" value="0"/>
+          </Option>
+        </Option>
+      </Option>
+    </Option>
+    <Option name="native:createspatialindex_6" type="Map">
+      <Option name="active" type="bool" value="true"/>
+      <Option name="alg_config"/>
+      <Option name="alg_id" type="QString" value="native:createspatialindex"/>
+      <Option name="color" type="QString" value=""/>
+      <Option name="comment" type="Map">
+        <Option name="color" type="QString" value=""/>
+        <Option name="component_description" type="QString" value=""/>
+        <Option name="component_height" type="double" value="60"/>
+        <Option name="component_pos_x" type="double" value="2420"/>
+        <Option name="component_pos_y" type="double" value="1725"/>
+        <Option name="component_width" type="double" value="100"/>
+        <Option name="outputs_collapsed" type="bool" value="true"/>
+        <Option name="parameters_collapsed" type="bool" value="true"/>
+      </Option>
+      <Option name="component_description" type="QString" value="Create spatial index"/>
+      <Option name="component_height" type="double" value="30"/>
+      <Option name="component_pos_x" type="double" value="610"/>
+      <Option name="component_pos_y" type="double" value="2200"/>
+      <Option name="component_width" type="double" value="200"/>
+      <Option name="dependencies"/>
+      <Option name="id" type="QString" value="native:createspatialindex_6"/>
+      <Option name="outputs"/>
+      <Option name="outputs_collapsed" type="bool" value="true"/>
+      <Option name="parameters_collapsed" type="bool" value="true"/>
+      <Option name="params" type="Map">
+        <Option name="INPUT" type="List">
+          <Option type="Map">
+            <Option name="child_id" type="QString" value="native:reprojectlayer_3"/>
+            <Option name="output_name" type="QString" value="OUTPUT"/>
+            <Option name="source" type="int" value="1"/>
+          </Option>
+        </Option>
+      </Option>
+    </Option>
+    <Option name="native:createspatialindex_7" type="Map">
+      <Option name="active" type="bool" value="true"/>
+      <Option name="alg_config"/>
+      <Option name="alg_id" type="QString" value="native:createspatialindex"/>
+      <Option name="color" type="QString" value=""/>
+      <Option name="comment" type="Map">
+        <Option name="color" type="QString" value=""/>
+        <Option name="component_description" type="QString" value=""/>
+        <Option name="component_height" type="double" value="60"/>
+        <Option name="component_pos_x" type="double" value="2420"/>
+        <Option name="component_pos_y" type="double" value="1725"/>
+        <Option name="component_width" type="double" value="100"/>
+        <Option name="outputs_collapsed" type="bool" value="true"/>
+        <Option name="parameters_collapsed" type="bool" value="true"/>
+      </Option>
+      <Option name="component_description" type="QString" value="Create spatial index"/>
+      <Option name="component_height" type="double" value="30"/>
+      <Option name="component_pos_x" type="double" value="840"/>
+      <Option name="component_pos_y" type="double" value="2200"/>
+      <Option name="component_width" type="double" value="200"/>
+      <Option name="dependencies"/>
+      <Option name="id" type="QString" value="native:createspatialindex_7"/>
+      <Option name="outputs"/>
+      <Option name="outputs_collapsed" type="bool" value="true"/>
+      <Option name="parameters_collapsed" type="bool" value="true"/>
+      <Option name="params" type="Map">
+        <Option name="INPUT" type="List">
+          <Option type="Map">
+            <Option name="child_id" type="QString" value="native:difference_3"/>
+            <Option name="output_name" type="QString" value="OUTPUT"/>
+            <Option name="source" type="int" value="1"/>
+          </Option>
+        </Option>
+      </Option>
+    </Option>
+    <Option name="native:createspatialindex_8" type="Map">
+      <Option name="active" type="bool" value="true"/>
+      <Option name="alg_config"/>
+      <Option name="alg_id" type="QString" value="native:createspatialindex"/>
+      <Option name="color" type="QString" value=""/>
+      <Option name="comment" type="Map">
+        <Option name="color" type="QString" value=""/>
+        <Option name="component_description" type="QString" value=""/>
+        <Option name="component_height" type="double" value="60"/>
+        <Option name="component_pos_x" type="double" value="2420"/>
+        <Option name="component_pos_y" type="double" value="1725"/>
+        <Option name="component_width" type="double" value="100"/>
+        <Option name="outputs_collapsed" type="bool" value="true"/>
+        <Option name="parameters_collapsed" type="bool" value="true"/>
+      </Option>
+      <Option name="component_description" type="QString" value="Create spatial index"/>
+      <Option name="component_height" type="double" value="30"/>
+      <Option name="component_pos_x" type="double" value="1070"/>
+      <Option name="component_pos_y" type="double" value="2200"/>
+      <Option name="component_width" type="double" value="200"/>
+      <Option name="dependencies"/>
+      <Option name="id" type="QString" value="native:createspatialindex_8"/>
+      <Option name="outputs"/>
+      <Option name="outputs_collapsed" type="bool" value="true"/>
+      <Option name="parameters_collapsed" type="bool" value="true"/>
+      <Option name="params" type="Map">
+        <Option name="INPUT" type="List">
+          <Option type="Map">
+            <Option name="child_id" type="QString" value="native:joinattributestable_2"/>
+            <Option name="output_name" type="QString" value="OUTPUT"/>
+            <Option name="source" type="int" value="1"/>
+          </Option>
+        </Option>
+      </Option>
+    </Option>
+    <Option name="native:createspatialindex_9" type="Map">
+      <Option name="active" type="bool" value="true"/>
+      <Option name="alg_config"/>
+      <Option name="alg_id" type="QString" value="native:createspatialindex"/>
+      <Option name="color" type="QString" value=""/>
+      <Option name="comment" type="Map">
+        <Option name="color" type="QString" value=""/>
+        <Option name="component_description" type="QString" value=""/>
+        <Option name="component_height" type="double" value="60"/>
+        <Option name="component_pos_x" type="double" value="2420"/>
+        <Option name="component_pos_y" type="double" value="1725"/>
+        <Option name="component_width" type="double" value="100"/>
+        <Option name="outputs_collapsed" type="bool" value="true"/>
+        <Option name="parameters_collapsed" type="bool" value="true"/>
+      </Option>
+      <Option name="component_description" type="QString" value="Create spatial index"/>
+      <Option name="component_height" type="double" value="30"/>
+      <Option name="component_pos_x" type="double" value="1300"/>
+      <Option name="component_pos_y" type="double" value="2200"/>
+      <Option name="component_width" type="double" value="200"/>
+      <Option name="dependencies"/>
+      <Option name="id" type="QString" value="native:createspatialindex_9"/>
+      <Option name="outputs"/>
+      <Option name="outputs_collapsed" type="bool" value="true"/>
+      <Option name="parameters_collapsed" type="bool" value="true"/>
+      <Option name="params" type="Map">
+        <Option name="INPUT" type="List">
+          <Option type="Map">
+            <Option name="child_id" type="QString" value="native:extractbylocation_4"/>
+            <Option name="output_name" type="QString" value="OUTPUT"/>
+            <Option name="source" type="int" value="1"/>
+          </Option>
+        </Option>
+      </Option>
+    </Option>
+    <Option name="native:createspatialindex_10" type="Map">
+      <Option name="active" type="bool" value="true"/>
+      <Option name="alg_config"/>
+      <Option name="alg_id" type="QString" value="native:createspatialindex"/>
+      <Option name="color" type="QString" value=""/>
+      <Option name="comment" type="Map">
+        <Option name="color" type="QString" value=""/>
+        <Option name="component_description" type="QString" value=""/>
+        <Option name="component_height" type="double" value="60"/>
+        <Option name="component_pos_x" type="double" value="2420"/>
+        <Option name="component_pos_y" type="double" value="1725"/>
+        <Option name="component_width" type="double" value="100"/>
+        <Option name="outputs_collapsed" type="bool" value="true"/>
+        <Option name="parameters_collapsed" type="bool" value="true"/>
+      </Option>
+      <Option name="component_description" type="QString" value="Create spatial index"/>
+      <Option name="component_height" type="double" value="30"/>
+      <Option name="component_pos_x" type="double" value="1530"/>
+      <Option name="component_pos_y" type="double" value="2200"/>
+      <Option name="component_width" type="double" value="200"/>
+      <Option name="dependencies"/>
+      <Option name="id" type="QString" value="native:createspatialindex_10"/>
+      <Option name="outputs"/>
+      <Option name="outputs_collapsed" type="bool" value="true"/>
+      <Option name="parameters_collapsed" type="bool" value="true"/>
+      <Option name="params" type="Map">
+        <Option name="INPUT" type="List">
+          <Option type="Map">
+            <Option name="child_id" type="QString" value="native:buffer_3"/>
+            <Option name="output_name" type="QString" value="OUTPUT"/>
+            <Option name="source" type="int" value="1"/>
           </Option>
         </Option>
       </Option>

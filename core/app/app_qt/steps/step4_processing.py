@@ -74,8 +74,12 @@ class PipelineWorker(_Q_OBJECT_BASE):
         event = Event()
         result = {"retry": False}
         self.file_locked.emit(str(path), (event, result))
-        event.wait()
-        return result["retry"]
+        # Navigation can cancel the worker while the GUI is waiting to show
+        # this dialog. Do not keep the worker blocked on a GUI response then.
+        while not event.wait(0.1):
+            if self.stop_event.is_set():
+                return False
+        return result["retry"] and not self.stop_event.is_set()
 
     def run(self) -> None:
         callbacks = PipelineCallbacks(
@@ -124,11 +128,11 @@ class Step4ProcessingWidget(_Q_WIDGET_BASE):
     )
 
     _MODEL5_FIELDS = (
-        ("minimum_distance_level_3_4_m", "dist_3_4", "Mindestabstand zwischen Stufe 3 und 4 [m]", 1, 100_000),
-        ("minimum_distance_level_3_m", "dist_3", "Mindestabstand zwischen Stufe 3 [m]", 1, 100_000),
-        ("minimum_distance_level_4_m", "dist_4", "Mindestabstand zwischen Stufe 4 [m]", 1, 100_000),
-        ("minimum_intensity_level_3", "min_intensity_3", "Mindest-Intensität für die Klassifizierung als Stufe 3", 0, 25),
-        ("minimum_intensity_level_4", "min_intensity_4", "Mindest-Intensität für die Klassifizierung als Stufe 4", 0, 25),
+        ("minimum_distance_level_3_4_m", "dist_3_4", "Mindestabstand zwischen Stufe 3 und 4 [m]", 250, 100_000),
+        ("minimum_distance_level_3_m", "dist_3", "Mindestabstand zwischen Stufe 3 [m]", 800, 100_000),
+        ("minimum_distance_level_4_m", "dist_4", "Mindestabstand zwischen Stufe 4 [m]", 200, 100_000),
+        ("minimum_intensity_level_3", "min_intensity_3", "Mindest-Intensität für die Klassifizierung als Stufe 3", 1, 25),
+        ("minimum_intensity_level_4", "min_intensity_4", "Mindest-Intensität für die Klassifizierung als Stufe 4", 1, 25),
     )
 
     def _create_parameter_label(self, model_prefix: str, short_key: str, default_label: str, edit_widget: Optional[QtWidgets.QWidget], parent: QtWidgets.QWidget, word_wrap: bool = True) -> QtWidgets.QLabel:
@@ -210,7 +214,7 @@ class Step4ProcessingWidget(_Q_WIDGET_BASE):
             return f"{val:,}".replace(",", ".")
         return f"{val:,}"
 
-    def _read_int_field(self, edit: Optional[object], default: int = 0) -> int:
+    def _read_int_field(self, edit: Optional[object], default: Optional[int] = 0) -> Optional[int]:
         """Liest den Integer-Wert aus einem QLineEdit oder Widget aus, bereinigt Trennpunkte und fällt ggf. auf den Standardwert zurück."""
         if edit is None:
             return default
@@ -225,6 +229,49 @@ class Step4ProcessingWidget(_Q_WIDGET_BASE):
             return int(cleaned)
         except Exception:
             return default
+
+    def _numeric_parameter_fields(self):
+        for definitions, edits, prefix in (
+            (self._MODEL2_FIELDS, self.model2_edits, "model2"),
+            (self._MODEL5_FIELDS, self.model5_edits, "model5"),
+        ):
+            for key, short_key, label, minimum, maximum in definitions:
+                if key in edits:
+                    yield edits[key], self.localizer.get_string(
+                        f"{prefix}_param_{short_key}", default=label
+                    ), minimum, maximum, True
+        nationwide_enabled = self.rb_nationwide_yes.isChecked()
+        for edit, label, minimum, maximum in (
+            (self.nw_radius_edit, "Ausschlussradius [m]", 0, 100_000),
+            (self.nw_min_intensity_edit, "Mindest-Intensität landesweit", 0, 25),
+            (self.nw_min_intensity_l3_edit, "Mindest-Intensität Stufe 3", 0, 25),
+        ):
+            if edit is not None:
+                yield edit, label, minimum, maximum, nationwide_enabled
+
+    def _validate_numeric_parameters(self) -> list[str]:
+        errors = []
+        for edit, label, minimum, maximum, active in self._numeric_parameter_fields():
+            value = self._read_int_field(edit, default=None)
+            invalid = active and (value is None or not minimum <= value <= maximum)
+            if edit.property("parameterBaseStyle") is None:
+                edit.setProperty("parameterBaseStyle", edit.styleSheet())
+                edit.setProperty("parameterBaseTooltip", edit.toolTip())
+            message = self.localizer.get_string(
+                "step4_parameter_invalid", label=label,
+                minimum=self._format_initial_int(minimum),
+                maximum=self._format_initial_int(maximum),
+                default=f"{label}: Bitte eine ganze Zahl zwischen {minimum} und {maximum} eingeben.",
+            )
+            edit.setStyleSheet(
+                edit.property("parameterBaseStyle") +
+                (" QLineEdit { border: 2px solid #dc2626; background-color: #fef2f2; color: #991b1b; }"
+                 if invalid else "")
+            )
+            edit.setToolTip(message if invalid else edit.property("parameterBaseTooltip"))
+            if invalid:
+                errors.append(message)
+        return errors
 
     @property
     def is_completed(self) -> bool:
@@ -251,7 +298,7 @@ class Step4ProcessingWidget(_Q_WIDGET_BASE):
         header, _title_label, _step_label = create_step_header(
             self.localizer.get_string("step4_title", default="Schritt 4: Parameterprüfung und Verarbeitung"),
             current_step=4,
-            total_steps=6,
+            total_steps=7,
             localizer=self.localizer,
             parent=self,
         )
@@ -534,6 +581,12 @@ class Step4ProcessingWidget(_Q_WIDGET_BASE):
         self.overall_progress = AnimatedProgressBar(execution_box, sync_taskbar=True)
         self.phase_progress = AnimatedProgressBar(execution_box, sync_taskbar=False)
         self.start_button = QtWidgets.QPushButton(self.localizer.get_string("step4_button_start"), execution_box)
+        self.start_button.setStyleSheet(
+            "QPushButton:enabled { background-color: #dcfce7; color: #166534; "
+            "border: 1px solid #86efac; border-radius: 4px; padding: 5px 14px; } "
+            "QPushButton:enabled:hover { background-color: #bbf7d0; } "
+            "QPushButton:enabled:pressed { background-color: #86efac; }"
+        )
         self.restart_button = QtWidgets.QPushButton(self.localizer.get_string("step4_button_restart_models"), execution_box)
         self.restart_button.setToolTip(
             self.localizer.get_string(
@@ -601,6 +654,7 @@ class Step4ProcessingWidget(_Q_WIDGET_BASE):
 
     def refresh_readiness(self) -> None:
         blockers = pipeline_readiness(self.project_path, self.step_data)
+        blockers.extend(self._validate_numeric_parameters())
         if self.rb_ref_yes.isChecked():
             reference = self.reference_edit.text().strip()
             if not reference:
@@ -754,31 +808,26 @@ class Step4ProcessingWidget(_Q_WIDGET_BASE):
         self.refresh_readiness()
 
     def cancel_processing(self) -> None:
-        """Safely stops, disconnects, and tears down the active pipeline worker thread."""
+        """Cancel before leaving the page; never destroy a running QThread."""
+        if self._thread is None:
+            return
+        self._leaving_page = True
         self.stop_pipeline()
-        if self._worker is not None:
-            try:
-                self._worker.phase_started.disconnect()
-                self._worker.phase_progress.disconnect()
-                self._worker.phase_detail.disconnect()
-                self._worker.log_ready.disconnect()
-                self._worker.output_ready.disconnect()
-                self._worker.finished.disconnect()
-                self._worker.error_ready.disconnect()
-                self._worker.file_locked.disconnect()
-            except Exception:
-                pass
-        if self._thread is not None:
-            try:
-                self._thread.quit()
-                self._thread.wait(100)
-                if getattr(self._thread, "isRunning", lambda: False)():
-                    self._thread.requestInterruption()
-                    self._thread.setParent(None)
-            except Exception:
-                pass
-            self._thread = None
-            self._worker = None
+        # The worker's finished/error signal may be queued to the GUI thread.
+        # Keep processing those signals while waiting, including when quit()
+        # was called before QThread's event loop had started.
+        window = self.main_window
+        was_enabled = window.isEnabled() if window is not None else False
+        if window is not None:
+            window.setEnabled(False)
+        try:
+            self._thread.quit()
+            while self._thread is not None and self._thread.isRunning():
+                self._thread.wait(50)
+                QtCore.QCoreApplication.processEvents()
+        finally:
+            if window is not None:
+                window.setEnabled(was_enabled)
 
     def cancel_all_workers(self) -> None:
         self.cancel_processing()
@@ -850,6 +899,8 @@ class Step4ProcessingWidget(_Q_WIDGET_BASE):
         self.log_box.appendPlainText(f"{key}: {path}")
 
     def _handle_finished(self, _context: object) -> None:
+        if getattr(self, "_leaving_page", False):
+            return
         self.phase_progress.setValue(100)
         self.overall_progress.stop_animation()
         self.phase_progress.stop_animation()
@@ -868,6 +919,9 @@ class Step4ProcessingWidget(_Q_WIDGET_BASE):
 
     def _handle_file_locked(self, filepath: str, sync_tuple: tuple) -> None:
         event, result = sync_tuple
+        if getattr(self, "_leaving_page", False):
+            event.set()
+            return
         filename = Path(filepath).name
         title = self.localizer.get_string("file_locked_title", default="Datei gesperrt (QGIS geöffnet?)")
         msg = self.localizer.get_string(
@@ -895,6 +949,8 @@ class Step4ProcessingWidget(_Q_WIDGET_BASE):
         event.set()
 
     def _handle_error(self, phase: str, message: str) -> None:
+        if getattr(self, "_leaving_page", False):
+            return
         self.overall_progress.stop_animation()
         self.phase_progress.stop_animation()
         try:
@@ -956,6 +1012,8 @@ class Step4ProcessingWidget(_Q_WIDGET_BASE):
     def _save_current_settings(self) -> None:
         """Persist all current user settings and input parameters to project/input directory."""
         if getattr(self, "_is_restoring", False) or not self.project_path:
+            return
+        if self._validate_numeric_parameters():
             return
         input_directory = os.path.join(self.project_path, "input")
         try:

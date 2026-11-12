@@ -7,3 +7,5 @@ shapely
 geopandas
 pycountry
 osmium
+typst>=0.13,<0.16
+pypdfium2>=4.30,<6

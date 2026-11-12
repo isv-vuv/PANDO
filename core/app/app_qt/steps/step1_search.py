@@ -186,7 +186,7 @@ class Step1SearchWidget(_Q_WIDGET_BASE):
         header, _title_label, _step_label = create_step_header(
             self.localizer.get_string("step1_title"),
             current_step=1,
-            total_steps=6,
+            total_steps=7,
             localizer=self.localizer,
             parent=self,
         )

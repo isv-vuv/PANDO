@@ -1,3 +1,7 @@
+if __package__:
+    from .visum_com import create_visum
+else:
+    from visum_com import create_visum
 import os
 import sys
 import logging
@@ -50,7 +54,7 @@ def find_helper_file(helper_dir: Path, base_dir: Path, filename: str) -> Path | 
 
 def open_visum():
     logging.info("Initialisiere Visum-Instanz...")
-    visum = com.Dispatch("Visum.Visum.250")
+    visum = create_visum()
     visum.Graphic.ShowMaximized()
     return visum
 

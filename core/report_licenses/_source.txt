@@ -1,0 +1,30 @@
+Report generation / Berichtsgenerierung
+
+Typst compiler and typst-py Python binding — Apache License 2.0.
+https://github.com/typst/typst
+https://github.com/messense/typst-py
+License text: core/report_licenses/Apache-2.0.txt
+Dependencies retain their own licenses; preserve the notices supplied by the installed packages.
+
+Inter 4.1 — Copyright Rasmus Andersson, SIL Open Font License 1.1.
+https://github.com/rsms/inter
+Static Regular (400), Bold (700), Italic and Bold Italic, at the original report text sizes.
+Font files may be bundled and embedded under the OFL; the generated PDF does not become subject to the OFL.
+Full copyright and license: report_template_de/fonts/OFL.txt and report_template_en/fonts/OFL.txt.
+
+PDF preview: pypdfium2 — Apache-2.0 OR BSD-3-Clause; PDFium — BSD-style license and third-party licenses.
+https://github.com/pypdfium2-team/pypdfium2#licensing
+When redistributing binaries, include PDFium and dependency license files from the exact installed wheel (pypdfium2_raw licenses / BUILD_LICENSES). This overview does not replace them.
+
+Map graphics: QGIS / PyQGIS (GPL-2.0-or-later), Qt / PyQt (licenses depend on the installed distribution), GDAL and other dependencies supplied by QGIS.
+https://qgis.org/resources/license/
+Data: GADM, GHS-POP and OpenStreetMap — see the separate data tabs and source notes printed on the maps. Visum exports require a separately licensed PTV Visum installation.
+
+Citation formatting: bundled VuV CSL styles (ISV VuV YR), executed by Typst's bibliography engine (Hayagriva / Citationberg).
+https://github.com/typst/hayagriva
+https://github.com/typst/citationberg
+The bundled CSL files do not declare a license. Their rights and any upstream attribution must be confirmed before redistribution.
+Bibliographic publication titles remain in their original language.
+
+Deutsch: Die jeweiligen Originallizenzen gelten unverändert. Eine Zustimmung in diesem Dialog erteilt keine zusätzlichen Weitergabe- oder Nutzungsrechte. Hinweise auf noch zu klärende Rechte stehen in docs/LICENSE_AUDIT.md.
+English: The original licenses remain applicable. Acceptance in this dialog grants no additional usage or redistribution rights. Outstanding rights checks are documented in docs/LICENSE_AUDIT.md.

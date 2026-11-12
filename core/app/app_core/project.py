@@ -729,6 +729,7 @@ def verify_pbf_files(project_path: str, download_jobs: Iterable[dict], data_path
     expected_basenames = set(job_map.keys())
     actual_files = [name for name in os.listdir(pbf_dir) if name.lower().endswith(".osm.pbf")]
     actual_basenames_map = {}
+    actual_download_dates = {}
     for name in actual_files:
         filepath = os.path.join(pbf_dir, name)
         norm_name = normalize_pbf_name(name)
@@ -737,7 +738,13 @@ def verify_pbf_files(project_path: str, download_jobs: Iterable[dict], data_path
         if expected_size > 1024 and file_size < int(expected_size * 0.5):
             logger.warning(f"File {name} is incomplete or corrupted ({file_size} bytes, expected {expected_size} bytes). Ignoring.")
             continue
-        actual_basenames_map[norm_name] = name
+        # Multiple download generations can coexist. Directory iteration order
+        # must not make an older copy replace the newly downloaded region.
+        download_date = pbf_downloaded_at(filepath) or datetime.min
+        candidate_key = (download_date, name)
+        if norm_name not in actual_download_dates or candidate_key > actual_download_dates[norm_name]:
+            actual_download_dates[norm_name] = candidate_key
+            actual_basenames_map[norm_name] = name
 
     found_basenames = sorted(expected_basenames.intersection(actual_basenames_map.keys()))
     missing_basenames = sorted(expected_basenames.difference(actual_basenames_map.keys()))
