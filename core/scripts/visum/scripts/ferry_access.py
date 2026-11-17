@@ -1,0 +1,623 @@
+"""Ferry node classification, automatic road-network connection, and turn activation for PTV Visum."""
+
+from __future__ import annotations
+
+import logging
+import math
+import re
+import xml.etree.ElementTree as ET
+from pathlib import Path
+from typing import Iterable
+
+import numpy as np
+import pandas as pd
+from scipy.spatial import cKDTree
+
+FERRY_TERMINAL_TAG_VALUES = {
+    "amenity": {"ferry_terminal"},
+    "ferry": {"yes"},
+    "mooring": {"ferry", "yes"},
+    "man_made": {"pier"},
+    "waterway": {"dock"},
+}
+
+
+def is_osm_ferry_terminal_tags(tags: dict[str, str]) -> bool:
+    """Return True if an OSM tag dictionary marks a ferry terminal / pier node."""
+    if not tags:
+        return False
+    for key, allowed_values in FERRY_TERMINAL_TAG_VALUES.items():
+        val = str(tags.get(key, "")).strip().lower()
+        if val in allowed_values:
+            return True
+    return False
+
+
+def _normalize_osm_id(value) -> str:
+    """Normalize numeric/string OSM node IDs to clean integer strings."""
+    if value is None:
+        return ""
+    if isinstance(value, (int, np.integer)):
+        return str(int(value))
+    if isinstance(value, (float, np.floating)):
+        if math.isnan(float(value)):
+            return ""
+        return str(int(value))
+    text = str(value).strip()
+    if not text or text.lower() in {"nan", "none", "<na>"}:
+        return ""
+    if text.endswith(".0") and text[:-2].lstrip("-").isdigit():
+        return text[:-2]
+    return text
+
+
+def _parse_tsys_tokens(tsysset: str) -> set[str]:
+    if not tsysset:
+        return set()
+    return {tok.strip().upper() for tok in str(tsysset).split(",") if tok.strip()}
+
+
+def _has_car_and_walk(tsysset: str) -> bool:
+    tokens = _parse_tsys_tokens(tsysset)
+    return "CAR" in tokens and "WALK" in tokens
+
+
+def extract_osm_ferry_terminal_info(
+    osm_path: str | Path,
+) -> tuple[set[str], dict[str, tuple[float, float]], set[str]]:
+    """Parse an .osm XML file for tagged ferry terminal nodes and mid-only ferry nodes.
+
+    Returns:
+        terminal_ids: Set of OSM node IDs carrying ferry terminal tags.
+        terminal_lonlats: Mapping of terminal OSM node ID -> (lon, lat) in WGS84 degrees.
+        mid_only_ferry_ids: Set of OSM node IDs that appear only as intermediate vertices
+            of `route=ferry` ways (never as way endpoints).
+    """
+    osm_path = Path(osm_path)
+    if not osm_path.exists() or osm_path.suffix.lower() != ".osm":
+        return set(), {}, set()
+
+    terminal_ids: set[str] = set()
+    terminal_lonlats: dict[str, tuple[float, float]] = {}
+    ferry_endpoints: set[str] = set()
+    ferry_midnodes: set[str] = set()
+
+    for _event, elem in ET.iterparse(str(osm_path), events=("end",)):
+        tag_name = elem.tag
+        if tag_name == "node":
+            tags = {t.attrib.get("k", ""): t.attrib.get("v", "") for t in elem.findall("tag")}
+            if is_osm_ferry_terminal_tags(tags):
+                nid = _normalize_osm_id(elem.attrib.get("id"))
+                if nid:
+                    terminal_ids.add(nid)
+                    try:
+                        lon = float(elem.attrib["lon"])
+                        lat = float(elem.attrib["lat"])
+                        terminal_lonlats[nid] = (lon, lat)
+                    except (KeyError, ValueError, TypeError):
+                        pass
+            elem.clear()
+        elif tag_name == "way":
+            tags = {t.attrib.get("k", ""): t.attrib.get("v", "") for t in elem.findall("tag")}
+            if tags.get("route") == "ferry":
+                nds = [_normalize_osm_id(nd.attrib.get("ref")) for nd in elem.findall("nd")]
+                nds = [nid for nid in nds if nid]
+                if len(nds) >= 2:
+                    ferry_endpoints.add(nds[0])
+                    ferry_endpoints.add(nds[-1])
+                    ferry_midnodes.update(nds[1:-1])
+            elem.clear()
+
+    mid_only_ferry_ids = ferry_midnodes - ferry_endpoints
+    return terminal_ids, terminal_lonlats, mid_only_ferry_ids
+
+
+def _wgs84_to_transverse_mercator(
+    lons: Iterable[float],
+    lats: Iterable[float],
+    central_meridian: float,
+    false_easting: float = 500000.0,
+    false_northing: float = 0.0,
+    scale_factor: float = 0.9996,
+) -> list[tuple[float, float]]:
+    """Convert WGS84 lon/lat coordinates to Transverse Mercator (e.g. UTM) in meters."""
+    a = 6378137.0
+    f = 1.0 / 298.257223563
+    e2 = f * (2.0 - f)
+    ep2 = e2 / (1.0 - e2)
+    lon0 = math.radians(central_meridian)
+
+    results: list[tuple[float, float]] = []
+    for lon_deg, lat_deg in zip(lons, lats):
+        lat = math.radians(lat_deg)
+        lon = math.radians(lon_deg)
+        sin_lat = math.sin(lat)
+        cos_lat = math.cos(lat)
+        tan_lat = math.tan(lat)
+
+        n = a / math.sqrt(1.0 - e2 * sin_lat * sin_lat)
+        t = tan_lat * tan_lat
+        c = ep2 * cos_lat * cos_lat
+        aa = cos_lat * (lon - lon0)
+
+        m = a * (
+            (1.0 - e2 / 4.0 - 3.0 * e2 * e2 / 64.0 - 5.0 * e2 * e2 * e2 / 256.0) * lat
+            - (3.0 * e2 / 8.0 + 3.0 * e2 * e2 / 32.0 + 45.0 * e2 * e2 * e2 / 1024.0) * math.sin(2.0 * lat)
+            + (15.0 * e2 * e2 / 256.0 + 45.0 * e2 * e2 * e2 / 1024.0) * math.sin(4.0 * lat)
+            - (35.0 * e2 * e2 * e2 / 3072.0) * math.sin(6.0 * lat)
+        )
+
+        x = false_easting + scale_factor * n * (
+            aa
+            + (1.0 - t + c) * (aa ** 3) / 6.0
+            + (5.0 - 18.0 * t + t * t + 72.0 * c - 58.0 * ep2) * (aa ** 5) / 120.0
+        )
+        y = false_northing + scale_factor * (
+            m
+            + n
+            * tan_lat
+            * (
+                (aa ** 2) / 2.0
+                + (5.0 - t + 9.0 * c + 4.0 * c * c) * (aa ** 4) / 24.0
+                + (61.0 - 58.0 * t + t * t + 600.0 * c - 330.0 * ep2) * (aa ** 6) / 720.0
+            )
+        )
+        results.append((x, y))
+    return results
+
+
+def _parse_tm_params_from_wkt(proj_wkt: str) -> tuple[float, float, float, float] | None:
+    """Extract (central_meridian, false_easting, false_northing, scale_factor) from WKT if projected."""
+    if not proj_wkt or "PROJCS" not in proj_wkt.upper():
+        return None
+    cm_match = re.search(r'PARAMETER\["central_meridian"\s*,\s*([-+]?\d+(?:\.\d+)?)\]', proj_wkt, re.IGNORECASE)
+    if not cm_match:
+        return None
+    cm = float(cm_match.group(1))
+    fe_match = re.search(r'PARAMETER\["false_easting"\s*,\s*([-+]?\d+(?:\.\d+)?)\]', proj_wkt, re.IGNORECASE)
+    fn_match = re.search(r'PARAMETER\["false_northing"\s*,\s*([-+]?\d+(?:\.\d+)?)\]', proj_wkt, re.IGNORECASE)
+    sf_match = re.search(r'PARAMETER\["scale_factor"\s*,\s*([-+]?\d+(?:\.\d+)?)\]', proj_wkt, re.IGNORECASE)
+    fe = float(fe_match.group(1)) if fe_match else 500000.0
+    fn = float(fn_match.group(1)) if fn_match else 0.0
+    sf = float(sf_match.group(1)) if sf_match else 0.9996
+    return cm, fe, fn, sf
+
+
+def project_lonlats_to_visum_xy(
+    lonlats: dict[str, tuple[float, float]],
+    proj_wkt: str = "",
+) -> dict[str, tuple[float, float]]:
+    """Project WGS84 (lon, lat) coordinates into the Visum network CRS."""
+    if not lonlats:
+        return {}
+
+    ids = list(lonlats.keys())
+    lons = [lonlats[k][0] for k in ids]
+    lats = [lonlats[k][1] for k in ids]
+
+    if proj_wkt and "PROJCS" in proj_wkt.upper():
+        try:
+            from pyproj import Transformer
+
+            transformer = Transformer.from_crs("EPSG:4326", proj_wkt, always_xy=True)
+            xs, ys = transformer.transform(lons, lats)
+            return {nid: (float(x), float(y)) for nid, x, y in zip(ids, xs, ys)}
+        except Exception:
+            pass
+
+        tm_params = _parse_tm_params_from_wkt(proj_wkt)
+        if tm_params is not None:
+            cm, fe, fn, sf = tm_params
+            coords = _wgs84_to_transverse_mercator(lons, lats, cm, fe, fn, sf)
+            return {nid: xy for nid, xy in zip(ids, coords)}
+
+    # Geographic / unknown WKT fallback: compute local UTM zone from median coordinates
+    med_lon = float(np.median(lons))
+    med_lat = float(np.median(lats))
+    zone = int((med_lon + 180.0) / 6.0) + 1
+    cm = (zone - 1) * 6.0 - 180.0 + 3.0
+    fn = 0.0 if med_lat >= 0.0 else 10000000.0
+    coords = _wgs84_to_transverse_mercator(lons, lats, cm, 500000.0, fn, 0.9996)
+    return {nid: xy for nid, xy in zip(ids, coords)}
+
+
+def classify_ferry_nodes(
+    nodes_df: pd.DataFrame,
+    links_df: pd.DataFrame,
+    *,
+    ferry_typenos: Iterable[int] = (94,),
+    ferry_access_typenos: Iterable[int] = (95,),
+    osm_terminal_ids: Iterable[str] | None = None,
+    osm_terminal_xy: dict[str, tuple[float, float]] | None = None,
+    mid_only_osm_ids: Iterable[str] | None = None,
+    snap_distance_m: float = 200.0,
+) -> pd.DataFrame:
+    """Classify nodes into ferry nodes, terminals, isolated ferry origins, and road targets.
+
+    Returns a copy of `nodes_df` enriched with boolean/int columns:
+        `Ferry_Node`, `Ferry_Degree`, `OSM_FerryTerminal`, `Isolated_Ferry`, `Road_Target_Node`.
+    """
+    result = nodes_df.copy()
+    if result.empty:
+        result["Ferry_Node"] = pd.Series(dtype=bool)
+        result["Ferry_Degree"] = pd.Series(dtype=int)
+        result["OSM_FerryTerminal"] = pd.Series(dtype=bool)
+        result["Isolated_Ferry"] = pd.Series(dtype=bool)
+        result["Road_Target_Node"] = pd.Series(dtype=bool)
+        return result
+
+    result["NO"] = result["NO"].astype(int)
+    if "OSM_NODE_ID" in result.columns:
+        result["_OSM_ID_NORM"] = result["OSM_NODE_ID"].map(_normalize_osm_id)
+    else:
+        result["_OSM_ID_NORM"] = ""
+
+    existing_terminal = (
+        result["OSM_FerryTerminal"].fillna(False).astype(bool)
+        if "OSM_FerryTerminal" in result.columns
+        else pd.Series(False, index=result.index)
+    )
+
+    ferry_type_set = {int(t) for t in ferry_typenos}
+    access_type_set = {int(t) for t in ferry_access_typenos}
+    excluded_road_types = ferry_type_set | access_type_set
+
+    ferry_neighbors: dict[int, set[int]] = {}
+    road_in_nodes: set[int] = set()
+    road_out_nodes: set[int] = set()
+
+    if not links_df.empty:
+        typenos = links_df["TYPENO"].astype(int)
+        from_nos = links_df["FROMNODENO"].astype(int)
+        to_nos = links_df["TONODENO"].astype(int)
+
+        ferry_mask = typenos.isin(ferry_type_set)
+        for u, v in zip(from_nos[ferry_mask], to_nos[ferry_mask]):
+            if u != v:
+                ferry_neighbors.setdefault(int(u), set()).add(int(v))
+                ferry_neighbors.setdefault(int(v), set()).add(int(u))
+
+        road_mask = (~typenos.isin(excluded_road_types)) & links_df["TSYSSET"].map(_has_car_and_walk)
+        road_in_nodes = set(int(x) for x in to_nos[road_mask])
+        road_out_nodes = set(int(x) for x in from_nos[road_mask])
+
+    ferry_degree = result["NO"].map(lambda n: len(ferry_neighbors.get(int(n), ()))).astype(int)
+    ferry_node = ferry_degree > 0
+    has_road_io = result["NO"].isin(road_in_nodes & road_out_nodes)
+
+    osm_term_set = {_normalize_osm_id(x) for x in (osm_terminal_ids or ()) if _normalize_osm_id(x)}
+    direct_terminal = existing_terminal | result["_OSM_ID_NORM"].isin(osm_term_set)
+
+    # 1:1 nearest-Ferry_Node snap (<= snap_distance_m) for offset or road-side terminal nodes
+    snapped_terminal = direct_terminal.copy()
+    if snap_distance_m > 0 and bool(ferry_node.any()):
+        ferry_subset = result.loc[ferry_node, ["NO", "XCOORD", "YCOORD"]].reset_index()
+        ferry_tree = cKDTree(ferry_subset[["XCOORD", "YCOORD"]].to_numpy(dtype=float))
+
+        # 1) Unmatched terminal points from Visum nodes not directly on a ferry link
+        unmatched_coords: list[tuple[float, float]] = []
+        off_ferry_term_mask = direct_terminal & (~ferry_node)
+        if bool(off_ferry_term_mask.any()):
+            for x, y in result.loc[off_ferry_term_mask, ["XCOORD", "YCOORD"]].to_numpy(dtype=float):
+                if math.isfinite(x) and math.isfinite(y):
+                    unmatched_coords.append((float(x), float(y)))
+
+        # 2) Unmatched terminal points from raw OSM terminal coordinates
+        if osm_terminal_xy:
+            direct_ferry_osm_ids = set(result.loc[ferry_node & direct_terminal, "_OSM_ID_NORM"])
+            for oid, (tx, ty) in osm_terminal_xy.items():
+                if _normalize_osm_id(oid) not in direct_ferry_osm_ids and math.isfinite(tx) and math.isfinite(ty):
+                    unmatched_coords.append((float(tx), float(ty)))
+
+        if unmatched_coords:
+            dists, idxs = ferry_tree.query(
+                np.asarray(unmatched_coords, dtype=float),
+                distance_upper_bound=float(snap_distance_m),
+            )
+            num_ferry = len(ferry_subset)
+            for dist, idx in zip(dists, idxs):
+                if math.isfinite(dist) and dist <= snap_distance_m and idx < num_ferry:
+                    orig_df_idx = ferry_subset.loc[int(idx), "index"]
+                    snapped_terminal.loc[orig_df_idx] = True
+
+    mid_only_set = {_normalize_osm_id(x) for x in (mid_only_osm_ids or ()) if _normalize_osm_id(x)}
+    is_mid_only = result["_OSM_ID_NORM"].isin(mid_only_set) if mid_only_set else pd.Series(False, index=result.index)
+
+    is_terminal = ferry_node & (snapped_terminal | ((ferry_degree == 1) & (~is_mid_only)))
+    isolated_ferry = ferry_node & is_terminal & (~has_road_io)
+    road_target_node = has_road_io & (~ferry_node)
+
+    result["Ferry_Node"] = ferry_node.astype(bool)
+    result["Ferry_Degree"] = ferry_degree.astype(int)
+    result["OSM_FerryTerminal"] = snapped_terminal.astype(bool)
+    result["Isolated_Ferry"] = isolated_ferry.astype(bool)
+    result["Road_Target_Node"] = road_target_node.astype(bool)
+    return result.drop(columns=["_OSM_ID_NORM"])
+
+
+def _ensure_node_uda(nodes_obj, uda_name: str, value_type: int, def_val, comment: str) -> None:
+    """Ensure a node UDA exists without overwriting existing values."""
+    if nodes_obj.AttrExists(uda_name):
+        return
+    nodes_obj.AddUserDefinedAttribute(uda_name, uda_name, uda_name, value_type, DefVal=def_val)
+    nodes_obj.SetAllAttValues(uda_name, def_val, OnlyActive=False)
+    try:
+        uda = nodes_obj.Attributes.ItemByKey(uda_name)
+        uda.Comment = comment
+        if value_type != 5:
+            uda.ValueDefault = def_val
+        else:
+            uda.StringValueDefault = def_val
+    except Exception:
+        pass
+
+
+def _ensure_ferry_access_linktype(visum, linktype_no: int = 95):
+    """Ensure LinkType 95 ('Ferry_Access') exists with PrT and Walk modes."""
+    try:
+        return visum.Net.LinkTypes.ItemByKey(linktype_no)
+    except Exception:
+        lt = visum.Net.AddLinkType(linktype_no)
+        lt.SetAttValue("NAME", "Ferry_Access")
+        lt.SetAttValue("V0PRT", 1)
+        lt.SetAttValue("NUMLANES", 1)
+        lt.SetAttValue("CAPPRT", 1000)
+
+        existing_tsys = [
+            (str(code).strip(), str(ttype).strip().upper())
+            for code, ttype in visum.Net.TSystems.GetMultipleAttributes(["CODE", "TYPE"])
+        ]
+        preferred = {"BIKE", "BUS", "CAR", "HGV", "PUTW", "WALK"}
+        selected = [code for code, _ in existing_tsys if code.upper() in preferred]
+        if not selected:
+            selected = [code for code, ttype in existing_tsys if ttype in {"PRT", "PUTWALK"}]
+        if selected:
+            lt.SetAttValue("TSYSSET", ",".join(selected))
+        return lt
+
+
+def _resolve_osm_file(osm_file: str | Path | None, working_dir: str | Path | None = None) -> Path | None:
+    candidates: list[Path] = []
+    if osm_file:
+        p = Path(osm_file)
+        candidates.append(p)
+        if p.suffix.lower() != ".osm":
+            candidates.append(p.with_suffix(".osm"))
+            if p.name.endswith(".osm.pbf"):
+                candidates.append(p.with_name(p.name[:-4]))
+    if working_dir:
+        wdir = Path(working_dir)
+        osm_base = wdir.parent / "osm"
+        candidates.extend([
+            osm_base / "04_network" / "road_network_hierarchical_modified.osm",
+            osm_base / "road_network_hierarchical_modified.osm",
+        ])
+    for cand in candidates:
+        if cand.exists() and cand.is_file() and cand.suffix.lower() == ".osm":
+            return cand
+    return None
+
+
+def connect_ferries_to_road_network(
+    visum,
+    *,
+    osm_file: str | Path | None = None,
+    working_dir: str | Path | None = None,
+    max_distance_m: float = 5000.0,
+    snap_distance_m: float = 200.0,
+    ferry_access_type_no: int = 95,
+    log=logging.info,
+) -> dict[str, int]:
+    """Qualify ferry nodes, connect isolated ferry terminals via Ferry_Access, and open turns."""
+    nodes_obj = visum.Net.Nodes
+    links_obj = visum.Net.Links
+
+    _ensure_node_uda(nodes_obj, "Ferry_Node", 9, False, "1 if node is connected to a ferry link")
+    _ensure_node_uda(nodes_obj, "Ferry_Degree", 1, 0, "Number of unique neighbor nodes connected via ferry links")
+    _ensure_node_uda(nodes_obj, "OSM_FerryTerminal", 9, False, "1 if tagged as ferry terminal in OSM")
+    _ensure_node_uda(nodes_obj, "Isolated_Ferry", 9, False, "1 if ferry terminal without CAR+WALK road access")
+    _ensure_node_uda(nodes_obj, "Ferry_Origin", 9, False, "Compatibility alias for Isolated_Ferry")
+
+    # Detect Ferry and Ferry_Access link type numbers dynamically (supports pre- and post-restructure nets)
+    lt_rows = visum.Net.LinkTypes.GetMultipleAttributes(["NO", "NAME"])
+    ferry_typenos = {94}
+    ferry_access_typenos = {ferry_access_type_no}
+    for lt_no, lt_name in lt_rows:
+        name_l = str(lt_name or "").strip().lower()
+        if name_l == "ferry":
+            ferry_typenos.add(int(lt_no))
+        elif name_l == "ferry_access":
+            ferry_access_typenos.add(int(lt_no))
+
+    node_attrs = ["NO", "XCOORD", "YCOORD"]
+    has_osm_id = nodes_obj.AttrExists("OSM_NODE_ID")
+    if has_osm_id:
+        node_attrs.append("OSM_NODE_ID")
+    node_attrs.append("OSM_FerryTerminal")
+
+    raw_nodes = nodes_obj.GetMultipleAttributes(node_attrs, OnlyActive=False)
+    visum_id_rows = nodes_obj.GetMultiAttValues("NO", OnlyActive=False)
+    if not raw_nodes or not visum_id_rows:
+        return {"ferry_nodes": 0, "osm_terminals": 0, "isolated_ferries": 0, "created_links": 0, "opened_turns": 0}
+
+    nodes_df = pd.DataFrame(raw_nodes, columns=node_attrs)
+    id_df = pd.DataFrame(visum_id_rows, columns=["VISUM_ID", "NO"]).astype({"VISUM_ID": int, "NO": int})
+    nodes_df["NO"] = nodes_df["NO"].astype(int)
+    nodes_df = pd.merge(id_df, nodes_df, on="NO", how="inner")
+
+    raw_links = links_obj.GetMultipleAttributes(["FROMNODENO", "TONODENO", "TYPENO", "TSYSSET"], OnlyActive=False)
+    links_df = (
+        pd.DataFrame(raw_links, columns=["FROMNODENO", "TONODENO", "TYPENO", "TSYSSET"])
+        if raw_links
+        else pd.DataFrame(columns=["FROMNODENO", "TONODENO", "TYPENO", "TSYSSET"])
+    )
+
+    resolved_osm = _resolve_osm_file(osm_file, working_dir)
+    osm_terminal_ids: set[str] = set()
+    osm_terminal_xy: dict[str, tuple[float, float]] = {}
+    mid_only_osm_ids: set[str] = set()
+    if resolved_osm is not None:
+        osm_terminal_ids, terminal_lonlats, mid_only_osm_ids = extract_osm_ferry_terminal_info(resolved_osm)
+        try:
+            proj_wkt = str(visum.Net.AttValue("PROJECTIONDEFINITION") or "")
+        except Exception:
+            proj_wkt = ""
+        osm_terminal_xy = project_lonlats_to_visum_xy(terminal_lonlats, proj_wkt)
+        # If the Visum network itself is still in geographic degrees, project node coords to local UTM for snapping
+        if "PROJCS" not in proj_wkt.upper() and not nodes_df.empty:
+            max_abs_x = float(nodes_df["XCOORD"].abs().max())
+            max_abs_y = float(nodes_df["YCOORD"].abs().max())
+            if max_abs_x <= 180.0 and max_abs_y <= 90.0:
+                med_lon = float(nodes_df["XCOORD"].median())
+                med_lat = float(nodes_df["YCOORD"].median())
+                zone = int((med_lon + 180.0) / 6.0) + 1
+                cm = (zone - 1) * 6.0 - 180.0 + 3.0
+                fn = 0.0 if med_lat >= 0.0 else 10000000.0
+                proj_nodes = _wgs84_to_transverse_mercator(
+                    nodes_df["XCOORD"].astype(float),
+                    nodes_df["YCOORD"].astype(float),
+                    cm,
+                    500000.0,
+                    fn,
+                    0.9996,
+                )
+                nodes_df = nodes_df.copy()
+                nodes_df["XCOORD"] = [xy[0] for xy in proj_nodes]
+                nodes_df["YCOORD"] = [xy[1] for xy in proj_nodes]
+
+    classified = classify_ferry_nodes(
+        nodes_df,
+        links_df,
+        ferry_typenos=ferry_typenos,
+        ferry_access_typenos=ferry_access_typenos,
+        osm_terminal_ids=osm_terminal_ids,
+        osm_terminal_xy=osm_terminal_xy,
+        mid_only_osm_ids=mid_only_osm_ids,
+        snap_distance_m=snap_distance_m,
+    )
+
+    nodes_obj.SetMultiAttValues("Ferry_Node", classified[["VISUM_ID", "Ferry_Node"]].astype(int).to_numpy())
+    nodes_obj.SetMultiAttValues("Ferry_Degree", classified[["VISUM_ID", "Ferry_Degree"]].astype(int).to_numpy())
+    nodes_obj.SetMultiAttValues("OSM_FerryTerminal", classified[["VISUM_ID", "OSM_FerryTerminal"]].astype(int).to_numpy())
+    nodes_obj.SetMultiAttValues("Isolated_Ferry", classified[["VISUM_ID", "Isolated_Ferry"]].astype(int).to_numpy())
+    nodes_obj.SetMultiAttValues("Ferry_Origin", classified[["VISUM_ID", "Isolated_Ferry"]].astype(int).to_numpy())
+
+    ferry_count = int(classified["Ferry_Node"].sum())
+    terminal_count = int((classified["Ferry_Node"] & classified["OSM_FerryTerminal"]).sum())
+    isolated_count = int(classified["Isolated_Ferry"].sum())
+    target_count = int(classified["Road_Target_Node"].sum())
+
+    log(
+        f"Fährknoten klassifiziert: {ferry_count} Fährknoten, "
+        f"{terminal_count} OSM_FerryTerminal, {isolated_count} isolierte Fähranleger (Isolated_Ferry=1)."
+    )
+
+    existing_access_links = int(links_df["TYPENO"].astype(int).isin(ferry_access_typenos).sum()) if not links_df.empty else 0
+    created_links = 0
+    opened_turns = 0
+
+    if existing_access_links > 0:
+        log(f"{existing_access_links} 'Ferry_Access'-Strecken bereits vorhanden – überspringe erneute Generierung.")
+        return {
+            "ferry_nodes": ferry_count,
+            "osm_terminals": terminal_count,
+            "isolated_ferries": isolated_count,
+            "created_links": 0,
+            "opened_turns": 0,
+        }
+
+    if isolated_count == 0 or target_count == 0:
+        return {
+            "ferry_nodes": ferry_count,
+            "osm_terminals": terminal_count,
+            "isolated_ferries": isolated_count,
+            "created_links": 0,
+            "opened_turns": 0,
+        }
+
+    _ensure_node_uda(nodes_obj, "Road_Target_Node", 9, False, "Temporary target filter for ConnectNodes")
+    nodes_obj.SetMultiAttValues("Road_Target_Node", classified[["VISUM_ID", "Road_Target_Node"]].astype(int).to_numpy())
+
+    nf = visum.Filters.NodeFilter()
+    lf = visum.Filters.LinkFilter()
+    tf = visum.Filters.TurnFilter()
+
+    try:
+        lt_access = _ensure_ferry_access_linktype(visum, ferry_access_type_no)
+
+        # Build origin net elements (Isolated_Ferry == 1)
+        visum.Filters.InitAll()
+        nf.Init()
+        nf.AddCondition("OP_NONE", False, "Isolated_Ferry", "EqualVal", 1)
+        source_nodes = visum.CreateNetElements()
+        for node_obj in nodes_obj.GetAllActive:
+            source_nodes.Add(node_obj)
+
+        # Set active destination nodes exclusively to valid CAR+WALK road nodes
+        nf.Init()
+        nf.AddCondition("OP_NONE", False, "Road_Target_Node", "EqualVal", 1)
+
+        if nodes_obj.CountActive > 0:
+            paras = nodes_obj.CreateAutomaticNodeConnectionParas()
+            paras.LinkType = lt_access
+            paras.SetAttValue("MinNewLinksPerSourceNode", 0)
+            paras.SetAttValue("MaxNewLinksPerSourceNode", 1)
+            paras.SetAttValue("MaxDistanceEnabled", True)
+            paras.SetAttValue("MaxDistance", f"{float(max_distance_m):g}m")
+
+            new_links = nodes_obj.ConnectNodes(source_nodes, paras)
+            try:
+                created_links = int(new_links.Count)
+            except Exception:
+                created_links = 0
+            log(f"Fähr-Anbindungen ('Ferry_Access') über ConnectNodes generiert: {created_links} Streckenrichtungen.")
+
+        # Open turns touching Ferry_Access links by intersecting allowed link modes (excluding PUTWALK)
+        visum.Filters.InitAll()
+        lf.Init()
+        lf.AddCondition("OP_NONE", False, "TYPENO", "ContainedIn", str(ferry_access_type_no))
+
+        nf.Init()
+        nf.AddCondition("OP_NONE", False, "COUNTACTIVE:INLINKS", "GreaterVal", 0)
+        nf.AddCondition("OP_OR", False, "COUNTACTIVE:OUTLINKS", "GreaterVal", 0)
+
+        tf.Init()
+        tf.AddCondition("OP_NONE", False, "COUNTACTIVE:VIANODE", "GreaterVal", 0)
+
+        if visum.Net.Turns.CountActive > 0:
+            tsys_code_map = {
+                str(code).strip().upper(): str(code).strip()
+                for code, ttype in visum.Net.TSystems.GetMultipleAttributes(["CODE", "TYPE"])
+                if str(ttype).strip().upper() != "PUTWALK"
+            }
+            turn_rows = visum.Net.Turns.GetMultipleAttributes(
+                ["TSYSSET", r"FROMLINK\TSYSSET", r"TOLINK\TSYSSET", r"FROMLINK\TYPENO", r"TOLINK\TYPENO"],
+                OnlyActive=True,
+            )
+            updated_vals = []
+            for cur_tsys, fl_tsys, tl_tsys, fl_type, tl_type in turn_rows:
+                if int(fl_type) == ferry_access_type_no or int(tl_type) == ferry_access_type_no:
+                    common_tokens = _parse_tsys_tokens(fl_tsys) & _parse_tsys_tokens(tl_tsys)
+                    inter = sorted(tsys_code_map[tok] for tok in common_tokens if tok in tsys_code_map)
+                    updated_vals.append([",".join(inter)])
+                    if inter:
+                        opened_turns += 1
+                else:
+                    updated_vals.append([cur_tsys])
+            visum.Net.Turns.SetMultipleAttributes(["TSYSSET"], updated_vals, OnlyActive=True)
+            log(f"Abbieger für 'Ferry_Access'-Strecken freigegeben: {opened_turns} Abbieger geöffnet.")
+    finally:
+        visum.Filters.InitAll()
+        try:
+            if nodes_obj.AttrExists("Road_Target_Node"):
+                nodes_obj.DeleteUserDefinedAttribute("Road_Target_Node")
+        except Exception:
+            pass
+
+    return {
+        "ferry_nodes": ferry_count,
+        "osm_terminals": terminal_count,
+        "isolated_ferries": isolated_count,
+        "created_links": created_links,
+        "opened_turns": opened_turns,
+    }

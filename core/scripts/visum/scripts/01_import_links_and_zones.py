@@ -1,9 +1,11 @@
 if __package__:
     from .visum_logging import measured, timed_step, log_network_counts
     from .visum_com import create_visum, get_visum_appdata_dir
+    from .ferry_access import connect_ferries_to_road_network
 else:
     from visum_logging import measured, timed_step, log_network_counts
     from visum_com import create_visum, get_visum_appdata_dir
+    from ferry_access import connect_ferries_to_road_network
 import os
 import re
 import sys
@@ -421,15 +423,20 @@ def run_import_links_and_zones(
     with timed_step('visum.Net.SetProjection'):
         visum.Net.SetProjection(wgs84_geographic_wkt, False)
 
-    step1_ver = ver_dir / "01_Links_Imported.ver"
-    logging.info(f"Speichere Schritt 1 unter: {step1_ver}")
-    with timed_step('visum.SaveVersion'):
-        visum.SaveVersion(str(step1_ver))
-
     # Schritt 2: Umschalten auf UTM & OSM-Strecken mathematisch transformieren
     logging.info("Schritt 2: Schalte auf UTM-Zielprojektion um & transformiere Streckenkoordinaten")
     with timed_step('visum.Net.SetProjection'):
         visum.Net.SetProjection(wkt_text, True)  # True = Rechnet WGS84-Grad-Koordinaten der Strecken in UTM-Meter um
+
+    # Fährknoten qualifizieren und isolierte Fähranleger an das Straßennetz anbinden
+    logging.info("Qualifiziere Fährknoten und binde isolierte Fähranleger an das Straßennetz an...")
+    with timed_step('connect_ferries_to_road_network'):
+        connect_ferries_to_road_network(visum, osm_file=osm_file, log=logging.info)
+
+    step1_ver = ver_dir / "01_Links_Imported.ver"
+    logging.info(f"Speichere Schritt 1 unter: {step1_ver}")
+    with timed_step('visum.SaveVersion'):
+        visum.SaveVersion(str(step1_ver))
 
     # Erst jetzt die Bezirke additiv ins UTM-Netz laden
     logging.info("Lade Bezirke additiv ins UTM-Netz...")

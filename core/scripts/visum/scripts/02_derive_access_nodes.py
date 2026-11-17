@@ -1,9 +1,11 @@
 if __package__:
     from .visum_logging import measured, timed_step, log_network_counts
     from .visum_com import create_visum
+    from .ferry_access import connect_ferries_to_road_network
 else:
     from visum_logging import measured, timed_step, log_network_counts
     from visum_com import create_visum
+    from ferry_access import connect_ferries_to_road_network
 import os
 import sys
 import logging
@@ -247,58 +249,14 @@ class AccessNodeDeriver:
 
     @measured
     def preprocess_ferries(self):
-        """Kennzeichnet Fährknoten und bindet diese über 'Ferry_Access' an (via Pandas)."""
+        """Qualifiziert Fährknoten und bindet isolierte Fähranleger über 'Ferry_Access' an."""
         logging.info("Verarbeite Fährverbindungen und Fähr-Anbindungen...")
-        self.add_uda(self.Visum.Net.Nodes, 'Ferry_Origin', 9, False, '1 wenn Knoten eine Fährverbindung besitzt')
-
-        link_data = self.get_multi_netobj_atts_with_id(self.Visum.Net.Links, {"TONODENO": int, "TYPENO": int})
-        if not link_data.empty:
-            ferry_nodes = link_data[link_data['TYPENO'] == 94]['TONODENO'].unique()
-
-            node_data = self.get_multi_netobj_atts_with_id(self.Visum.Net.Nodes, {"NO": int})
-            if not node_data.empty and len(ferry_nodes) > 0:
-                node_data['Ferry_Origin'] = node_data['NO'].isin(ferry_nodes)
-                ferry_vals = node_data[node_data['Ferry_Origin']][['VISUM_ID', 'Ferry_Origin']].copy()
-                if not ferry_vals.empty:
-                    with timed_step("self.Visum.Net.Nodes.SetMultiAttValues | 'Ferry_Origin'"):
-                        self.Visum.Net.Nodes.SetMultiAttValues('Ferry_Origin', ferry_vals.values)
-                    logging.info(f"{len(ferry_vals)} Fähr-Knoten mit 'Ferry_Origin = 1' markiert.")
-
-        ferry_access_type_no = 95
-        try:
-            self.Visum.Net.LinkTypes.ItemByKey(ferry_access_type_no)
-        except Exception:
-            lt = self.Visum.Net.AddLinkType(ferry_access_type_no)
-            lt.SetAttValue("NAME", "Ferry_Access")
-            lt.SetAttValue("V0PRT", 5)
-            lt.SetAttValue("NUMLANES", 1)
-            lt.SetAttValue("CAPPRT", 999)
-
-        try:
-            connect_para = self.Visum.Net.CreateConnectNodesViaLinksPara()
-            connect_para.SetAttValue("MINLENGTH", 0)
-            connect_para.SetAttValue("MAXLENGTH", 5000)
-            connect_para.SetAttValue("LINKTYPENO", ferry_access_type_no)
-            connect_para.SetAttValue("ONLYACTIVEORIGINS", True)
-
-            self.nf.Init()
-            self.nf.AddCondition("OP_NONE", False, "Ferry_Origin", "EqualVal", True)
-            self.Visum.Net.ConnectNodesViaLinks(connect_para)
-            logging.info("Fähr-Anbindungen ('Ferry_Access') erfolgreich generiert.")
-        except Exception as e:
-            logging.debug(f"Fähr-Anbindungen (ConnectNodesViaLinks) übersprungen/nicht unterstützt: {e}")
-        self.nf.Init()
-
-        try:
-            self.lf.Init()
-            self.lf.AddCondition("OP_NONE", False, "LINKTYPE\\NAME", "EqualVal", "Ferry_Access")
-            turn_para = self.Visum.Net.CreateCalculateTurnsPara()
-            turn_para.SetAttValue("CALCULATEFROMMODES", True)
-            self.Visum.Net.CalculateTurns(turn_para)
-            logging.info("Abbieger für 'Ferry_Access'-Strecken freigegeben.")
-        except Exception as e:
-            logging.debug(f"Fähr-Abbieger (CalculateTurns) übersprungen/nicht unterstützt: {e}")
-        self.lf.Init()
+        with timed_step("connect_ferries_to_road_network"):
+            connect_ferries_to_road_network(
+                self.Visum,
+                working_dir=self.working_dir,
+                log=logging.info,
+            )
 
     @measured
     def prepare_net(self):
@@ -571,8 +529,10 @@ class AccessNodeDeriver:
         try:
             self.Visum.Filters.InitAll()
             self.nf.Init()
-            if self.Visum.Net.Nodes.AttrExists("Ferry_Origin"):
-                self.nf.AddCondition("OP_NONE", False, "Ferry_Origin", "EqualVal", False)
+            if self.Visum.Net.Nodes.AttrExists("Ferry_Node"):
+                self.nf.AddCondition("OP_NONE", False, "Ferry_Node", "EqualVal", 0)
+            elif self.Visum.Net.Nodes.AttrExists("Ferry_Origin"):
+                self.nf.AddCondition("OP_NONE", False, "Ferry_Origin", "EqualVal", 0)
             if self.Visum.Net.Nodes.AttrExists("ZK_TYP_DETAIL"):
                 self.nf.AddCondition("OP_AND", False, "ZK_TYP_DETAIL", "NotEqualVal", "N-N")
                 self.nf.AddCondition("OP_AND", False, "ZK_TYP_DETAIL", "NotEqualVal", "")

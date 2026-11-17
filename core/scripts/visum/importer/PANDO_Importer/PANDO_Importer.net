@@ -22,6 +22,7 @@ LINKTYPE;LinkTypeImpedanceFactor_Bike;LinkTypeImpedanceFactor_Bike;LinkTypeImped
 LINKTYPE;LinkTypeImpedanceFactor_Pedestrian;LinkTypeImpedanceFactor_Pedestrian;LinkTypeImpedanceFactor_Pedestrian;Double;MIN;MAX;1.000;;Type-dependent impedance factor for TSys pedestrian (BASt-GiV);0;2;Data;;0;SUM;0;;0;
 LINK;OSM_PedestrianInfrastructure;OSM_PedestrianInfrastructure;OSM_PedestrianInfrastructure;Bool;0.000;0.000;0.000;;;255;0;Data;;0;MAX;0;;0;
 LINK;OSM_BicycleInfrastructure;OSM_BicycleInfrastructure;OSM_BicycleInfrastructure;Bool;0.000;0.000;0.000;;;255;0;Data;;0;MAX;0;;0;
+NODE;OSM_FerryTerminal;OSM_FerryTerminal;OSM_FerryTerminal;Bool;0.000;0.000;0.000;;1 if tagged as ferry terminal in OSM;255;0;Data;;0;MAX;0;;0;
 
 * 
 * Table: Notepad lines

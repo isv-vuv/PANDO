@@ -99,8 +99,13 @@
 		<Pipe Code="ProblemWayPipe" InputBin="ProblemWaysBin" OutputBin="LinkTopologyBin" Wait4Pipes="LinkAttributesPipe">
 			<ProcessProblemWays NodesTargetBin="NodeExportBin"/>
 		</Pipe>
+		<!-- Mark ferry terminal nodes so multi-stop ferry ways are split at intermediate terminals -->
+		<Pipe Code="MarkFerryTerminalsPipe" InputBin="TAGGED_NODES" OutputBin="" Wait4Pipes="">
+			<EntityFilter Code="FilterFerryTerminals" Expression="(amenity=='ferry_terminal') || (ferry=='yes') || (mooring=='ferry') || (mooring=='yes') || (man_made=='pier') || (waterway=='dock')"/>
+			<MarkNodesForSplit Code="MarkFerryTerminalNodes" NodesTargetBin="NodeExportBin"/>
+		</Pipe>
 		<!-- export the nodes required for road links-->
-		<Pipe Code="NodeExportPipe" InputBin="NodeExportBin" Wait4Pipes="ProblemWayPipe">
+		<Pipe Code="NodeExportPipe" InputBin="NodeExportBin" Wait4Pipes="ProblemWayPipe, MarkFerryTerminalsPipe">
 			<GenerateVISUMNodes Code="GenerateVISUMNodes"/>
 			<!-- Visum_Node_No gets written to default tag VISUM_NODE_NO-->
 		</Pipe>
