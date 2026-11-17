@@ -353,13 +353,12 @@ def _ensure_node_uda(nodes_obj, uda_name: str, value_type: int, def_val, comment
 
 
 def _ensure_ferry_access_linktype(visum, linktype_no: int = 95):
-    """Ensure LinkType 95 ('Ferry_Access') exists with PrT and Walk modes."""
+    """Ensure LinkType 95 ('Ferry_Access') exists with 20 km/h for all modes (incl. Walk)."""
     try:
-        return visum.Net.LinkTypes.ItemByKey(linktype_no)
+        lt = visum.Net.LinkTypes.ItemByKey(linktype_no)
     except Exception:
         lt = visum.Net.AddLinkType(linktype_no)
         lt.SetAttValue("NAME", "Ferry_Access")
-        lt.SetAttValue("V0PRT", 1)
         lt.SetAttValue("NUMLANES", 1)
         lt.SetAttValue("CAPPRT", 1000)
 
@@ -373,7 +372,19 @@ def _ensure_ferry_access_linktype(visum, linktype_no: int = 95):
             selected = [code for code, ttype in existing_tsys if ttype in {"PRT", "PUTWALK"}]
         if selected:
             lt.SetAttValue("TSYSSET", ",".join(selected))
-        return lt
+
+    # Treat Ferry_Access identically to Ferry: 20 km/h for all modes (including Walk / PuTW)
+    for attr_name, val in (
+        ("V0PRT", 20),
+        ("VMINPRT", 1),
+        ("VMAX_PRTSYS(WALK)", 20),
+        ("VDEF_PUTSYS(PUTW)", 20),
+    ):
+        try:
+            lt.SetAttValue(attr_name, val)
+        except Exception:
+            pass
+    return lt
 
 
 def _resolve_osm_file(osm_file: str | Path | None, working_dir: str | Path | None = None) -> Path | None:

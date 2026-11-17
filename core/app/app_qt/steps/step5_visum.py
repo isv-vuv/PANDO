@@ -273,6 +273,7 @@ class Step5VisumWidget(_Q_WIDGET_BASE):
         from core.app.app_core.centrality_edits import project_session
         self.edit_session = project_session(parent, project_path)
         self.selective_update = False
+        self._loading_params = False
         self._thread = None
         self._worker = None
         self._visum_seconds = 0
@@ -317,6 +318,95 @@ class Step5VisumWidget(_Q_WIDGET_BASE):
         self.update_summary.setStyleSheet('background: #fef3c7; color: #713f12; padding: 10px;')
         self.update_summary.hide()
         main_layout.addWidget(self.update_summary)
+
+        # Pre-Visum Ferry Wait & Link-Types Configuration Box
+        self.params_group = QtWidgets.QGroupBox(
+            escape_mnemonic(
+                self.localizer.get_string(
+                    "step5_group_ferry_linktypes",
+                    default="Fähr- und Streckentypen-Parameter (vor Visum-Verarbeitung)",
+                )
+            ),
+            self,
+        )
+        params_layout = QtWidgets.QGridLayout(self.params_group)
+        params_layout.setSpacing(8)
+        params_layout.setColumnMinimumWidth(0, 140)
+        params_layout.setColumnStretch(0, 0)
+        params_layout.setColumnStretch(1, 1)
+
+        # Row 0: Ferry waiting time per boarding
+        self.ferry_wait_label = QtWidgets.QLabel(
+            self.localizer.get_string("ferry_wait_minutes", default="Wartezeit je Fährnutzung"),
+            self.params_group,
+        )
+        self.ferry_wait_label.setFont(app_font(9, qfont_bold()))
+        ferry_row = QtWidgets.QHBoxLayout()
+        ferry_row.setSpacing(10)
+        self.ferry_wait_spin = QtWidgets.QDoubleSpinBox(self.params_group)
+        self.ferry_wait_spin.setRange(0, 10080)
+        self.ferry_wait_spin.setDecimals(1)
+        self.ferry_wait_spin.setSingleStep(5.0)
+        self.ferry_wait_spin.setSuffix(" min")
+        self.ferry_wait_spin.setFixedWidth(105)
+        self.ferry_wait_spin.valueChanged.connect(self._on_ferry_wait_changed)
+
+        self.ferry_wait_hint = QtWidgets.QLabel(
+            self.localizer.get_string(
+                "step5_ferry_wait_hint",
+                default="Ferry und Ferry_Access mit 20 km/h (inkl. Fuß); Wartezeit einmalig bei Auffahrt auf die Fähre bzw. Ferry_Access.",
+            ),
+            self.params_group,
+        )
+        self.ferry_wait_hint.setFont(app_font(8))
+        self.ferry_wait_hint.setStyleSheet("color: #475569;")
+        self.ferry_wait_hint.setWordWrap(True)
+
+        ferry_row.addWidget(self.ferry_wait_spin)
+        ferry_row.addWidget(self.ferry_wait_hint, 1)
+        params_layout.addWidget(self.ferry_wait_label, 0, 0)
+        params_layout.addLayout(ferry_row, 0, 1, 1, 2)
+
+        # Row 1: Link-Types (Streckentypen) Configuration
+        self.linktypes_label = QtWidgets.QLabel(
+            self.localizer.get_string("step5_label_linktypes", default="Streckentypen:"),
+            self.params_group,
+        )
+        self.linktypes_label.setFont(app_font(9, qfont_bold()))
+        lt_row = QtWidgets.QHBoxLayout()
+        lt_row.setSpacing(8)
+        self.linktypes_status_label = QtWidgets.QLabel("", self.params_group)
+        self.linktypes_status_label.setFont(app_font(9))
+        self.linktypes_status_label.setStyleSheet("color: #334155;")
+
+        self.linktypes_reset_button = QtWidgets.QPushButton(
+            self.localizer.get_string("step5_btn_reset_linktypes", default="Standard"),
+            self.params_group,
+        )
+        self.linktypes_reset_button.setStyleSheet(
+            "QPushButton:enabled { background-color: #ffffff; color: #334155; border: 1px solid #cbd5e1; border-radius: 4px; padding: 4px 10px; } "
+            "QPushButton:enabled:hover { background-color: #f1f5f9; }"
+        )
+        self.linktypes_reset_button.clicked.connect(self._reset_linktypes_to_default)
+
+        self.linktypes_config_button = QtWidgets.QPushButton(
+            self.localizer.get_string("step5_btn_configure_linktypes", default="Streckentypen konfigurieren…"),
+            self.params_group,
+        )
+        self.linktypes_config_button.setStyleSheet(
+            "QPushButton:enabled { background-color: #eff6ff; color: #1d4ed8; border: 1px solid #93c5fd; border-radius: 4px; padding: 4px 12px; font-weight: bold; } "
+            "QPushButton:enabled:hover { background-color: #dbeafe; }"
+        )
+        self.linktypes_config_button.clicked.connect(self._open_linktypes_dialog)
+
+        lt_row.addWidget(self.linktypes_status_label, 1)
+        lt_row.addWidget(self.linktypes_reset_button)
+        lt_row.addWidget(self.linktypes_config_button)
+        params_layout.addWidget(self.linktypes_label, 1, 0)
+        params_layout.addLayout(lt_row, 1, 1, 1, 2)
+
+        main_layout.addWidget(self.params_group)
+        self._load_pre_visum_parameters()
 
         # Unified Control & Execution Box (consistent with Step 4 styling)
         self.execution_group = QtWidgets.QGroupBox(
@@ -436,6 +526,25 @@ class Step5VisumWidget(_Q_WIDGET_BASE):
 
     def retranslate_ui(self) -> None:
         self.desc_label.setText(self.localizer.get_string("step5_desc"))
+        self.params_group.setTitle(
+            escape_mnemonic(
+                self.localizer.get_string(
+                    "step5_group_ferry_linktypes",
+                    default="Fähr- und Streckentypen-Parameter (vor Visum-Verarbeitung)",
+                )
+            )
+        )
+        self.ferry_wait_label.setText(self.localizer.get_string("ferry_wait_minutes", default="Wartezeit je Fährnutzung"))
+        self.ferry_wait_hint.setText(
+            self.localizer.get_string(
+                "step5_ferry_wait_hint",
+                default="Ferry und Ferry_Access mit 20 km/h (inkl. Fuß); Wartezeit einmalig bei Auffahrt auf die Fähre bzw. Ferry_Access.",
+            )
+        )
+        self.linktypes_label.setText(self.localizer.get_string("step5_label_linktypes", default="Streckentypen:"))
+        self.linktypes_reset_button.setText(self.localizer.get_string("step5_btn_reset_linktypes", default="Standard"))
+        self.linktypes_config_button.setText(self.localizer.get_string("step5_btn_configure_linktypes", default="Streckentypen konfigurieren…"))
+        self._refresh_linktypes_status()
         self.step_label.setText(self.localizer.get_string("step5_label_start_from_step", default="Starten ab Schritt:"))
         self._populate_combo_items()
         self.execution_group.setTitle(escape_mnemonic(self.localizer.get_string("step5_group_execution", default="Visum-Steuerung und Ausführung")))
@@ -451,8 +560,95 @@ class Step5VisumWidget(_Q_WIDGET_BASE):
         self.project_path = path
         from core.app.app_core.centrality_edits import project_session
         self.edit_session = project_session(self.parent(), path)
+        self._load_pre_visum_parameters()
         if self.selective_update:
             self.prepare_centrality_update()
+
+    def _load_pre_visum_parameters(self) -> None:
+        self._loading_params = True
+        try:
+            wait_val = 20.0
+            if self.project_path:
+                from core.scripts.visum.scripts.ferry_wait import load_wait_minutes
+                try:
+                    wait_val = float(load_wait_minutes(self.project_path))
+                except Exception:
+                    wait_val = 20.0
+            self.ferry_wait_spin.setValue(wait_val)
+            self._refresh_linktypes_status()
+        finally:
+            self._loading_params = False
+
+    def _on_ferry_wait_changed(self, value: float) -> None:
+        if self._loading_params or not self.project_path:
+            return
+        try:
+            from core.scripts.visum.scripts.ferry_wait import save_wait_minutes
+            save_wait_minutes(self.project_path, float(value))
+            if self.selective_update:
+                self.edit_session.set_ferry_wait(float(value))
+        except Exception as exc:
+            logging.warning(f"Fährwartezeit konnte nicht gespeichert werden: {exc}")
+
+    def _refresh_linktypes_status(self) -> None:
+        from core.app.app_core.linktypes_config import (
+            generate_linktypes_rows,
+            is_default_linktypes_config,
+            load_linktypes_config,
+        )
+        cfg = load_linktypes_config(self.project_path)
+        rows = generate_linktypes_rows(cfg)
+        is_def = is_default_linktypes_config(cfg)
+        if is_def:
+            text = self.localizer.get_string(
+                "step5_linktypes_status_default",
+                count=len(rows),
+                default=f"Standard-Voreinstellung aktiv ({len(rows)} Streckentypen, Master-Methodik)",
+            )
+        else:
+            text = self.localizer.get_string(
+                "step5_linktypes_status_custom",
+                count=len(rows),
+                default=f"Benutzerdefinierte Konfiguration aktiv ({len(rows)} Streckentypen)",
+            )
+        self.linktypes_status_label.setText(text)
+        self.linktypes_reset_button.setEnabled((not is_def) and (not self.is_running()))
+
+    def _open_linktypes_dialog(self) -> None:
+        from core.app.app_core.linktypes_config import (
+            load_linktypes_config,
+            reset_linktypes_config,
+            save_linktypes_config,
+            is_default_linktypes_config,
+        )
+        from core.app.app_qt.dialogs.linktypes_dialog import LinkTypesConfigDialog
+
+        current = load_linktypes_config(self.project_path)
+        dialog = LinkTypesConfigDialog(current, parent=self, localizer_obj=self.localizer)
+        exec_fn = getattr(dialog, "exec", None) or getattr(dialog, "exec_", None)
+        accepted_code = qt_enum(QtWidgets.QDialog, "Accepted", "DialogCode")
+        if exec_fn() in (1, accepted_code):
+            updated = dialog.get_config()
+            if self.project_path:
+                if is_default_linktypes_config(updated):
+                    reset_linktypes_config(self.project_path)
+                else:
+                    save_linktypes_config(self.project_path, updated)
+            self._refresh_linktypes_status()
+
+    def _reset_linktypes_to_default(self) -> None:
+        from core.app.app_core.linktypes_config import reset_linktypes_config
+        if self.project_path:
+            reset_linktypes_config(self.project_path)
+        self._refresh_linktypes_status()
+
+    def _set_param_controls_enabled(self, enabled: bool) -> None:
+        self.ferry_wait_spin.setEnabled(enabled)
+        self.linktypes_config_button.setEnabled(enabled)
+        if enabled:
+            self._refresh_linktypes_status()
+        else:
+            self.linktypes_reset_button.setEnabled(False)
 
     def prepare_centrality_update(self):
         self.selective_update = True
@@ -483,11 +679,23 @@ class Step5VisumWidget(_Q_WIDGET_BASE):
                 Dialogs.error(self, self.localizer.get_string('centres_error'), str(exc))
                 return
 
+        # Persist configured Ferry Wait Time & Link-Type .net before launching Visum
+        try:
+            from core.scripts.visum.scripts.ferry_wait import save_wait_minutes
+            save_wait_minutes(self.project_path, float(self.ferry_wait_spin.value()))
+            from core.app.app_core.linktypes_config import CONFIG_FILENAME, load_linktypes_config, save_linktypes_config
+            if (Path(self.project_path) / CONFIG_FILENAME).is_file():
+                save_linktypes_config(self.project_path, load_linktypes_config(self.project_path))
+        except Exception as exc:
+            Dialogs.error(self, self.localizer.get_string("step5_title_error", default="Fehler"), str(exc))
+            return
+
         start_step = self.step_combo.currentIndex() + 1
 
         self.start_button.setEnabled(False)
         self.stop_button.setEnabled(True)
         self.step_combo.setEnabled(False)
+        self._set_param_controls_enabled(False)
         self._visum_seconds = 0
         self.elapsed_label.setText("00:00")
         if self._visum_timer is not None:
@@ -559,6 +767,7 @@ class Step5VisumWidget(_Q_WIDGET_BASE):
         self.start_button.setEnabled(True)
         self.stop_button.setEnabled(False)
         self.step_combo.setEnabled(True)
+        self._set_param_controls_enabled(True)
         if self.running_state_changed:
             self.running_state_changed.emit(False)
         self.phase_label.setText(self.localizer.get_string("step5_status_stopped", default="Status: Durch Benutzer abgebrochen"))
@@ -613,6 +822,7 @@ class Step5VisumWidget(_Q_WIDGET_BASE):
         self.start_button.setEnabled(True)
         self.stop_button.setEnabled(False)
         self.step_combo.setEnabled(True)
+        self._set_param_controls_enabled(True)
         if self.selective_update:
             self.edit_session.busy = False
             self.prepare_centrality_update()

@@ -26,10 +26,12 @@ class FerryWaitTests(unittest.TestCase):
 
     def test_boarding_split_route_return_to_zero_and_existing_penalty(self):
         rows = [
-            ['Ferry_Access', 'Ferry', 7, 0, 0],
-            ['Ferry', 'Ferry', 0, 0, 0],
-            ['Ferry', 'Residential', 4, 0, 0],
-            ['Residential', 'Primary', 8, 0, 0],
+            ['Primary', 'Ferry_Access', 7, 0, 0],       # Board via Ferry_Access -> gets penalty once
+            ['Ferry_Access', 'Ferry', 3, 0, 0],         # Inside ferry system -> 0 penalty
+            ['Ferry', 'Ferry', 0, 0, 0],                # Split ferry -> 0 penalty
+            ['Residential', 'Ferry', 5, 0, 0],          # Direct road -> Ferry -> gets penalty once
+            ['Ferry', 'Residential', 4, 0, 0],          # Alighting -> 0 penalty
+            ['Residential', 'Primary', 8, 0, 0],        # Normal road turn -> 0 penalty
         ]
         visum = MagicMock()
         turns = visum.Net.Turns
@@ -44,8 +46,17 @@ class FerryWaitTests(unittest.TestCase):
 
         turns.SetMultiAttValues.side_effect = write
         for minutes in (20, 20, 5, 0):
-            ferry.apply_ferry_wait(visum, minutes)
-            self.assertEqual([r[2] for r in rows], [7 + minutes * 60, 0, 4, 8])
+            count = ferry.apply_ferry_wait(visum, minutes)
+            expected_count = 2 if minutes > 0 else 0
+            self.assertEqual(count, expected_count)
+            self.assertEqual(
+                [r[2] for r in rows],
+                [7 + minutes * 60, 3, 0, 5 + minutes * 60, 4, 8],
+            )
+            self.assertEqual(
+                [r[3] for r in rows],
+                [minutes * 60, 0, 0, minutes * 60, 0, 0],
+            )
         # No restrictions or link speeds are opened/rewritten.
         self.assertEqual({call.args[0] for call in turns.SetMultiAttValues.call_args_list},
                          {'T0PRT', 'PANDO_FERRY_WAIT', 'ADDVAL2'})

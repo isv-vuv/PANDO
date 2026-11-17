@@ -49,23 +49,32 @@ def run_restructure_link_types(target_project_dir=None, visum=None):
     ver_dir.mkdir(parents=True, exist_ok=True)
     output_ver = ver_dir / "04_LinkTypes_Restructured.ver"
 
-    # Dynamische Suche nach der Linktypes-Master-Datei
-    linktype_files = list(visum_input_dir.glob("*_export_excel_linktypes.net"))
-    if not linktype_files:
-        script_dir = Path(__file__).resolve().parent
-        helper_net = script_dir.parent / "helper_files" / "master_linktypes.net"
-        if helper_net.exists():
-            linktype_files = [helper_net]
-        else:
-            helper_files = list((script_dir.parent / "helper_files").glob("*.net"))
-            if helper_files:
-                linktype_files = helper_files
-    if not linktype_files:
-        raise FileNotFoundError(
-            f"Keine Linktypes-Datei im Format '*_export_excel_linktypes.net' oder 'master_linktypes.net' gefunden!"
-        )
+    # Dynamische Suche nach der benutzerdefinierten oder Standard-Master-Datei
+    script_dir = Path(__file__).resolve().parent
+    helper_net = script_dir.parent / "helper_files" / "master_linktypes.net"
+    master_net_path = None
+    try:
+        from core.app.app_core.linktypes_config import resolve_project_master_net
+        candidate = resolve_project_master_net(base_project_dir, helper_net)
+        if candidate.exists():
+            master_net_path = candidate
+    except Exception:
+        master_net_path = None
 
-    master_net_path = max(linktype_files, key=lambda p: p.stat().st_mtime)
+    if master_net_path is None:
+        linktype_files = list(visum_input_dir.glob("*_export_excel_linktypes.net"))
+        if not linktype_files:
+            if helper_net.exists():
+                linktype_files = [helper_net]
+            else:
+                helper_files = list((script_dir.parent / "helper_files").glob("*.net"))
+                if helper_files:
+                    linktype_files = helper_files
+        if not linktype_files:
+            raise FileNotFoundError(
+                f"Keine Linktypes-Datei im Format '*_export_excel_linktypes.net' oder 'master_linktypes.net' gefunden!"
+            )
+        master_net_path = max(linktype_files, key=lambda p: p.stat().st_mtime)
     logging.info(f"Verwende Master-Linktypes-Datei: {master_net_path.name}")
 
     if visum is None:
@@ -166,14 +175,14 @@ def run_restructure_link_types(target_project_dir=None, visum=None):
     # Phase 2: Iterative Filter-Zuweisung DIREKT über Visum-Standardattribute (NUMLANES & V0PRT)
     logging.info("Phase 2: Führe Zuweisung über native Visum-Attribute ('NUMLANES' & 'V0PRT') aus...")
     structured_categories = {
-        "Motorway", "Trunk", "Primary", "Secondary", "Tertiary", "Unclassified",
+        "Motorway", "Trunk", "Primary", "Secondary", "Tertiary", "Unclassified", "Residential",
         "Motorway_link", "Trunk_link", "Primary_link", "Secondary_link", "Tertiary_link"
     }
     df_structured_rules = df_new_types[df_new_types['OSM_NAME'].isin(structured_categories)]
 
     processing_order = [
         "Motorway", "Motorway_link", "Primary", "Primary_link", "Trunk", "Trunk_link",
-        "Secondary", "Secondary_link", "Tertiary", "Tertiary_link", "Unclassified"
+        "Secondary", "Secondary_link", "Tertiary", "Tertiary_link", "Unclassified", "Residential"
     ]
 
     for category_name in processing_order:
@@ -191,6 +200,8 @@ def run_restructure_link_types(target_project_dir=None, visum=None):
         for i, num_lanes in enumerate(lane_counts):
             lane_specific_types = category_df[category_df['NUMLANES'] == num_lanes].sort_values('V0PRT', ascending=False)
             speed_steps = lane_specific_types['V0PRT'].tolist()
+            is_highest_lane = i == 0
+            is_lowest_lane = i == len(lane_counts) - 1
 
             for j, v0prt in enumerate(speed_steps):
                 rule_row = lane_specific_types.iloc[j]
@@ -203,8 +214,13 @@ def run_restructure_link_types(target_project_dir=None, visum=None):
                 lf.AddCondition("OP_NONE", False, "TYPENO", "ContainedIn", ",".join(map(str, old_typenos)))
 
                 # DIREKTER FILTER AUF DAS VISUM-STANDARDATTRIBUT 'NUMLANES'
-                if i == 0:
+                if is_highest_lane and is_lowest_lane:
+                    lf.AddCondition("OP_AND", False, "NUMLANES", "GreaterEqualVal", 1)
+                elif is_highest_lane:
                     lf.AddCondition("OP_AND", False, "NUMLANES", "GreaterEqualVal", num_lanes)
+                elif is_lowest_lane and num_lanes > 1:
+                    lf.AddCondition("OP_AND", False, "NUMLANES", "GreaterEqualVal", 1)
+                    lf.AddCondition("OP_AND", False, "NUMLANES", "LessEqualVal", num_lanes)
                 else:
                     lf.AddCondition("OP_AND", False, "NUMLANES", "EqualVal", num_lanes)
 

@@ -1,19 +1,13 @@
 # Fährwartezeit
 
-Schritt 6 enthält den Projektparameter „Wartezeit je Fährnutzung“ (Minuten).
-Standard: 20; 0 deaktiviert den Zuschlag. Speichern merkt Analyse und Darstellung
-zur Neuberechnung vor. Über die vorhandene Schaltfläche zur Aktualisierung wird
-der vorbereitete Visum-Netzstand weiterverwendet; OSM wird nicht erneut importiert.
-Die Einstellung steht in `ferry_parameters.json` im Projektverzeichnis.
+Der Projektparameter „Wartezeit je Fährnutzung“ (Minuten, Standard: 20; 0 deaktiviert den Zuschlag) kann bereits vor der Visum-Verarbeitung in Schritt 5 sowie nachträglich in Schritt 6 eingestellt werden. Speichern in Schritt 6 merkt Analyse und Darstellung zur Neuberechnung vor; über die vorhandene Schaltfläche zur Aktualisierung wird der vorbereitete Visum-Netzstand weiterverwendet, ohne OSM erneut zu importieren. Die Einstellung steht in `ferry_parameters.json` im Projektverzeichnis.
 
-Vor dem Verfahrensablauf wird der Zuschlag auf Abbieger von einer Nicht-Fährstrecke
-auf eine Strecke mit dem Streckentypnamen `Ferry` gesetzt. Das umfasst importierte
-Fähren (Typ 94) und den Mastertyp 939. `Ferry_Access` gilt als Landzugang.
-Die Zeit wird in Sekunden zu `T0PRT` addiert. Das Attribut `PANDO_FERRY_WAIT`
-merkt den zuletzt verwendeten Zuschlag, damit Wiederholungen ihn ersetzen.
-Fähre–Fähre-Abbieger erhalten keinen weiteren Zuschlag. Ein direkter Wechsel
-zwischen zwei Fährdiensten ohne Landstrecke wird damit als durchgehende Fahrt
-behandelt; OSM-Fährdienste werden derzeit nicht separat identifiziert.
+`Ferry` (Importer-Typ 94 / Master-Typ 939) und `Ferry_Access` (Importer-Typ 95 / Master-Typ 940) werden beide als Teil des Fährsystems behandelt: alle Verkehrssysteme einschließlich Fußverkehr (`WALK` / `PUTW`) bewegen sich auf beiden Typen mit 20 km/h (`GTYPE = 100`).
+
+Vor dem Verfahrensablauf wird der Zuschlag genau einmal je Fährnutzung beim Auffahren aus dem übrigen Straßennetz in das Fährsystem `{Ferry, Ferry_Access}` gesetzt:
+- Bei direkt angebundenen Fähren am Abbieger `Straße -> Ferry`.
+- Bei über `Ferry_Access` angebundenen Fähranlegern am Abbieger `Straße -> Ferry_Access`.
+- Der Übergang `Ferry_Access -> Ferry` sowie `Ferry -> Ferry` (geteilte OSM-Fährstrecken) erhält **keinen** weiteren Zuschlag (`0`). Ein direkter Wechsel zwischen zwei Fährdiensten ohne Landstrecke wird damit als durchgehende Fahrt behandelt.
 
 Die vereinfachte ÖV-Kenngröße summiert die Wartezeit direkt von den Abbiegern;
 die Faktoren für Minibus/Dreirad vervielfachen sie nicht. Für die nachträgliche

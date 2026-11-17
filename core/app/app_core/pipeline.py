@@ -1338,9 +1338,15 @@ class UrbanActPipeline:
                     "poi_polygons": str(outputs["study_area_polygons"]),
                     **outputs,
                 }
+            from core.app.app_core.linktypes_config import resolve_project_master_net
+
             callbacks.phase_started("OSM-Verkehrsnetz & POIs", 7, 9)
             update_manifest_phase(manifest, "osm_phase_c", "running")
             save_pipeline_manifest(self.project_path, manifest)
+            master_net_path = resolve_project_master_net(
+                self.project_path,
+                root / "core/scripts/visum/helper_files/master_linktypes.net",
+            )
             outputs = dict(
                 osm.run_phase_c(
                     OsmPhaseCConfig(
@@ -1348,7 +1354,7 @@ class UrbanActPipeline:
                         Path(str(model_context["merged_pbf"])),
                         Path(str(model_context["poly_paia1"])),
                         Path(str(model_context["poly_study_area_paia1ia2"])),
-                        root / "core/scripts/visum/helper_files/master_linktypes.net",
+                        master_net_path,
                     )
                 )
             )

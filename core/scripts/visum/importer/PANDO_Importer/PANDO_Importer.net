@@ -122,5 +122,5 @@ $LINKTYPE:NO;NAME;STRICT;RANK;TSYSSET;NUMLANES;CAPPRT;V0PRT;VMINPRT;VMAX_PRTSYS(
 83;Subway;0;1;SUBWAY;0;0;0km/h;0km/h;20km/h;130km/h;100km/h;4km/h;80km/h;80km/h;50km/h;4km/h;50km/h;50km/h;50km/h;SUBWAY, underground urban railway;10;10;10
 84;Tram;0;1;TRAM;0;0;0km/h;0km/h;20km/h;130km/h;100km/h;4km/h;80km/h;80km/h;50km/h;4km/h;50km/h;50km/h;50km/h;Tram, street-level urban rail;10;10;10
 94;Ferry;0;1;BIKE,BUS,CAR,HGV,WALK,PUTW;1;1000;20km/h;1km/h;20km/h;130km/h;100km/h;20km/h;80km/h;80km/h;50km/h;20km/h;50km/h;50km/h;50km/h;Route for vehicles or pedestrians using a boat or ferry service;2;1;1
-95;Ferry_Access;0;1;BIKE,BUS,CAR,HGV,WALK,PUTW;1;1000;1km/h;1km/h;20km/h;130km/h;100km/h;20km/h;80km/h;80km/h;50km/h;20km/h;50km/h;50km/h;50km/h;Access to a boat or ferry service. v0 = 1km/h necessary for connectors;2;1;1
+95;Ferry_Access;0;1;BIKE,BUS,CAR,HGV,WALK,PUTW;1;1000;20km/h;1km/h;20km/h;130km/h;100km/h;20km/h;80km/h;80km/h;50km/h;20km/h;50km/h;50km/h;50km/h;Access link to a boat or ferry service (20 km/h for all modes);2;1;1
 99;UnknownByImporter(Default);0;1;;0;0;0km/h;0km/h;20km/h;130km/h;100km/h;4km/h;80km/h;80km/h;50km/h;4km/h;50km/h;50km/h;50km/h;Used when highway/construction tag is unknown to the importer;10;10;10
