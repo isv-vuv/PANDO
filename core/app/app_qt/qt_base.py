@@ -1232,7 +1232,7 @@ def run_qt_application(
 
     window = window_factory()
     install_exception_hook(lambda: window)
-    window.show()
+    window.showMaximized()
 
     try:
         return context.exec()
