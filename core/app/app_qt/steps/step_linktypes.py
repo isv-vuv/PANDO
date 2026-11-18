@@ -773,10 +773,10 @@ class LinkTypesEditorWidget(_Q_WIDGET_BASE):
         self.cap_table = QtWidgets.QTableWidget(len(ALL_SPEEDS), 4, cap_group)
         self.cap_table.setAlternatingRowColors(True)
         self.cap_table.setHorizontalHeaderLabels([
-            "1 Lane [Fz/h]",
-            "2 Lanes [Fz/h]",
-            "3 Lanes [Fz/h]",
-            "4 Lanes [Fz/h]",
+            self.loc.get_string("linktypes_col_lane_cap_1", default="1 Lane [Fz/h]"),
+            self.loc.get_string("linktypes_col_lane_cap_2", default="2 Lanes [Fz/h]"),
+            self.loc.get_string("linktypes_col_lane_cap_3", default="3 Lanes [Fz/h]"),
+            self.loc.get_string("linktypes_col_lane_cap_4", default="4 Lanes [Fz/h]"),
         ])
         self.cap_table.setVerticalHeaderLabels([f"{spd} km/h" for spd in ALL_SPEEDS])
         self._table_watchers.append(_TableResizeWatcher(self.cap_table))
@@ -913,7 +913,7 @@ class LinkTypesEditorWidget(_Q_WIDGET_BASE):
             "GType [-]",
             "TSysSet",
             "V0PrT [km/h]",
-            "CapPrT [Fz/h]",
+            self.loc.get_string("linktypes_col_capprt", default="CapPrT [Fz/h]"),
             self.loc.get_string("linktypes_col_imp_car", default="Imp Pkw (Car) [-]"),
             self.loc.get_string("linktypes_col_imp_bike", default="Imp Rad (Bike) [-]"),
             self.loc.get_string("linktypes_col_imp_walk", default="Imp Fuß (Walk) [-]"),
@@ -973,7 +973,7 @@ class LinkTypesEditorWidget(_Q_WIDGET_BASE):
             self.loc.get_string("linktypes_col_category", default="Kategorie"),
             "Rank [-]",
             "Lanes [-]",
-            "CapPrT [Fz/h]",
+            self.loc.get_string("linktypes_col_capprt", default="CapPrT [Fz/h]"),
             "V0PrT [km/h]",
             "TSysSet",
             self.loc.get_string("linktypes_col_imp_car", default="Imp Pkw (Car) [-]"),
