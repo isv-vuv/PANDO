@@ -331,6 +331,101 @@ class FerryAccessUnitTests(unittest.TestCase):
             self.assertEqual(len(lines), 1)
             self.assertGreater(lines[0].length, 0.0)
 
+    def test_connect_ferries_avoids_unsorted_irange_for_descending_ids(self):
+        visum = MagicMock()
+        nodes = visum.Net.Nodes
+        links = visum.Net.Links
+        turns = visum.Net.Turns
+
+        nodes.AttrExists.side_effect = lambda name: name in {"OSM_NODE_ID", "OSM_FerryTerminal", "Road_Target_Node"}
+        links.AttrExists.return_value = False
+        visum.Net.LinkTypes.GetMultipleAttributes.return_value = [(30, "Primary"), (94, "Ferry"), (95, "Ferry_Access")]
+        nodes.GetMultipleAttributes.return_value = [
+            (20500, 0.0, 10.0, "20500", True),
+            (20486, 0.0, 0.0, "20486", True),
+            (17708, -150.0, 5.0, "17708", False),
+            (17709, -250.0, 5.0, "17709", False),
+            (20510, 140.0, -40.0, "20510", True),
+            (15854, 90.0, -25.0, "15854", False),
+            (15855, 190.0, -25.0, "15855", False),
+        ]
+        nodes.GetMultiAttValues.return_value = [(i + 1, n) for i, n in enumerate([20500, 20486, 17708, 17709, 20510, 15854, 15855])]
+        # Ferry from 20500->20486->20510 leaves SE toward water; 15854 is closer to 20486 across water (93m vs 150m)
+        # while 15854 is landward for opposite-bank terminal 20510
+        links.GetMultipleAttributes.return_value = [
+            (20500, 20486, 94, "CAR,WALK"),
+            (20486, 20500, 94, "CAR,WALK"),
+            (20486, 20510, 94, "CAR,WALK"),
+            (20510, 20486, 94, "CAR,WALK"),
+            (17708, 17709, 30, "CAR,WALK"),
+            (17709, 17708, 30, "CAR,WALK"),
+            (15854, 15855, 30, "CAR,WALK"),
+            (15855, 15854, 30, "CAR,WALK"),
+        ]
+        nodes.GetAllActive = [MagicMock(name="node")]
+        nodes.CountActive = 1
+        nodes.ConnectNodes.return_value = MagicMock(Count=2)
+        turns.CountActive = 0
+
+        stats = ferry_access.connect_ferries_to_road_network(visum)
+        self.assertGreater(stats["created_links"], 0)
+        for c in visum.Filters.NodeFilter().AddCondition.call_args_list:
+            args = c.args
+            self.assertNotEqual((args[2], args[3]), ("NO", "ContainedIn"))
+        for c in visum.Filters.LinkFilter().AddCondition.call_args_list:
+            args = c.args
+            if len(args) >= 5 and args[3] == "ContainedIn" and "," in str(args[4]):
+                vals = [int(x) for x in str(args[4]).split(",")]
+                self.assertEqual(vals, sorted(vals))
+
+    @unittest.skipUnless(_visum_available(), "PTV Visum 260 COM not available")
+    def test_connect_ferries_real_visum_com_override_and_descending_ids(self):
+        import win32com.client as com
+
+        visum = com.Dispatch("Visum.Visum.260")
+        visum.ClearNet()
+        wgs84_utm51 = (
+            'PROJCS["WGS 84 / UTM zone 51N",GEOGCS["WGS 84",DATUM["WGS_1984",'
+            'SPHEROID["WGS 84",6378137,298.257223563]],PRIMEM["Greenwich",0],'
+            'UNIT["Degree",0.0174532925199433]],PROJECTION["Transverse_Mercator"],'
+            'PARAMETER["latitude_of_origin",0],PARAMETER["central_meridian",123],'
+            'PARAMETER["scale_factor",0.9996],PARAMETER["false_easting",500000],'
+            'PARAMETER["false_northing",0],UNIT["metre",1]]'
+        )
+        visum.Net.SetProjection(wgs84_utm51, False)
+        visum.Net.AddTSystem("CAR", "PRT")
+        visum.Net.AddTSystem("WALK", "PRT")
+        lt30 = visum.Net.AddLinkType(30)
+        lt30.SetAttValue("TSYSSET", "CAR,WALK")
+        lt94 = visum.Net.AddLinkType(94)
+        lt94.SetAttValue("TSYSSET", "CAR,WALK")
+
+        # West bank: road 17708 (-200, 0), terminals 20500 (0, 20) and 20486 (0, 0)
+        # Water channel crosses at x=+70..100; East bank: road 15854 (+100, 0), terminal 20510 (+180, 0)
+        n20500 = visum.Net.AddNode(20500, 500000.0, 1180020.0)
+        n20486 = visum.Net.AddNode(20486, 500000.0, 1180000.0)
+        n20510 = visum.Net.AddNode(20510, 500180.0, 1180000.0)
+        n17708 = visum.Net.AddNode(17708, 499800.0, 1180010.0)
+        n17709 = visum.Net.AddNode(17709, 499700.0, 1180010.0)
+        n15854 = visum.Net.AddNode(15854, 500100.0, 1180000.0)
+        n15855 = visum.Net.AddNode(15855, 500080.0, 1180100.0)
+        visum.Net.Nodes.AddUserDefinedAttribute("OSM_FerryTerminal", "OSM_FerryTerminal", "OSM_FerryTerminal", 9, DefVal=False)
+        for tn in (n20500, n20486, n20510):
+            tn.SetAttValue("OSM_FerryTerminal", 1)
+
+        visum.Net.AddLink(1, n20500, n20510, lt94)
+        visum.Net.AddLink(2, n20486, n20510, lt94)
+        visum.Net.AddLink(3, n17708, n17709, lt30)
+        visum.Net.AddLink(4, n15854, n15855, lt30)
+
+        stats = ferry_access.connect_ferries_to_road_network(visum)
+        self.assertEqual(stats["isolated_ferries"], 3)
+        # West bank terminals 20500 & 20486 must BOTH connect to West bank 17708 (not closer East bank 15854!)
+        self.assertTrue(visum.Net.Links.LinkExistsByKey(20500, 17708))
+        self.assertTrue(visum.Net.Links.LinkExistsByKey(20486, 17708))
+        self.assertFalse(visum.Net.Links.LinkExistsByKey(20486, 15854))
+        self.assertTrue(visum.Net.Links.LinkExistsByKey(20510, 15854))
+
 
 if __name__ == "__main__":
     unittest.main()

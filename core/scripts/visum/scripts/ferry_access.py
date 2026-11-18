@@ -411,7 +411,7 @@ def select_same_bank_target_nodes(
         if math.isfinite(float(row.XCOORD)) and math.isfinite(float(row.YCOORD))
     }
 
-    # Build (from_no, to_no, coords) list for all Ferry links
+    # Build pre-computed barrier geometries + bounding boxes once before looping over terminals
     ferry_segments: list[tuple[int, int, list[tuple[float, float]]]] = []
     if ferry_wkt_rows:
         for fn, tn, wkt_str in ferry_wkt_rows:
@@ -429,25 +429,44 @@ def select_same_bank_target_nodes(
             if u != v and u in node_xy and v in node_xy:
                 ferry_segments.append((u, v, [node_xy[u], node_xy[v]]))
 
-    # Compute water departure unit vectors per isolated ferry terminal
     water_vectors: dict[int, list[tuple[float, float]]] = {}
+    pre_ferry_barriers: list[
+        tuple[
+            int,
+            int,
+            tuple[LineString, float, float, float, float],
+            tuple[LineString, float, float, float, float] | None,
+            tuple[LineString, float, float, float, float] | None,
+        ]
+    ] = []
     for u, v, coords in ferry_segments:
-        if len(coords) >= 2:
-            # First step out of u
-            dux, duy = coords[1][0] - coords[0][0], coords[1][1] - coords[0][1]
-            lu = math.hypot(dux, duy)
-            if lu > 1e-6:
-                water_vectors.setdefault(u, []).append((dux / lu, duy / lu))
-            # First step out of v
-            dvx, dvy = coords[-2][0] - coords[-1][0], coords[-2][1] - coords[-1][1]
-            lv = math.hypot(dvx, dvy)
-            if lv > 1e-6:
-                water_vectors.setdefault(v, []).append((dvx / lv, dvy / lv))
+        dux, duy = coords[1][0] - coords[0][0], coords[1][1] - coords[0][1]
+        lu = math.hypot(dux, duy)
+        if lu > 1e-6:
+            water_vectors.setdefault(u, []).append((dux / lu, duy / lu))
+        dvx, dvy = coords[-2][0] - coords[-1][0], coords[-2][1] - coords[-1][1]
+        lv = math.hypot(dvx, dvy)
+        if lv > 1e-6:
+            water_vectors.setdefault(v, []).append((dvx / lv, dvy / lv))
+
+        full_ls = LineString(coords)
+        tail_u = None
+        tail_v = None
+        if len(coords) >= 3:
+            lu_tail = LineString(coords[1:])
+            tail_u = (lu_tail, *lu_tail.bounds)
+            lv_tail = LineString(coords[:-1])
+            tail_v = (lv_tail, *lv_tail.bounds)
+        pre_ferry_barriers.append((u, v, (full_ls, *full_ls.bounds), tail_u, tail_v))
+
+    pre_waterway_barriers: list[tuple[LineString, float, float, float, float]] = [
+        (w_ls, *w_ls.bounds) for w_ls in (waterway_lines or ())
+    ]
 
     tgt_nos = tgt_df["NO"].astype(int).to_numpy()
     tgt_coords = tgt_df[["XCOORD", "YCOORD"]].to_numpy(dtype=float)
     tgt_tree = cKDTree(tgt_coords)
-    river_barriers = list(waterway_lines or ())
+    bound_pad = float(max_distance_m)
 
     assignments: dict[int, int] = {}
     k_query = min(len(tgt_nos), 64)
@@ -468,18 +487,23 @@ def select_same_bank_target_nodes(
             ux /= u_len
             uy /= u_len
 
-        # Collect barrier lines for this terminal: non-incident ferries, downstream segments, waterways
-        barriers: list[LineString] = []
-        for u, v, coords in ferry_segments:
+        # Collect only local barriers whose bounding box intersects [tx +/- max_distance_m]
+        t_minx, t_miny, t_maxx, t_maxy = tx - bound_pad, ty - bound_pad, tx + bound_pad, ty + bound_pad
+        local_barriers: list[tuple[LineString, float, float, float, float]] = []
+        for u, v, full_b, tail_u_b, tail_v_b in pre_ferry_barriers:
             if u != t_no and v != t_no:
-                barriers.append(LineString(coords))
-            elif u == t_no and len(coords) >= 3:
-                barriers.append(LineString(coords[1:]))
-            elif v == t_no and len(coords) >= 3:
-                barriers.append(LineString(coords[:-1]))
-        barriers.extend(river_barriers)
+                b = full_b
+            elif u == t_no:
+                b = tail_u_b
+            else:
+                b = tail_v_b
+            if b is not None and b[3] >= t_minx and b[1] <= t_maxx and b[4] >= t_miny and b[2] <= t_maxy:
+                local_barriers.append(b)
+        for wb in pre_waterway_barriers:
+            if wb[3] >= t_minx and wb[1] <= t_maxx and wb[4] >= t_miny and wb[2] <= t_maxy:
+                local_barriers.append(wb)
 
-        dists, idxs = tgt_tree.query([tx, ty], k=k_query, distance_upper_bound=float(max_distance_m))
+        dists, idxs = tgt_tree.query([tx, ty], k=k_query, distance_upper_bound=bound_pad)
         if np.ndim(dists) == 0:
             dists, idxs = np.asarray([dists], dtype=float), np.asarray([idxs], dtype=int)
 
@@ -495,8 +519,17 @@ def select_same_bank_target_nodes(
             if best_any is None:
                 best_any = r_no
 
+            s_minx = tx if tx < rx else rx
+            s_maxx = rx if tx < rx else tx
+            s_miny = ty if ty < ry else ry
+            s_maxy = ry if ty < ry else ty
             seg = LineString([(tx, ty), (rx, ry)])
-            crosses = any(seg.intersects(b) for b in barriers)
+            crosses = False
+            for b_ls, b_minx, b_miny, b_maxx, b_maxy in local_barriers:
+                if b_maxx >= s_minx and b_minx <= s_maxx and b_maxy >= s_miny and b_miny <= s_maxy:
+                    if seg.intersects(b_ls):
+                        crosses = True
+                        break
             if not crosses and best_clear is None:
                 best_clear = r_no
 
@@ -801,10 +834,6 @@ def connect_ferries_to_road_network(
     try:
         lt_access = _ensure_ferry_access_linktype(visum, ferry_access_type_no)
 
-        target_groups: dict[int, list[int]] = {}
-        for iso_no, tgt_no in same_bank_map.items():
-            target_groups.setdefault(int(tgt_no), []).append(int(iso_no))
-
         paras = nodes_obj.CreateAutomaticNodeConnectionParas()
         paras.LinkType = lt_access
         paras.SetAttValue("MinNewLinksPerSourceNode", 0)
@@ -812,45 +841,82 @@ def connect_ferries_to_road_network(
         paras.SetAttValue("MaxDistanceEnabled", True)
         paras.SetAttValue("MaxDistance", f"{float(max_distance_m):g}m")
 
-        if len(target_groups) <= 1:
-            # Build origin net elements (Isolated_Ferry == 1)
-            visum.Filters.InitAll()
-            nf.Init()
-            nf.AddCondition("OP_NONE", False, "Isolated_Ferry", "EqualVal", 1)
-            source_nodes = visum.CreateNetElements()
-            for node_obj in nodes_obj.GetAllActive:
-                source_nodes.Add(node_obj)
+        # Partition isolated terminals into:
+        # 1) batch_nos: Euclidean-nearest node among selected_targets IS their same-bank target -> single ConnectNodes call
+        # 2) override_groups: rare terminals where another terminal's target in selected_targets is Euclidean-closer across water
+        batch_nos: list[int] = []
+        override_groups: dict[int, list[int]] = {}
+        if same_bank_map:
+            sel_df = classified.loc[classified["Road_Target_Node"].astype(bool), ["NO", "XCOORD", "YCOORD"]]
+            sel_nos = sel_df["NO"].astype(int).to_numpy()
+            if len(sel_nos) > 0:
+                sel_tree = cKDTree(sel_df[["XCOORD", "YCOORD"]].to_numpy(dtype=float))
+                iso_xy = {
+                    int(r.NO): (float(r.XCOORD), float(r.YCOORD))
+                    for r in classified.loc[
+                        classified["Isolated_Ferry"].astype(bool), ["NO", "XCOORD", "YCOORD"]
+                    ].itertuples(index=False)
+                }
+                for iso_no, tgt_no in same_bank_map.items():
+                    xy = iso_xy.get(int(iso_no))
+                    if xy is None:
+                        continue
+                    dist_n, idx_n = sel_tree.query(xy, distance_upper_bound=float(max_distance_m))
+                    if math.isfinite(dist_n) and int(idx_n) < len(sel_nos) and int(sel_nos[int(idx_n)]) == int(tgt_no):
+                        batch_nos.append(int(iso_no))
+                    else:
+                        override_groups.setdefault(int(tgt_no), []).append(int(iso_no))
+            else:
+                batch_nos = [int(k) for k in same_bank_map]
 
-            # Set active destination nodes exclusively to valid CAR+WALK same-bank road nodes
-            nf.Init()
-            nf.AddCondition("OP_NONE", False, "Road_Target_Node", "EqualVal", 1)
+        override_visum_rows = []
+        if override_groups:
+            ovr_set = {s_no for src_list in override_groups.values() for s_no in src_list}
+            override_visum_rows = classified.loc[classified["NO"].isin(ovr_set), "VISUM_ID"].astype(int).tolist()
 
-            if nodes_obj.CountActive > 0:
-                new_links = nodes_obj.ConnectNodes(source_nodes, paras)
-                try:
-                    created_links = int(new_links.Count)
-                except Exception:
-                    created_links = 0
-        else:
-            # Connect each terminal group exclusively to its verified same-bank target node
-            for tgt_no, src_nos in target_groups.items():
+        # Pass 1: Batch-connect all non-conflicting isolated terminals in one ConnectNodes call
+        if not same_bank_map or batch_nos:
+            if override_visum_rows:
+                nodes_obj.SetMultiAttValues("Isolated_Ferry", [(vid, 0) for vid in override_visum_rows])
+            try:
                 visum.Filters.InitAll()
                 nf.Init()
                 nf.AddCondition("OP_NONE", False, "Isolated_Ferry", "EqualVal", 1)
-                nf.AddCondition("OP_AND", False, "NO", "ContainedIn", ",".join(map(str, src_nos)))
                 source_nodes = visum.CreateNetElements()
                 for node_obj in nodes_obj.GetAllActive:
                     source_nodes.Add(node_obj)
 
                 nf.Init()
                 nf.AddCondition("OP_NONE", False, "Road_Target_Node", "EqualVal", 1)
-                nf.AddCondition("OP_AND", False, "NO", "EqualVal", int(tgt_no))
                 if nodes_obj.CountActive > 0:
                     new_links = nodes_obj.ConnectNodes(source_nodes, paras)
                     try:
                         created_links += int(new_links.Count)
                     except Exception:
                         pass
+            finally:
+                if override_visum_rows:
+                    nodes_obj.SetMultiAttValues("Isolated_Ferry", [(vid, 1) for vid in override_visum_rows])
+
+        # Pass 2: Connect only the few across-water conflict terminals directly to their same-bank targets
+        for tgt_no, src_nos in override_groups.items():
+            visum.Filters.InitAll()
+            source_nodes = visum.CreateNetElements()
+            for s_no in sorted(set(src_nos)):
+                try:
+                    source_nodes.Add(nodes_obj.ItemByKey(int(s_no)))
+                except Exception:
+                    pass
+
+            nf.Init()
+            nf.AddCondition("OP_NONE", False, "Road_Target_Node", "EqualVal", 1)
+            nf.AddCondition("OP_AND", False, "NO", "EqualVal", int(tgt_no))
+            if nodes_obj.CountActive > 0:
+                new_links = nodes_obj.ConnectNodes(source_nodes, paras)
+                try:
+                    created_links += int(new_links.Count)
+                except Exception:
+                    pass
 
         log(f"Fähr-Anbindungen ('Ferry_Access') über ConnectNodes generiert: {created_links} Streckenrichtungen.")
 
