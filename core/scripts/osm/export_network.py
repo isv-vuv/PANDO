@@ -492,8 +492,8 @@ def build_hierarchical_network(merged_pbf, osm_dir, osmium_exe, bin_dir, poly_pa
                 run_osmium([osmium_exe, "cat", rel_net_ferry, "-o", rel_ferry_osm, "--overwrite"])
                 abs_ferry_osm = os.path.join(osm_dir, rel_ferry_osm)
                 abs_ferry_poly = os.path.join(osm_dir, rel_ferry_poly)
-                if _write_ferry_terminal_buffer_poly(abs_ferry_osm, abs_ferry_poly, radius_m=500.0):
-                    log("D2) Extrahiere lokale Zubringerstraßen im 500 m-Puffer um Fähranleger ...")
+                if _write_ferry_terminal_buffer_poly(abs_ferry_osm, abs_ferry_poly, radius_m=1500.0):
+                    log("D2) Extrahiere lokale Zubringerstraßen im 1500 m-Puffer um Fähranleger ...")
                     run_osmium([osmium_exe, "extract", "-p", rel_ferry_poly, merged_pbf, "-o", rel_ferry_buf_extract, "--overwrite"])
                     filter_ferry_access = (
                         "w/highway=motorway,motorway_link,trunk,trunk_link,primary,primary_link,"

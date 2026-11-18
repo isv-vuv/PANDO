@@ -121,6 +121,48 @@ class FerryAccessUnitTests(unittest.TestCase):
         self.assertFalse(out.loc[99, "Ferry_Node"])
         self.assertFalse(out.loc[99, "Isolated_Ferry"])
 
+    def test_small_buffer_fragment_terminal_bridges_to_main_road_component(self):
+        # Ferry terminal 1 sits on a tiny 3-node buffer fragment (1 <-> 2 <-> 3),
+        # while a 60-node mainland component (100..159) passes 600 m away.
+        nodes = [
+            {"NO": 1, "XCOORD": 0.0, "YCOORD": 0.0, "OSM_NODE_ID": "1", "OSM_FerryTerminal": True},
+            {"NO": 2, "XCOORD": 100.0, "YCOORD": 0.0, "OSM_NODE_ID": "2", "OSM_FerryTerminal": False},
+            {"NO": 3, "XCOORD": 200.0, "YCOORD": 0.0, "OSM_NODE_ID": "3", "OSM_FerryTerminal": False},
+            {"NO": 9, "XCOORD": -500.0, "YCOORD": 0.0, "OSM_NODE_ID": "9", "OSM_FerryTerminal": True},
+        ]
+        for i in range(60):
+            nodes.append({
+                "NO": 100 + i,
+                "XCOORD": 600.0 + i * 50.0,
+                "YCOORD": 0.0,
+                "OSM_NODE_ID": str(100 + i),
+                "OSM_FerryTerminal": False,
+            })
+        nodes_df = pd.DataFrame(nodes)
+
+        links = [
+            {"FROMNODENO": 1, "TONODENO": 9, "TYPENO": 94, "TSYSSET": "CAR,WALK"},
+            {"FROMNODENO": 9, "TONODENO": 1, "TYPENO": 94, "TSYSSET": "CAR,WALK"},
+            {"FROMNODENO": 1, "TONODENO": 2, "TYPENO": 70, "TSYSSET": "CAR,WALK"},
+            {"FROMNODENO": 2, "TONODENO": 1, "TYPENO": 70, "TSYSSET": "CAR,WALK"},
+            {"FROMNODENO": 2, "TONODENO": 3, "TYPENO": 70, "TSYSSET": "CAR,WALK"},
+            {"FROMNODENO": 3, "TONODENO": 2, "TYPENO": 70, "TSYSSET": "CAR,WALK"},
+        ]
+        for i in range(59):
+            links.append({"FROMNODENO": 100 + i, "TONODENO": 101 + i, "TYPENO": 30, "TSYSSET": "CAR,WALK"})
+            links.append({"FROMNODENO": 101 + i, "TONODENO": 100 + i, "TYPENO": 30, "TSYSSET": "CAR,WALK"})
+        links_df = pd.DataFrame(links)
+
+        classified = ferry_access.classify_ferry_nodes(nodes_df, links_df)
+        by_no = classified.set_index("NO")
+        self.assertTrue(by_no.loc[1, "Isolated_Ferry"])
+        self.assertFalse(by_no.loc[2, "Road_Target_Node"])
+        self.assertFalse(by_no.loc[3, "Road_Target_Node"])
+        self.assertTrue(by_no.loc[100, "Road_Target_Node"])
+
+        targets = ferry_access.select_same_bank_target_nodes(classified, links_df, max_distance_m=2000.0)
+        self.assertEqual(targets.get(1), 100)
+
     def test_extract_osm_ferry_terminal_info_ignores_bus_stops(self):
         osm_content = """<?xml version="1.0" encoding="utf-8"?>
 <osm version="0.6">

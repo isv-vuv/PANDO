@@ -267,6 +267,18 @@ def classify_ferry_nodes(
     ferry_neighbors: dict[int, set[int]] = {}
     road_in_nodes: set[int] = set()
     road_out_nodes: set[int] = set()
+    parent: dict[int, int] = {}
+
+    def _uf_find(x: int) -> int:
+        while parent.get(x, x) != x:
+            parent[x] = parent.get(parent[x], parent[x])
+            x = parent[x]
+        return x
+
+    def _uf_union(a: int, b: int) -> None:
+        ra, rb = _uf_find(a), _uf_find(b)
+        if ra != rb:
+            parent[rb] = ra
 
     if not links_df.empty:
         typenos = links_df["TYPENO"].astype(int)
@@ -280,8 +292,29 @@ def classify_ferry_nodes(
                 ferry_neighbors.setdefault(int(v), set()).add(int(u))
 
         road_mask = (~typenos.isin(excluded_road_types)) & links_df["TSYSSET"].map(_has_car_and_walk)
-        road_in_nodes = set(int(x) for x in to_nos[road_mask])
-        road_out_nodes = set(int(x) for x in from_nos[road_mask])
+        road_from = from_nos[road_mask]
+        road_to = to_nos[road_mask]
+        road_in_nodes = set(int(x) for x in road_to)
+        road_out_nodes = set(int(x) for x in road_from)
+        for u, v in zip(road_from, road_to):
+            iu, iv = int(u), int(v)
+            parent.setdefault(iu, iu)
+            parent.setdefault(iv, iv)
+            _uf_union(iu, iv)
+
+    comp_counts: dict[int, int] = {}
+    node_comp_id: dict[int, int] = {}
+    for n in list(parent):
+        root_id = _uf_find(n)
+        node_comp_id[n] = root_id
+        comp_counts[root_id] = comp_counts.get(root_id, 0) + 1
+    max_comp_size = max(comp_counts.values(), default=0)
+    min_target_comp_size = min(50, max_comp_size) if max_comp_size > 0 else 0
+
+    road_comp_id_series = result["NO"].map(lambda n: node_comp_id.get(int(n), -1)).astype(int)
+    road_comp_size_series = result["NO"].map(
+        lambda n: comp_counts.get(node_comp_id.get(int(n), -1), 0)
+    ).astype(int)
 
     ferry_degree = result["NO"].map(lambda n: len(ferry_neighbors.get(int(n), ()))).astype(int)
     ferry_node = ferry_degree > 0
@@ -326,14 +359,44 @@ def classify_ferry_nodes(
     is_mid_only = result["_OSM_ID_NORM"].isin(mid_only_set) if mid_only_set else pd.Series(False, index=result.index)
 
     is_terminal = ferry_node & (snapped_terminal | ((ferry_degree == 1) & (~is_mid_only)))
+    road_target_node = has_road_io & (~ferry_node) & (road_comp_size_series >= min_target_comp_size)
     isolated_ferry = ferry_node & is_terminal & (~has_road_io)
-    road_target_node = has_road_io & (~ferry_node)
+
+    # Also treat terminals on tiny disconnected buffer road fragments (<50 nodes) as isolated
+    # when a strictly larger road component exists nearby (<= 2000 m), e.g. Victorias port.
+    small_frag_terminals = (
+        ferry_node
+        & is_terminal
+        & has_road_io
+        & (road_comp_size_series > 0)
+        & (road_comp_size_series < min_target_comp_size)
+    )
+    if bool(small_frag_terminals.any()) and bool(road_target_node.any()):
+        tgt_sub = result.loc[road_target_node, ["XCOORD", "YCOORD"]].to_numpy(dtype=float)
+        tgt_comp_ids = road_comp_id_series.loc[road_target_node].to_numpy(dtype=int)
+        tgt_comp_sizes = road_comp_size_series.loc[road_target_node].to_numpy(dtype=int)
+        tgt_tree = cKDTree(tgt_sub)
+        for df_idx in result.index[small_frag_terminals]:
+            tx = float(result.at[df_idx, "XCOORD"])
+            ty = float(result.at[df_idx, "YCOORD"])
+            c_id = int(road_comp_id_series.at[df_idx])
+            c_sz = int(road_comp_size_series.at[df_idx])
+            if not (math.isfinite(tx) and math.isfinite(ty)):
+                continue
+            cand_idxs = tgt_tree.query_ball_point([tx, ty], r=2000.0)
+            if any(
+                tgt_comp_ids[i] != c_id and tgt_comp_sizes[i] > c_sz * 2
+                for i in cand_idxs
+            ):
+                isolated_ferry.at[df_idx] = True
 
     result["Ferry_Node"] = ferry_node.astype(bool)
     result["Ferry_Degree"] = ferry_degree.astype(int)
     result["OSM_FerryTerminal"] = snapped_terminal.astype(bool)
     result["Isolated_Ferry"] = isolated_ferry.astype(bool)
     result["Road_Target_Node"] = road_target_node.astype(bool)
+    result["Road_Comp_ID"] = road_comp_id_series
+    result["Road_Comp_Size"] = road_comp_size_series
     return result.drop(columns=["_OSM_ID_NORM"])
 
 
@@ -465,6 +528,7 @@ def select_same_bank_target_nodes(
 
     tgt_nos = tgt_df["NO"].astype(int).to_numpy()
     tgt_coords = tgt_df[["XCOORD", "YCOORD"]].to_numpy(dtype=float)
+    tgt_comp_ids = tgt_df["Road_Comp_ID"].astype(int).to_numpy() if "Road_Comp_ID" in tgt_df.columns else None
     tgt_tree = cKDTree(tgt_coords)
     bound_pad = float(max_distance_m)
 
@@ -511,10 +575,13 @@ def select_same_bank_target_nodes(
         best_clear = None
         best_any = None
 
+        iso_comp_id = int(getattr(iso_row, "Road_Comp_ID", -1))
         for dist, idx in zip(dists, idxs):
             if not math.isfinite(dist) or dist <= 0 or idx >= len(tgt_nos):
                 continue
             r_no = int(tgt_nos[int(idx)])
+            if tgt_comp_ids is not None and iso_comp_id >= 0 and int(tgt_comp_ids[int(idx)]) == iso_comp_id:
+                continue
             rx, ry = float(tgt_coords[int(idx), 0]), float(tgt_coords[int(idx), 1])
             if best_any is None:
                 best_any = r_no
