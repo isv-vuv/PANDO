@@ -228,6 +228,16 @@ def run_generate_connectors(target_project_dir=None, visum=None):
     zf = visum.Filters.ZoneFilter()
     cf = visum.Filters.ConnectorFilter()
 
+    # 0. Erreichbarkeits-Attribut nach Streckentyp-/TSysSet-Umstrukturierung (Schritt 3) auffrischen
+    import importlib
+    derive_mod = (
+        importlib.import_module(".02_derive_access_nodes", package=__package__)
+        if __package__
+        else importlib.import_module("02_derive_access_nodes")
+    )
+    logging.info("Aktualisiere 'Reachable_Node' nach finaler Streckentyp-/TSysSet-Konfiguration...")
+    derive_mod.AccessNodeDeriver(visum, visum_input_dir).calculate_reachable_nodes(max_start_nodes=10)
+
     # 1. Distanzen berechnen
     calculate_zone_distances(visum, nf, use_island_logic=USE_ISLAND_ID)
 
