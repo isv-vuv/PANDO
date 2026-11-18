@@ -19,6 +19,7 @@ from core.app.app_qt.steps.step1_search import Step1SearchWidget
 from core.app.app_qt.steps.step2_data import Step2DataWidget
 from core.app.app_qt.steps.step3_grid_area import Step3GridAreaWidget
 from core.app.app_qt.steps.step4_processing import Step4ProcessingWidget
+from core.app.app_qt.steps.step5_linktypes import Step5LinkTypesWidget
 from core.app.app_qt.steps.step5_visum import Step5VisumWidget
 from core.app.app_qt.steps.step6_results import Step6ResultsWidget
 from core.app.app_qt.steps.step7_report import Step7ReportWidget
@@ -488,6 +489,8 @@ class UrbanActQtMainWindow(BaseMainWindow):
             self._show_step3()
         elif step_id == StepId.PROCESSING:
             self._show_step4()
+        elif step_id == StepId.LINKTYPES:
+            self._show_step5_linktypes()
         elif step_id == StepId.VISUM:
             self._show_step5()
         elif step_id == StepId.RESULTS:
@@ -555,13 +558,36 @@ class UrbanActQtMainWindow(BaseMainWindow):
     def _show_step4(self) -> None:
         step4_widget = Step4ProcessingWidget(localizer, self.state.payload_for_step5(), self)
         step4_widget.status_changed.connect(self._handle_step4_status_changed)
-        step4_widget.next_requested.connect(self._show_step5)
+        step4_widget.next_requested.connect(self._show_step5_linktypes)
         project_path = self.state.step4_data.get("project_path") or ""
         self._show_step(
             StepId.PROCESSING,
             step4_widget,
             localizer.get_string("step4_status_pbf_ready") + f" {project_path}",
         )
+
+    def _show_step5_linktypes(self) -> None:
+        project_path = self.state.project_path or self.state.step4_data.get("project_path") or ""
+        step5_lt_widget = Step5LinkTypesWidget(localizer, self, project_path=project_path)
+        step5_lt_widget.next_requested.connect(self._proceed_from_linktypes_to_visum)
+        step5_lt_widget.status_changed.connect(self.set_status)
+        self._show_step(
+            StepId.LINKTYPES,
+            step5_lt_widget,
+            localizer.get_string("step5_linktypes_title", default="Schritt 5: Streckentypen und Fährparameter")
+            + (f": {project_path}" if project_path else ""),
+        )
+
+    def _proceed_from_linktypes_to_visum(self) -> None:
+        widget = self._current_step_widget
+        if isinstance(widget, Step5LinkTypesWidget) and not widget.save_all():
+            Dialogs.warning(
+                self,
+                localizer.get_string("linktypes_err_empty_title", default="Keine Streckentypen"),
+                localizer.get_string("linktypes_err_empty_body", default="Bitte mindestens eine Streckentyp-Klasse aktivieren."),
+            )
+            return
+        self._show_step5()
 
     def _handle_step4_status_changed(self, status_msg: str) -> None:
         self.set_status(status_msg)
@@ -663,6 +689,9 @@ class UrbanActQtMainWindow(BaseMainWindow):
             return
         if self.state.current_step == StepId.VISUM:
             self._show_step6()
+            return
+        if self.state.current_step == StepId.LINKTYPES:
+            self._proceed_from_linktypes_to_visum()
             return
         if hasattr(widget, "_confirm_selection"):
             widget._confirm_selection()

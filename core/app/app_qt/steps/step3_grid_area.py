@@ -275,7 +275,7 @@ class Step3GridAreaWidget(_Q_WIDGET_BASE):
         header, _title_label, _step_label = create_step_header(
             self.localizer.get_string("step3_title"),
             current_step=3,
-            total_steps=7,
+            total_steps=8,
             localizer=self.localizer,
             parent=self,
         )

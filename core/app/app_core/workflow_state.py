@@ -55,12 +55,13 @@ class StepId(IntEnum):
     PROJECT_PBF = 3
     GRID_AREA = 4
     PROCESSING = 5
-    VISUM = 6
-    RESULTS = 7
-    REPORT = 8
+    LINKTYPES = 6
+    VISUM = 7
+    RESULTS = 8
+    REPORT = 9
 
 
-STEP_COUNT = 7  # Active process steps (1 to 7)
+STEP_COUNT = 8  # Active process steps (1 to 8)
 
 
 def coerce_step_id(value: StepId | int) -> StepId:

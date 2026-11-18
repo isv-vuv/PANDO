@@ -58,7 +58,7 @@ class Step0WelcomeWidget(_Q_WIDGET_BASE):
         header, _title_label, step_label = create_step_header(
             self.localizer.get_string("step0_title"),
             current_step=0,
-            total_steps=7,
+            total_steps=8,
             localizer=self.localizer,
             parent=container,
         )
@@ -149,7 +149,7 @@ class Step0WelcomeWidget(_Q_WIDGET_BASE):
                 title = raw_text.strip()
             return f"<b>{num}.</b> {title}"
 
-        # Dynamically load the exact titles from steps 1 to 6
+        # Dynamically load the exact titles from steps 1 to 8
         steps_grid = QtWidgets.QGridLayout()
         steps_grid.setContentsMargins(4, 2, 4, 2)
         steps_grid.setHorizontalSpacing(24)
@@ -162,13 +162,15 @@ class Step0WelcomeWidget(_Q_WIDGET_BASE):
             self.localizer.get_string("step2_title"),
             self.localizer.get_string("step3_title"),
             self.localizer.get_string("step4_title"),
+            self.localizer.get_string("step5_linktypes_title", default="Schritt 5: Streckentypen und Fährparameter"),
             self.localizer.get_string("step5_title"),
             self.localizer.get_string("step6_title"),
+            self.localizer.get_string("step7_title"),
         ]
 
         for i, raw_title in enumerate(raw_titles):
-            col = 0 if i < 3 else 1
-            row = i if i < 3 else i - 3
+            col = 0 if i < 4 else 1
+            row = i if i < 4 else i - 4
             lbl = QtWidgets.QLabel(_clean_title(raw_title, i + 1), steps_card)
             lbl.setFont(app_font(9))
             lbl.setWordWrap(True)

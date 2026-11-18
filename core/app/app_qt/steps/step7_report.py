@@ -33,7 +33,7 @@ class Step7ReportWidget(_BASE):
         self.cancel_timer.setSingleShot(True)
         self.cancel_timer.timeout.connect(self._kill_process)
         layout = QtWidgets.QVBoxLayout(self)
-        header, _, _ = create_step_header(self.text('step7_title'), current_step=7, total_steps=7, localizer=self.localizer, parent=self)
+        header, _, _ = create_step_header(self.text('step7_title'), current_step=8, total_steps=8, localizer=self.localizer, parent=self)
         layout.addWidget(header)
         actions = QtWidgets.QHBoxLayout()
         self.generate_button = QtWidgets.QPushButton(self.text('report_generate'))

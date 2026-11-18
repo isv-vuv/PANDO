@@ -150,6 +150,7 @@ class HelpPanelWidget(_Q_WIDGET_BASE):
             StepId.PROJECT_PBF: "help_step2_body",
             StepId.GRID_AREA: "help_step3_body",
             StepId.PROCESSING: "help_step4_body",
+            StepId.LINKTYPES: "help_step5_linktypes_body",
             StepId.VISUM: "help_step5_body",
             StepId.RESULTS: "help_step6_body",
             StepId.REPORT: "help_step7_body",

@@ -298,7 +298,7 @@ class Step4ProcessingWidget(_Q_WIDGET_BASE):
         header, _title_label, _step_label = create_step_header(
             self.localizer.get_string("step4_title", default="Schritt 4: Parameterprüfung und Verarbeitung"),
             current_step=4,
-            total_steps=7,
+            total_steps=8,
             localizer=self.localizer,
             parent=self,
         )

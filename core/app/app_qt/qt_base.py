@@ -543,7 +543,7 @@ def bind_header_scroll_separator(header_widget: Optional[QWidget], scroll_area: 
 def create_step_header(
     title_raw: str,
     current_step: int,
-    total_steps: int = 7,
+    total_steps: int = 8,
     localizer: Optional[object] = None,
     parent: Optional[object] = None,
     scroll_area: Optional[QtWidgets.QScrollArea] = None,

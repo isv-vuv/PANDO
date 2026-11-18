@@ -293,9 +293,9 @@ class Step5VisumWidget(_Q_WIDGET_BASE):
         main_layout.setSpacing(8)
 
         self.header, _title_label, _step_label = create_step_header(
-            self.localizer.get_string("step5_title", default="Schritt 5: Visum-Import und Verarbeitung"),
-            current_step=5,
-            total_steps=7,
+            self.localizer.get_string("step5_title", default="Schritt 6: Visum-Import und Verarbeitung"),
+            current_step=6,
+            total_steps=8,
             localizer=self.localizer,
             parent=self,
         )
@@ -624,7 +624,12 @@ class Step5VisumWidget(_Q_WIDGET_BASE):
         from core.app.app_qt.dialogs.linktypes_dialog import LinkTypesConfigDialog
 
         current = load_linktypes_config(self.project_path)
-        dialog = LinkTypesConfigDialog(current, parent=self, localizer_obj=self.localizer)
+        dialog = LinkTypesConfigDialog(
+            current,
+            parent=self,
+            localizer_obj=self.localizer,
+            project_path=self.project_path,
+        )
         exec_fn = getattr(dialog, "exec", None) or getattr(dialog, "exec_", None)
         accepted_code = qt_enum(QtWidgets.QDialog, "Accepted", "DialogCode")
         if exec_fn() in (1, accepted_code):
@@ -634,7 +639,7 @@ class Step5VisumWidget(_Q_WIDGET_BASE):
                     reset_linktypes_config(self.project_path)
                 else:
                     save_linktypes_config(self.project_path, updated)
-            self._refresh_linktypes_status()
+            self._load_pre_visum_parameters()
 
     def _reset_linktypes_to_default(self) -> None:
         from core.app.app_core.linktypes_config import reset_linktypes_config

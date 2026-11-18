@@ -1,9 +1,10 @@
 """Configuration model, defaults, and Visum .net generator for PANDO link types.
 
-Replicates the LINKTYPE_Visum.xlsm methodology (`Dictionary` + `Link types`)
-with sensible presets that match `core/scripts/visum/helper_files/master_linktypes.net`
-out-of-the-box while allowing users to customize modes, lane classes, speed
-brackets, capacities, and impedance factors via the GUI before Visum runs.
+Provides PANDO's master link-type taxonomy with curated defaults that match
+`core/scripts/visum/helper_files/master_linktypes.net` out-of-the-box while
+allowing users to customize active road categories, lane classes, speed
+brackets, capacities, and impedance factors directly in the GUI before Visum
+runs.
 """
 
 from __future__ import annotations
@@ -425,7 +426,7 @@ def _format_decimal_comma(value: float) -> str:
 
 
 def default_capacities() -> dict[str, dict[str, int]]:
-    """Return capacity lookup ``{str(speed): {str(lanes): cap_prt}}`` matching Excel Dictionary."""
+    """Return capacity lookup ``{str(speed): {str(lanes): cap_prt}}`` for the master methodology."""
     return {
         str(speed): {str(lanes): int(base * lanes) for lanes in (1, 2, 3, 4)}
         for speed, base in DEFAULT_BASE_CAPACITY_1_LANE.items()
@@ -911,7 +912,57 @@ def resolve_project_master_net(
             export_linktypes_net(cfg, custom_net, template_net_path=fallback if fallback.is_file() else None)
         return custom_net
 
-    excel_exports = list(visum_dir.glob("*_export_excel_linktypes.net")) if visum_dir.is_dir() else []
-    if excel_exports:
-        return max(excel_exports, key=lambda p: p.stat().st_mtime)
+    legacy_exports = list(visum_dir.glob("*_export_excel_linktypes.net")) if visum_dir.is_dir() else []
+    if legacy_exports:
+        return max(legacy_exports, key=lambda p: p.stat().st_mtime)
     return fallback
+
+
+def apply_linktypes_to_modified_osm(
+    project_dir: str | Path | None,
+    *,
+    force: bool = False,
+    log=print,
+) -> bool:
+    """Re-classify ``road_network_hierarchical_modified.osm`` using the active master `.net` brackets.
+
+    Only rewrites the modified OSM file when ``road_network_hierarchical_original.osm``
+    exists and either ``force=True`` or ``custom_export_excel_linktypes.net`` is newer
+    than ``road_network_hierarchical_modified.osm``.
+    """
+    if not project_dir:
+        return False
+    base = Path(project_dir)
+    net_dir = base / "processed" / "osm" / "04_network"
+    orig_osm = net_dir / "road_network_hierarchical_original.osm"
+    mod_osm = net_dir / "road_network_hierarchical_modified.osm"
+    if not orig_osm.is_file():
+        return False
+
+    fallback = (
+        Path(tool_root()) / "core" / "scripts" / "visum" / "helper_files" / "master_linktypes.net"
+    )
+    active_net = resolve_project_master_net(base, fallback)
+    if not active_net.is_file():
+        return False
+
+    if not force:
+        cfg_file = base / CONFIG_FILENAME
+        if not cfg_file.is_file() and active_net == fallback:
+            return False
+        if mod_osm.is_file() and active_net.stat().st_mtime <= mod_osm.stat().st_mtime:
+            return False
+
+    from core.scripts.osm.export_network import (
+        calculate_dynamic_brackets,
+        impute_and_classify_osm,
+        parse_net_link_types,
+    )
+
+    df_types = parse_net_link_types(str(active_net), log=log)
+    brackets_db = calculate_dynamic_brackets(df_types)
+    tmp_out = mod_osm.with_suffix(".osm.tmp")
+    impute_and_classify_osm(str(orig_osm), str(tmp_out), brackets_db, log=log)
+    tmp_out.replace(mod_osm)
+    return True
+

@@ -271,6 +271,35 @@ class FerryAccessUnitTests(unittest.TestCase):
         stats2 = ferry_access.connect_ferries_to_road_network(visum)
         self.assertEqual(stats2["created_links"], 0)
 
+    def test_select_same_bank_target_nodes_blocks_across_river_and_water_cone(self):
+        import pandas as pd
+        from shapely.geometry import LineString
+
+        # Terminal 20486 at (0, 0) connects via ferry link going SE-NE (water vector ~ (1, 0.5))
+        # Closer road node 15854 is across a river waterway (distance ~112 m)
+        # Same-bank road node 17708 is on the landward side (-200, 80, distance ~215 m)
+        classified_df = pd.DataFrame([
+            {"NO": 20486, "XCOORD": 0.0, "YCOORD": 0.0, "Isolated_Ferry": 1, "Road_Target_Node": 0},
+            {"NO": 20487, "XCOORD": 400.0, "YCOORD": 200.0, "Isolated_Ferry": 0, "Road_Target_Node": 0},
+            {"NO": 15854, "XCOORD": 100.0, "YCOORD": -50.0, "Isolated_Ferry": 0, "Road_Target_Node": 1},
+            {"NO": 17708, "XCOORD": -200.0, "YCOORD": 80.0, "Isolated_Ferry": 0, "Road_Target_Node": 1},
+        ])
+        links_df = pd.DataFrame([
+            {"FROMNODENO": 20486, "TONODENO": 20487, "TYPENO": 94, "TSYSSET": "CAR,WALK"},
+            {"FROMNODENO": 20487, "TONODENO": 20486, "TYPENO": 94, "TSYSSET": "CAR,WALK"},
+        ])
+        # River bank separator passing between (0, 0) and (100, -50)
+        waterway_lines = [LineString([(-50.0, -150.0), (150.0, 150.0)])]
+        ferry_wkt_rows = [(20486, 20487, "LINESTRING(0 0, 120 40, 400 200)")]
+
+        targets = ferry_access.select_same_bank_target_nodes(
+            classified_df,
+            links_df,
+            ferry_wkt_rows=ferry_wkt_rows,
+            waterway_lines=waterway_lines,
+        )
+        self.assertEqual(targets.get(20486), 17708)
+
 
 if __name__ == "__main__":
     unittest.main()

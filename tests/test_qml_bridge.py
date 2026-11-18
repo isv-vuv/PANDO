@@ -20,8 +20,8 @@ class QmlBridgeTests(unittest.TestCase):
 
         self.assertEqual(bridge.language, "de")
         self.assertEqual(bridge.currentStep, 3)
-        self.assertEqual(bridge.stepCount, 6)
-        self.assertEqual(bridge.progressPercent, 33)
+        self.assertEqual(bridge.stepCount, 8)
+        self.assertEqual(bridge.progressPercent, 25)
         self.assertTrue(bridge.backEnabled)
         self.assertFalse(bridge.qmlMaterialAvailable)
         self.assertEqual(bridge.mapBridgeStatus, "QtLocation/QML map")

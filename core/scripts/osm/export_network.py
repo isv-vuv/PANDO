@@ -155,6 +155,24 @@ def impute_and_classify_osm(input_xml_path, output_xml_path, brackets_db, log=pr
         orig_tags = w_data['tags']
         nodes = w_data['nodes']
 
+        # Promote drivable service roads (e.g. ferry terminal pier approaches) to residential
+        # so the Visum importer assigns CAR+WALK instead of non-motorized Service (type 73).
+        if hw == 'service':
+            service_sub = str(orig_tags.get('service', '')).strip().lower()
+            access_val = str(orig_tags.get('access', '')).strip().lower()
+            mv_val = str(orig_tags.get('motor_vehicle', '')).strip().lower()
+            if (
+                service_sub not in {'parking_aisle', 'driveway', 'alley', 'emergency_access'}
+                and access_val not in {'private', 'no', 'customers', 'agricultural', 'forestry'}
+                and mv_val not in {'private', 'no'}
+            ):
+                hw = 'residential'
+                tags_dict_pre = {tag.get('k'): tag for tag in way.findall('tag')}
+                if 'highway_original' not in tags_dict_pre:
+                    way.append(ET.Element('tag', k='highway_original', v='service'))
+                if 'highway' in tags_dict_pre:
+                    tags_dict_pre['highway'].set('v', 'residential')
+
         fallback = mean_rules.get(hw, {'speed': 30.0, 'lanes': 1.0})
         cat_name = osm_to_cat_map.get(hw, hw.capitalize())
 
@@ -303,6 +321,69 @@ def impute_and_classify_osm(input_xml_path, output_xml_path, brackets_db, log=pr
     log(f"Bearbeitete Netzdatei erfolgreich aktualisiert: {output_xml_path}")
 
 
+def _write_ferry_terminal_buffer_poly(ferry_osm_path: str, poly_out_path: str, radius_m: float = 500.0) -> bool:
+    """Create an Osmium .poly file buffering all route=ferry way endpoints by `radius_m` meters."""
+    import math
+    if not os.path.isfile(ferry_osm_path):
+        return False
+    try:
+        from shapely.geometry import Polygon
+        from shapely.ops import unary_union
+    except ImportError:
+        return False
+
+    node_coords: dict[str, tuple[float, float]] = {}
+    endpoint_ids: set[str] = set()
+    for _ev, elem in ET.iterparse(ferry_osm_path, events=("end",)):
+        if elem.tag == "node":
+            nid = elem.get("id")
+            if nid and "lon" in elem.attrib and "lat" in elem.attrib:
+                node_coords[nid] = (float(elem.attrib["lon"]), float(elem.attrib["lat"]))
+            elem.clear()
+        elif elem.tag == "way":
+            tags = {t.get("k", ""): t.get("v", "") for t in elem.findall("tag")}
+            if tags.get("route") == "ferry":
+                nds = [nd.get("ref") for nd in elem.findall("nd") if nd.get("ref")]
+                if nds:
+                    endpoint_ids.add(nds[0])
+                    endpoint_ids.add(nds[-1])
+            elem.clear()
+
+    polys = []
+    for nid in endpoint_ids:
+        if nid not in node_coords:
+            continue
+        lon, lat = node_coords[nid]
+        dlat = radius_m / 111320.0
+        cos_lat = max(0.1, math.cos(math.radians(lat)))
+        dlon = radius_m / (111320.0 * cos_lat)
+        pts = [
+            (lon + dlon * math.cos(k * math.pi / 4.0), lat + dlat * math.sin(k * math.pi / 4.0))
+            for k in range(8)
+        ]
+        polys.append(Polygon(pts))
+
+    if not polys:
+        return False
+
+    merged = unary_union(polys)
+    geoms = list(merged.geoms) if hasattr(merged, "geoms") else [merged]
+    lines = ["ferry_terminal_buffer"]
+    poly_idx = 0
+    for poly in geoms:
+        if poly.is_empty:
+            continue
+        poly_idx += 1
+        lines.append(str(poly_idx))
+        for x, y in poly.exterior.coords:
+            lines.append(f"   {x:.6f}   {y:.6f}")
+        lines.append("END")
+    lines.append("END")
+    with open(poly_out_path, "w", encoding="utf-8") as f:
+        f.write("\n".join(lines) + "\n")
+    return poly_idx > 0
+
+
 # ==============================================================================
 # 3. OSMIUM PIPELINE EXECUTIVE
 # ==============================================================================
@@ -351,6 +432,10 @@ def build_hierarchical_network(merged_pbf, osm_dir, osmium_exe, bin_dir, poly_pa
     rel_net_ia2 = "temp_net_2_ia2.osm.pbf"
     rel_net_oa = "temp_net_3_oa.osm.pbf"
     rel_net_ferry = "temp_net_4_ferry.osm.pbf"
+    rel_ferry_osm = "temp_net_4_ferry.osm"
+    rel_ferry_poly = "temp_ferry_buffer.poly"
+    rel_ferry_buf_extract = "temp_ferry_buf_extract.osm.pbf"
+    rel_net_ferry_access = "temp_net_5_ferry_access.osm.pbf"
 
     rel_final = "hierarchical_network.osm"
     abs_final_osm = os.path.join(osm_dir, rel_final)
@@ -399,10 +484,30 @@ def build_hierarchical_network(merged_pbf, osm_dir, osmium_exe, bin_dir, poly_pa
         log("D) Extrahiere Fährverbindungen ...")
         run_osmium([osmium_exe, "tags-filter", merged_pbf, "w/route=ferry", "-o", rel_net_ferry, "--overwrite"])
 
+        merge_inputs = [rel_net_pa_ia1, rel_net_ia2, rel_net_oa, rel_net_ferry]
+        abs_net_ferry = os.path.join(osm_dir, rel_net_ferry)
+        if os.path.isfile(abs_net_ferry) and os.path.getsize(abs_net_ferry) > 0:
+            try:
+                run_osmium([osmium_exe, "cat", rel_net_ferry, "-o", rel_ferry_osm, "--overwrite"])
+                abs_ferry_osm = os.path.join(osm_dir, rel_ferry_osm)
+                abs_ferry_poly = os.path.join(osm_dir, rel_ferry_poly)
+                if _write_ferry_terminal_buffer_poly(abs_ferry_osm, abs_ferry_poly, radius_m=500.0):
+                    log("D2) Extrahiere lokale Zubringerstraßen im 500 m-Puffer um Fähranleger ...")
+                    run_osmium([osmium_exe, "extract", "-p", rel_ferry_poly, merged_pbf, "-o", rel_ferry_buf_extract, "--overwrite"])
+                    filter_ferry_access = (
+                        "w/highway=motorway,motorway_link,trunk,trunk_link,primary,primary_link,"
+                        "secondary,secondary_link,tertiary,tertiary_link,unclassified,residential,"
+                        "living_street,service,road"
+                    )
+                    run_osmium([osmium_exe, "tags-filter", rel_ferry_buf_extract, filter_ferry_access, "-o", rel_net_ferry_access, "--overwrite"])
+                    if os.path.isfile(os.path.join(osm_dir, rel_net_ferry_access)):
+                        merge_inputs.append(rel_net_ferry_access)
+            except Exception as buf_exc:
+                log(f"Hinweis: Lokaler Fährpuffer konnte nicht erzeugt werden ({buf_exc}).")
+
         progress("network_merge", 7, total_steps)
         log("E) Führe alle Netz-Schichten zusammen ...")
-        run_osmium([osmium_exe, "merge", rel_net_pa_ia1, rel_net_ia2, rel_net_oa, rel_net_ferry, "-o", rel_final,
-                    "--overwrite"])
+        run_osmium([osmium_exe, "merge", *merge_inputs, "-o", rel_final, "--overwrite"])
 
         # 1. Save out raw unaltered baseline copy
         shutil.copyfile(abs_final_osm, abs_final_orig_xml)
@@ -434,7 +539,9 @@ def build_hierarchical_network(merged_pbf, osm_dir, osmium_exe, bin_dir, poly_pa
     finally:
         for tmp in [
             rel_temp_pa_ia1, rel_net_pa_ia1, rel_temp_ia2, rel_net_ia2,
-            rel_net_oa, rel_net_ferry, abs_final_osm, abs_final_orig_xml, abs_final_mod_xml
+            rel_net_oa, rel_net_ferry, rel_ferry_osm, rel_ferry_poly,
+            rel_ferry_buf_extract, rel_net_ferry_access,
+            abs_final_osm, abs_final_orig_xml, abs_final_mod_xml
         ]:
             abs_tmp = tmp if os.path.isabs(tmp) else os.path.join(osm_dir, tmp)
             if os.path.exists(abs_tmp): os.remove(abs_tmp)

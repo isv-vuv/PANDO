@@ -516,9 +516,9 @@ class Step6ResultsWidget(_Q_WIDGET_BASE):
 
         # Header
         self.header, _title_label, _step_label = create_step_header(
-            self.localizer.get_string("step6_title", default="Schritt 6: Ergebnisse und Auswertung"),
-            current_step=6,
-            total_steps=7,
+            self.localizer.get_string("step6_title", default="Schritt 7: Ergebnisse und Auswertung"),
+            current_step=7,
+            total_steps=8,
             localizer=self.localizer,
             parent=self,
         )

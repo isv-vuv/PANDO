@@ -658,7 +658,7 @@ class Step2DataWidget(_Q_WIDGET_BASE):
         header, _title_label, _step_label = create_step_header(
             self.localizer.get_string("step2_title", default="Schritt 2: Projektordner und Geodaten-Setup"),
             current_step=2,
-            total_steps=7,
+            total_steps=8,
             localizer=self.localizer,
             parent=self,
         )
