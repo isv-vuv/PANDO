@@ -281,14 +281,11 @@ class LinkTypesQtWidgetTests(unittest.TestCase):
 
         with tempfile.TemporaryDirectory() as tmp:
             widget = VisumStepWidget(localizer, project_path=tmp)
-            self.assertAlmostEqual(widget.ferry_wait_spin.value(), 20.0)
+            # Ferry & Link-Types box was intentionally removed from Step 6 (configured in Step 5)
+            self.assertFalse(hasattr(widget, "params_group"))
+            self.assertFalse(hasattr(widget, "ferry_wait_spin"))
 
-            widget.ferry_wait_spin.setValue(35.0)
-            ferry_json = Path(tmp) / "ferry_parameters.json"
-            self.assertTrue(ferry_json.is_file())
-            self.assertAlmostEqual(json.loads(ferry_json.read_text(encoding="utf-8"))["wait_minutes"], 35.0)
-
-            # Edit in LinkTypesConfigDialog (now 5 sub-pages matching Step 5)
+            # LinkTypesConfigDialog standalone still mirrors Step 5 (5 sub-pages)
             dlg = LinkTypesConfigDialog(
                 default_linktypes_config(),
                 parent=widget,
@@ -303,11 +300,8 @@ class LinkTypesQtWidgetTests(unittest.TestCase):
             self.assertNotIn(130, updated["categories"]["Motorway"]["speeds"])
 
             save_linktypes_config(tmp, updated)
-            widget._refresh_linktypes_status()
-            self.assertTrue(widget.linktypes_reset_button.isEnabled())
-
-            widget._reset_linktypes_to_default()
-            self.assertFalse(widget.linktypes_reset_button.isEnabled())
+            self.assertTrue((Path(tmp) / CONFIG_FILENAME).is_file())
+            reset_linktypes_config(tmp)
             self.assertFalse((Path(tmp) / CONFIG_FILENAME).exists())
             widget.close()
             dlg.close()
