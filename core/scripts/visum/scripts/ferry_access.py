@@ -346,7 +346,7 @@ def _extract_waterway_lines_from_osm(
         return []
     raw_nodes: dict[str, tuple[float, float]] = {}
     way_refs: list[list[str]] = []
-    waterway_values = {"river", "canal", "tidal_channel"}
+    waterway_values = {"river", "canal", "tidal_channel", "fairway"}
     for _ev, elem in ET.iterparse(str(osm_path), events=("end",)):
         if elem.tag == "node":
             nid = _normalize_osm_id(elem.attrib.get("id"))
@@ -591,6 +591,32 @@ def _resolve_osm_file(osm_file: str | Path | None, working_dir: str | Path | Non
     return None
 
 
+def _resolve_waterway_osm_files(
+    resolved_osm: Path | None,
+    working_dir: str | Path | None = None,
+) -> list[Path]:
+    """Locate separate waterway sidecar (`ferry_waterways.osm`) plus fallback OSM."""
+    candidates: list[Path] = []
+    if resolved_osm is not None:
+        candidates.append(resolved_osm.parent / "ferry_waterways.osm")
+        candidates.append(resolved_osm)
+    if working_dir:
+        wdir = Path(working_dir)
+        osm_base = wdir.parent / "osm"
+        candidates.extend([
+            osm_base / "04_network" / "ferry_waterways.osm",
+            osm_base / "ferry_waterways.osm",
+        ])
+    seen: set[Path] = set()
+    found: list[Path] = []
+    for cand in candidates:
+        resolved = cand.resolve() if cand.exists() else cand
+        if cand.exists() and cand.is_file() and cand.suffix.lower() == ".osm" and resolved not in seen:
+            seen.add(resolved)
+            found.append(cand)
+    return found
+
+
 def connect_ferries_to_road_network(
     visum,
     *,
@@ -747,12 +773,14 @@ def connect_ferries_to_road_network(
         ferry_wkt_rows = None
 
     waterway_lines: list[LineString] = []
-    if resolved_osm is not None:
+    waterway_files = _resolve_waterway_osm_files(resolved_osm, working_dir)
+    if waterway_files:
         try:
             proj_wkt_cur = str(visum.Net.AttValue("PROJECTIONDEFINITION") or "")
         except Exception:
             proj_wkt_cur = ""
-        waterway_lines = _extract_waterway_lines_from_osm(resolved_osm, proj_wkt_cur)
+        for wf in waterway_files:
+            waterway_lines.extend(_extract_waterway_lines_from_osm(wf, proj_wkt_cur))
 
     same_bank_map = select_same_bank_target_nodes(
         classified,

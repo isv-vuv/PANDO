@@ -300,6 +300,37 @@ class FerryAccessUnitTests(unittest.TestCase):
         )
         self.assertEqual(targets.get(20486), 17708)
 
+    def test_resolve_and_extract_ferry_waterways_sidecar(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            net_dir = Path(tmp) / "processed" / "osm" / "04_network"
+            visum_dir = Path(tmp) / "processed" / "visum"
+            net_dir.mkdir(parents=True)
+            visum_dir.mkdir(parents=True)
+
+            road_osm = net_dir / "road_network_hierarchical_modified.osm"
+            road_osm.write_text('<?xml version="1.0"?><osm version="0.6"></osm>', encoding="utf-8")
+            ww_osm = net_dir / "ferry_waterways.osm"
+            ww_osm.write_text(
+                """<?xml version="1.0" encoding="UTF-8"?>
+<osm version="0.6">
+  <node id="10" lat="10.690" lon="122.570"/>
+  <node id="11" lat="10.695" lon="122.575"/>
+  <way id="50">
+    <nd ref="10"/>
+    <nd ref="11"/>
+    <tag k="waterway" v="river"/>
+  </way>
+</osm>
+""",
+                encoding="utf-8",
+            )
+
+            files = ferry_access._resolve_waterway_osm_files(road_osm, visum_dir)
+            self.assertEqual(files[0].resolve(), ww_osm.resolve())
+            lines = ferry_access._extract_waterway_lines_from_osm(ww_osm, "")
+            self.assertEqual(len(lines), 1)
+            self.assertGreater(lines[0].length, 0.0)
+
 
 if __name__ == "__main__":
     unittest.main()

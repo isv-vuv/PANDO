@@ -13,6 +13,7 @@ from core.locales import localizer
 from core.app.app_core.geo import get_utm_epsg
 from core.app.app_core.model_pipeline import load_parameter_defaults
 from core.app.app_core.pipeline import PipelineCallbacks, UrbanActPipeline, pipeline_readiness
+from core.app.app_core.workflow_state import StepId
 from core.app.app_qt.qt_base import (
     AnimatedProgressBar,
     Dialogs,
@@ -111,7 +112,7 @@ class PipelineWorker(_Q_OBJECT_BASE):
         self.phase_started.emit(name, index, total)
 
 
-class Step4ProcessingWidget(_Q_WIDGET_BASE):
+class ProcessingStepWidget(_Q_WIDGET_BASE):
     """Review external data and Model-2 values, then run the fixed chain."""
 
     status_changed = pyqtSignal(str) if pyqtSignal is not None else None
@@ -297,8 +298,7 @@ class Step4ProcessingWidget(_Q_WIDGET_BASE):
         root.setSpacing(8)
         header, _title_label, _step_label = create_step_header(
             self.localizer.get_string("step4_title", default="Schritt 4: Parameterprüfung und Verarbeitung"),
-            current_step=4,
-            total_steps=8,
+            current_step=StepId.PROCESSING,
             localizer=self.localizer,
             parent=self,
         )
@@ -1293,3 +1293,6 @@ class Step4ProcessingWidget(_Q_WIDGET_BASE):
     def append_log(self, text: str) -> None:
         if hasattr(self, "log_box") and self.log_box is not None:
             self.log_box.appendPlainText(text)
+
+
+Step4ProcessingWidget = ProcessingStepWidget

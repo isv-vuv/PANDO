@@ -436,6 +436,7 @@ def build_hierarchical_network(merged_pbf, osm_dir, osmium_exe, bin_dir, poly_pa
     rel_ferry_poly = "temp_ferry_buffer.poly"
     rel_ferry_buf_extract = "temp_ferry_buf_extract.osm.pbf"
     rel_net_ferry_access = "temp_net_5_ferry_access.osm.pbf"
+    rel_ferry_waterways = "temp_ferry_waterways.osm"
 
     rel_final = "hierarchical_network.osm"
     abs_final_osm = os.path.join(osm_dir, rel_final)
@@ -502,6 +503,14 @@ def build_hierarchical_network(merged_pbf, osm_dir, osmium_exe, bin_dir, poly_pa
                     run_osmium([osmium_exe, "tags-filter", rel_ferry_buf_extract, filter_ferry_access, "-o", rel_net_ferry_access, "--overwrite"])
                     if os.path.isfile(os.path.join(osm_dir, rel_net_ferry_access)):
                         merge_inputs.append(rel_net_ferry_access)
+                    # Extract river/canal centerlines separately (NOT merged into road network so PANDO_Importer never imports waterways as roads)
+                    filter_waterways = "w/waterway=river,canal,tidal_channel,fairway"
+                    run_osmium([osmium_exe, "tags-filter", rel_ferry_buf_extract, filter_waterways, "-o", rel_ferry_waterways, "--overwrite"])
+                    abs_temp_waterways = os.path.join(osm_dir, rel_ferry_waterways)
+                    if os.path.isfile(abs_temp_waterways) and os.path.getsize(abs_temp_waterways) > 0:
+                        target_dir = os.path.dirname(output_modified) or osm_dir
+                        os.makedirs(target_dir, exist_ok=True)
+                        shutil.copyfile(abs_temp_waterways, os.path.join(target_dir, "ferry_waterways.osm"))
             except Exception as buf_exc:
                 log(f"Hinweis: Lokaler Fährpuffer konnte nicht erzeugt werden ({buf_exc}).")
 
@@ -540,7 +549,7 @@ def build_hierarchical_network(merged_pbf, osm_dir, osmium_exe, bin_dir, poly_pa
         for tmp in [
             rel_temp_pa_ia1, rel_net_pa_ia1, rel_temp_ia2, rel_net_ia2,
             rel_net_oa, rel_net_ferry, rel_ferry_osm, rel_ferry_poly,
-            rel_ferry_buf_extract, rel_net_ferry_access,
+            rel_ferry_buf_extract, rel_net_ferry_access, rel_ferry_waterways,
             abs_final_osm, abs_final_orig_xml, abs_final_mod_xml
         ]:
             abs_tmp = tmp if os.path.isabs(tmp) else os.path.join(osm_dir, tmp)

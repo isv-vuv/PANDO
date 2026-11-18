@@ -4,6 +4,7 @@ from __future__ import annotations
 
 from typing import Optional
 
+from core.app.app_core.workflow_state import StepId
 from core.app.app_qt.map_preview import MapPreviewWidget
 from core.app.app_qt.qt_base import (
     Dialogs,
@@ -101,8 +102,8 @@ class LocationCardWidget(QtWidgets.QWidget if QtWidgets is not None else object)
         super().mousePressEvent(event)
 
 
-class Step1SearchWidget(_Q_WIDGET_BASE):
-    """Combined Step 1 widget: Search bar, geocoding results list, and map preview.
+class SearchStepWidget(_Q_WIDGET_BASE):
+    """Combined place-search widget: Search bar, geocoding results list, and map preview.
 
     The left pane contains the search box and the results list with radio buttons.
     The right pane displays an interactive map preview of the selected location.
@@ -185,8 +186,7 @@ class Step1SearchWidget(_Q_WIDGET_BASE):
         # Step Header spanning full window width
         header, _title_label, _step_label = create_step_header(
             self.localizer.get_string("step1_title"),
-            current_step=1,
-            total_steps=8,
+            current_step=StepId.SEARCH,
             localizer=self.localizer,
             parent=self,
         )
@@ -376,3 +376,6 @@ class Step1SearchWidget(_Q_WIDGET_BASE):
                 self._confirm_selection()
                 return True
         return super().eventFilter(watched, event)
+
+
+Step1SearchWidget = SearchStepWidget

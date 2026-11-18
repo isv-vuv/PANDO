@@ -189,10 +189,10 @@ class LinkTypesQtWidgetTests(unittest.TestCase):
 
     def test_step5_linktypes_wizard_5_subpages_and_dblclick_jump(self):
         from core.app.app_qt.qt_base import QtWidgets
-        from core.app.app_qt.steps.step5_linktypes import Step5LinkTypesWidget
+        from core.app.app_qt.steps.step_linktypes import LinkTypesStepWidget
 
         with tempfile.TemporaryDirectory() as tmp:
-            widget = Step5LinkTypesWidget(localizer, project_path=tmp)
+            widget = LinkTypesStepWidget(localizer, project_path=tmp)
             self.assertEqual(widget.tab_widget.count(), 5)
             self.assertFalse(widget.reset_button.isEnabled())
 
@@ -277,10 +277,10 @@ class LinkTypesQtWidgetTests(unittest.TestCase):
 
     def test_step6_visum_and_linktypes_dialog(self):
         from core.app.app_qt.dialogs.linktypes_dialog import LinkTypesConfigDialog
-        from core.app.app_qt.steps.step5_visum import Step5VisumWidget
+        from core.app.app_qt.steps.step_visum import VisumStepWidget
 
         with tempfile.TemporaryDirectory() as tmp:
-            widget = Step5VisumWidget(localizer, project_path=tmp)
+            widget = VisumStepWidget(localizer, project_path=tmp)
             self.assertAlmostEqual(widget.ferry_wait_spin.value(), 20.0)
 
             widget.ferry_wait_spin.setValue(35.0)
@@ -315,22 +315,36 @@ class LinkTypesQtWidgetTests(unittest.TestCase):
     def test_welcome_shows_8_steps_and_main_window_routes_step5_linktypes(self):
         from types import SimpleNamespace
         from unittest.mock import Mock
-        from core.app.app_core.workflow_state import StepId
+        from core.app.app_core.workflow_state import StepId, step_number_for_id
         from core.app.app_qt import main_window
         from core.app.app_qt.qt_base import QtWidgets
-        from core.app.app_qt.steps.step0_welcome import Step0WelcomeWidget
-        from core.app.app_qt.steps.step5_linktypes import Step5LinkTypesWidget
+        from core.app.app_qt.steps.step_welcome import WelcomeStepWidget
+        from core.app.app_qt.steps.step_linktypes import LinkTypesStepWidget
+        from core.app.app_qt.steps.step_visum import VisumStepWidget
+        from core.app.app_qt.steps.step5_visum import Step5VisumWidget
+        from core.app.app_qt.steps.step6_visum import Step6VisumWidget
+        from core.app.app_qt.steps.step7_results import Step7ResultsWidget
+        from core.app.app_qt.steps.step8_report import Step8ReportWidget
 
-        welcome = Step0WelcomeWidget(localizer)
+        self.assertIs(Step5VisumWidget, VisumStepWidget)
+        self.assertIs(Step6VisumWidget, VisumStepWidget)
+        self.assertEqual(step_number_for_id(StepId.LINKTYPES), 5)
+        self.assertEqual(step_number_for_id(StepId.VISUM), 6)
+        self.assertEqual(step_number_for_id(StepId.RESULTS), 7)
+        self.assertEqual(step_number_for_id(StepId.REPORT), 8)
+        self.assertTrue(hasattr(Step7ResultsWidget, "refresh_results"))
+        self.assertTrue(hasattr(Step8ReportWidget, "release_resources"))
+
+        welcome = WelcomeStepWidget(localizer)
         label_texts = [lbl.text() for lbl in welcome.findChildren(QtWidgets.QLabel)]
         self.assertTrue(any("Schritt 0 von 8" in txt for txt in label_texts))
         self.assertTrue(any("8." in txt for txt in label_texts))
         welcome.close()
 
-        # English Step5LinkTypesWidget also has zero Excel/xlsm references
+        # English LinkTypesStepWidget also has zero Excel/xlsm references
         localizer.set_language("en")
         try:
-            en_widget = Step5LinkTypesWidget(localizer)
+            en_widget = LinkTypesStepWidget(localizer)
             for lbl in en_widget.findChildren(QtWidgets.QLabel):
                 self.assertNotIn("excel", lbl.text().lower())
                 self.assertNotIn("xlsm", lbl.text().lower())
@@ -341,13 +355,13 @@ class LinkTypesQtWidgetTests(unittest.TestCase):
         # MainWindow StepId.LINKTYPES routing
         fake_win = SimpleNamespace(
             state=SimpleNamespace(current_step=StepId.LINKTYPES),
-            _show_step5_linktypes=Mock(),
-            _show_step5=Mock(),
+            _show_linktypes_step=Mock(),
+            _show_visum_step=Mock(),
             _proceed_from_linktypes_to_visum=Mock(),
             _current_step_widget=object(),
         )
         main_window.UrbanActQtMainWindow._show_step_by_id(fake_win, StepId.LINKTYPES)
-        fake_win._show_step5_linktypes.assert_called_once()
+        fake_win._show_linktypes_step.assert_called_once()
         main_window.UrbanActQtMainWindow._handle_next_requested(fake_win)
         fake_win._proceed_from_linktypes_to_visum.assert_called_once()
 

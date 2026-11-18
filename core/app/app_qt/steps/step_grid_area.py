@@ -29,6 +29,7 @@ from core.app.app_core.grid import (
     transfer_selected_cells,
 )
 from core.app.app_core.project import tool_root
+from core.app.app_core.workflow_state import StepId
 from core.app.app_qt.map_preview import (
     OsmAttributionOverlay,
     lonlat_to_web_mercator,
@@ -166,7 +167,7 @@ class Step3SelectionMapTool(_MAP_TOOL_BASE):
         return abs(current_pixel.x() - self._press_pixel.x()) + abs(current_pixel.y() - self._press_pixel.y()) >= 4
 
 
-class Step3GridAreaWidget(_Q_WIDGET_BASE):
+class GridAreaStepWidget(_Q_WIDGET_BASE):
     """Generates a UTM-based grid and lets the user classify cells on a QGIS canvas."""
 
     status_changed = pyqtSignal(str) if pyqtSignal is not None else None
@@ -274,8 +275,7 @@ class Step3GridAreaWidget(_Q_WIDGET_BASE):
         # Step Header spanning full window width
         header, _title_label, _step_label = create_step_header(
             self.localizer.get_string("step3_title"),
-            current_step=3,
-            total_steps=8,
+            current_step=StepId.GRID_AREA,
             localizer=self.localizer,
             parent=self,
         )
@@ -1429,6 +1429,7 @@ class Step3GridAreaWidget(_Q_WIDGET_BASE):
 
 
 # Backward compatibility aliases
-Step2GridAreaWidget = Step3GridAreaWidget
+Step3GridAreaWidget = GridAreaStepWidget
+Step2GridAreaWidget = GridAreaStepWidget
 FloatingMapToolbar = FloatingMapControls
 FloatingLayerSwitcher = FloatingMapControls

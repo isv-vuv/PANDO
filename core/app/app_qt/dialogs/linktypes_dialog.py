@@ -15,7 +15,7 @@ from core.app.app_qt.qt_base import (
     app_font,
     qfont_bold,
 )
-from core.app.app_qt.steps.step5_linktypes import LinkTypesEditorWidget
+from core.app.app_qt.steps.step_linktypes import LinkTypesEditorWidget
 
 _Q_DIALOG_BASE = QtWidgets.QDialog if QtWidgets is not None else object
 

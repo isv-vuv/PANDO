@@ -6,6 +6,7 @@ import os
 from typing import Optional
 
 from core.app.app_core.project import tool_root
+from core.app.app_core.workflow_state import ACTIVE_WORKFLOW_STEPS, StepId
 from core.app.app_qt.qt_base import (
     Qt,
     QtGui,
@@ -21,8 +22,8 @@ from core.app.app_qt.qt_base import (
 _Q_WIDGET_BASE = QtWidgets.QWidget if QtWidgets is not None else object
 
 
-class Step0WelcomeWidget(_Q_WIDGET_BASE):
-    """Welcome screen widget (Step 0) for PANDO."""
+class WelcomeStepWidget(_Q_WIDGET_BASE):
+    """Welcome screen widget for PANDO."""
 
     start_requested = pyqtSignal() if pyqtSignal is not None else None
     project_folder_open_requested = pyqtSignal() if pyqtSignal is not None else None
@@ -57,8 +58,7 @@ class Step0WelcomeWidget(_Q_WIDGET_BASE):
 
         header, _title_label, step_label = create_step_header(
             self.localizer.get_string("step0_title"),
-            current_step=0,
-            total_steps=8,
+            current_step=StepId.WELCOME,
             localizer=self.localizer,
             parent=container,
         )
@@ -149,7 +149,7 @@ class Step0WelcomeWidget(_Q_WIDGET_BASE):
                 title = raw_text.strip()
             return f"<b>{num}.</b> {title}"
 
-        # Dynamically load the exact titles from steps 1 to 8
+        # Dynamically load titles from ACTIVE_WORKFLOW_STEPS
         steps_grid = QtWidgets.QGridLayout()
         steps_grid.setContentsMargins(4, 2, 4, 2)
         steps_grid.setHorizontalSpacing(24)
@@ -157,20 +157,26 @@ class Step0WelcomeWidget(_Q_WIDGET_BASE):
         steps_grid.setColumnStretch(0, 1)
         steps_grid.setColumnStretch(1, 1)
 
+        title_keys = {
+            StepId.SEARCH: "step1_title",
+            StepId.PROJECT_PBF: "step2_title",
+            StepId.GRID_AREA: "step3_title",
+            StepId.PROCESSING: "step4_title",
+            StepId.LINKTYPES: "step5_linktypes_title",
+            StepId.VISUM: "step5_title",
+            StepId.RESULTS: "step6_title",
+            StepId.REPORT: "step7_title",
+        }
         raw_titles = [
-            self.localizer.get_string("step1_title"),
-            self.localizer.get_string("step2_title"),
-            self.localizer.get_string("step3_title"),
-            self.localizer.get_string("step4_title"),
-            self.localizer.get_string("step5_linktypes_title", default="Schritt 5: Streckentypen und Fährparameter"),
-            self.localizer.get_string("step5_title"),
-            self.localizer.get_string("step6_title"),
-            self.localizer.get_string("step7_title"),
+            self.localizer.get_string(title_keys[step], default=step.name.title())
+            for step in ACTIVE_WORKFLOW_STEPS
+            if step in title_keys
         ]
+        half = (len(raw_titles) + 1) // 2
 
         for i, raw_title in enumerate(raw_titles):
-            col = 0 if i < 4 else 1
-            row = i if i < 4 else i - 4
+            col = 0 if i < half else 1
+            row = i if i < half else i - half
             lbl = QtWidgets.QLabel(_clean_title(raw_title, i + 1), steps_card)
             lbl.setFont(app_font(9))
             lbl.setWordWrap(True)
@@ -361,3 +367,6 @@ class Step0WelcomeWidget(_Q_WIDGET_BASE):
     def _handle_open_folder(self) -> None:
         if self.project_folder_open_requested is not None:
             self.project_folder_open_requested.emit()
+
+
+Step0WelcomeWidget = WelcomeStepWidget

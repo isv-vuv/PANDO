@@ -40,6 +40,7 @@ from core.app.app_core.project import (
     workspace_data_dir,
     tool_root,
 )
+from core.app.app_core.workflow_state import StepId
 from core.app.app_qt.map_preview import OsmAttributionOverlay, create_high_quality_osm_layer, setup_map_canvas
 from core.app.app_qt.qt_base import (
     AnimatedProgressBar,
@@ -543,7 +544,7 @@ class IndexUpdateWorker(_Q_OBJECT_BASE):
                 self.finished.emit(False, str(exc))
 
 
-class Step2DataWidget(_Q_WIDGET_BASE):
+class DataStepWidget(_Q_WIDGET_BASE):
     """Creates the project folder and prepares geodata inputs (GADM, POP & OSM PBF)."""
 
     status_changed = pyqtSignal(str) if pyqtSignal is not None else None
@@ -657,8 +658,7 @@ class Step2DataWidget(_Q_WIDGET_BASE):
         # Title: Top Left (Fixed position)
         header, _title_label, _step_label = create_step_header(
             self.localizer.get_string("step2_title", default="Schritt 2: Projektordner und Geodaten-Setup"),
-            current_step=2,
-            total_steps=8,
+            current_step=StepId.PROJECT_PBF,
             localizer=self.localizer,
             parent=self,
         )
@@ -2185,5 +2185,6 @@ class Step2DataWidget(_Q_WIDGET_BASE):
         self._index_update_worker = None
 
 
-# Backward compatibility alias
-Step3DataWidget = Step2DataWidget
+# Backward compatibility aliases
+Step2DataWidget = DataStepWidget
+Step3DataWidget = DataStepWidget

@@ -12,6 +12,7 @@ from pathlib import Path
 from typing import Optional, Sequence
 
 from core.locales import localizer
+from core.app.app_core.workflow_state import StepId
 from core.scripts.visum.scripts.visum_com import create_visum
 from core.app.app_qt.results_map import ResultsMapWidget
 from core.app.app_qt.qt_base import (
@@ -485,8 +486,8 @@ class ResultCardWidget(_Q_WIDGET_BASE):
                 )
 
 
-class Step6ResultsWidget(_Q_WIDGET_BASE):
-    """Step 6 Widget providing an overview of all generated results and opening tools."""
+class ResultsStepWidget(_Q_WIDGET_BASE):
+    """Widget providing an overview of all generated results and opening tools."""
 
     recalculate_requested = pyqtSignal() if pyqtSignal else None
 
@@ -517,8 +518,7 @@ class Step6ResultsWidget(_Q_WIDGET_BASE):
         # Header
         self.header, _title_label, _step_label = create_step_header(
             self.localizer.get_string("step6_title", default="Schritt 7: Ergebnisse und Auswertung"),
-            current_step=7,
-            total_steps=8,
+            current_step=StepId.RESULTS,
             localizer=self.localizer,
             parent=self,
         )
@@ -943,3 +943,7 @@ class Step6ResultsWidget(_Q_WIDGET_BASE):
         self.stale_text.setText(self.localizer.get_string('centres_stale'))
         self.recalculate_button.setText(self.localizer.get_string('centres_prepare_update'))
         self.results_map.retranslate_ui()
+
+
+Step7ResultsWidget = ResultsStepWidget
+Step6ResultsWidget = ResultsStepWidget

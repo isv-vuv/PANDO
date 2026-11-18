@@ -9,6 +9,7 @@ from typing import Optional
 from pathlib import Path
 
 from core.locales import localizer
+from core.app.app_core.workflow_state import StepId
 from core.app.app_qt.qt_base import (
     AnimatedProgressBar,
     Dialogs,
@@ -253,8 +254,8 @@ class CentralityUpdateWorker(VisumWorker):
             self.finished.emit(False, str(exc))
 
 
-class Step5VisumWidget(_Q_WIDGET_BASE):
-    """Step 5 Widget for executing and watching Visum post-processing."""
+class VisumStepWidget(_Q_WIDGET_BASE):
+    """Widget for executing and watching Visum post-processing."""
 
     run_requested = pyqtSignal() if pyqtSignal is not None else None
     finished = pyqtSignal(bool, str) if pyqtSignal is not None else None
@@ -294,8 +295,7 @@ class Step5VisumWidget(_Q_WIDGET_BASE):
 
         self.header, _title_label, _step_label = create_step_header(
             self.localizer.get_string("step5_title", default="Schritt 6: Visum-Import und Verarbeitung"),
-            current_step=6,
-            total_steps=8,
+            current_step=StepId.VISUM,
             localizer=self.localizer,
             parent=self,
         )
@@ -855,3 +855,7 @@ class Step5VisumWidget(_Q_WIDGET_BASE):
             self.phase_label.setText(self.localizer.get_string("step5_status_error", default="Status: Abgebrochen / Fehler"))
             title = self.localizer.get_string("step5_title_error", default="Fehler")
             Dialogs.error(self, title, message)
+
+
+Step6VisumWidget = VisumStepWidget
+Step5VisumWidget = VisumStepWidget

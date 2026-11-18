@@ -1788,7 +1788,7 @@ def post_process_exports_and_styles(project_path: str, *, log: Optional[Callable
 
     # 6. Generate Master QGIS Project with local CRS and OpenStreetMap background
     try:
-        from core.app.app_qt.steps.step6_results import create_qgis_project_for_layers
+        from core.app.app_qt.steps.step_results import create_qgis_project_for_layers
         qgis_out = Path(project_path) / "processed" / "qgis_output"
         all_layers = [
             qgis_out / "model6_ZoneAssembler" / "zone_centroids.gpkg",

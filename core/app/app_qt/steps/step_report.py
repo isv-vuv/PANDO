@@ -8,11 +8,12 @@ from core.app.app_qt.qt_base import QtCore, QtGui, QtWidgets, Qt, create_step_he
 from core.app.app_core.project import tool_root
 from core.app.app_core.centrality_edits import project_session
 from core.app.app_core.report_data import report_blockers
+from core.app.app_core.workflow_state import StepId
 
 _BASE = QtWidgets.QWidget if QtWidgets is not None else object
 
 
-class Step7ReportWidget(_BASE):
+class ReportStepWidget(_BASE):
     generation_finished = pyqtSignal() if pyqtSignal else None
 
     def __init__(self, localizer_obj, parent=None, project_path=''):
@@ -33,7 +34,7 @@ class Step7ReportWidget(_BASE):
         self.cancel_timer.setSingleShot(True)
         self.cancel_timer.timeout.connect(self._kill_process)
         layout = QtWidgets.QVBoxLayout(self)
-        header, _, _ = create_step_header(self.text('step7_title'), current_step=8, total_steps=8, localizer=self.localizer, parent=self)
+        header, _, _ = create_step_header(self.text('step7_title'), current_step=StepId.REPORT, localizer=self.localizer, parent=self)
         layout.addWidget(header)
         actions = QtWidgets.QHBoxLayout()
         self.generate_button = QtWidgets.QPushButton(self.text('report_generate'))
@@ -294,3 +295,7 @@ class Step7ReportWidget(_BASE):
             process.waitForFinished(1500)
         self.progress.stop_animation()
         self._close_pdf()
+
+
+Step8ReportWidget = ReportStepWidget
+Step7ReportWidget = ReportStepWidget

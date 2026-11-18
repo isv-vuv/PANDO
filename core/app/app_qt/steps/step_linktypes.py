@@ -6,6 +6,7 @@ import copy
 from typing import Any, Mapping, Optional
 
 from core.locales import localizer
+from core.app.app_core.workflow_state import StepId
 from core.app.app_core.linktypes_config import (
     ALL_LANES,
     ALL_SPEEDS,
@@ -1293,8 +1294,8 @@ class LinkTypesEditorWidget(_Q_WIDGET_BASE):
             self.config_changed.emit()
 
 
-class Step5LinkTypesWidget(_Q_WIDGET_BASE):
-    """Dedicated Step 5 wizard page for configuring link types and ferry parameters."""
+class LinkTypesStepWidget(_Q_WIDGET_BASE):
+    """Dedicated wizard page for configuring link types and ferry parameters."""
 
     next_requested = pyqtSignal() if pyqtSignal is not None else None
     status_changed = pyqtSignal(str) if pyqtSignal is not None else None
@@ -1323,8 +1324,7 @@ class Step5LinkTypesWidget(_Q_WIDGET_BASE):
                 "step5_linktypes_title",
                 default="Schritt 5: Streckentypen und Fährparameter",
             ),
-            current_step=5,
-            total_steps=8,
+            current_step=StepId.LINKTYPES,
             localizer=self.localizer,
             parent=self,
         )
@@ -1386,3 +1386,6 @@ class Step5LinkTypesWidget(_Q_WIDGET_BASE):
             self.editor.save_to_project(self.project_path)
         if self.status_changed is not None:
             self.status_changed.emit(self.editor.summary_label.text())
+
+
+Step5LinkTypesWidget = LinkTypesStepWidget
