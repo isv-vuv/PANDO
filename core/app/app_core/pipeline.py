@@ -1317,6 +1317,7 @@ class UrbanActPipeline:
                 parameters=model_parameters[description.key],
             )
             save_pipeline_manifest(self.project_path, manifest)
+            any_model_executed["flag"] = True
 
         def model_reused(description, index: int, _total: int, model_context) -> None:
             phase_num = index + 1 if index < 6 else index + 2
@@ -1429,6 +1430,7 @@ class UrbanActPipeline:
             from core.app.app_core.linktypes_config import resolve_project_master_net
 
             callbacks.phase_started("OSM-Straßennetz & POIs (hierarchisches Netz, Fähren & Einrichtungen)", 7, 9)
+            any_model_executed["flag"] = True
             update_manifest_phase(manifest, "osm_phase_c", "running")
             save_pipeline_manifest(self.project_path, manifest)
             master_net_path = resolve_project_master_net(
@@ -1459,6 +1461,7 @@ class UrbanActPipeline:
             self.project_path,
             model_directory=manifest["active_model_source"],
         )
+        any_model_executed = {"flag": False}
         try:
             result = pipeline.run(
                 context,
@@ -1490,8 +1493,20 @@ class UrbanActPipeline:
                 update_manifest_phase(manifest, str(current_model["key"]), "failed", error=f"{exc}\n{error_trace}")
                 save_pipeline_manifest(self.project_path, manifest)
             raise
-        callbacks.phase_started("Exporte und Projektaufbereitung", 9, 9)
-        post_process_exports_and_styles(self.project_path, log=log)
+        visum_zones_dir = os.path.join(self.project_path, "processed", "visum", "shapefile", "Zones")
+        master_qgs = os.path.join(self.project_path, "processed", "qgis_output", "pando_master.qgs")
+        exports_exist = (
+            os.path.isfile(os.path.join(visum_zones_dir, "zones.shp"))
+            and os.path.isfile(os.path.join(visum_zones_dir, "mainzones.shp"))
+            and os.path.isfile(os.path.join(visum_zones_dir, "adm0.geojson"))
+            and os.path.isfile(master_qgs)
+        )
+        if any_model_executed["flag"] or forced_recalc_keys or not exports_exist:
+            callbacks.phase_started("Exporte und Projektaufbereitung", 9, 9)
+            post_process_exports_and_styles(self.project_path, log=log)
+        else:
+            callbacks.phase_started("Exporte und Projektaufbereitung (wiederverwendet)", 9, 9)
+            log("Exporte, Shapefiles/GeoJSON und Styles bereits aktuell – übersprungen.")
         save_pipeline_manifest(self.project_path, manifest)
         callbacks.phase_progress(100)
         return result

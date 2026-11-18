@@ -59,14 +59,17 @@ PANDO guides users through the model generation process step by step:
 2. **Project Folder and Geospatial Data Setup**: Create the project folder, prepare the base data (GADM, GHS-POP), and download the OSM data (PBF).
 3. **Study Area and Grid Definition**: Define the grid and model areas (PA, IA1, IA2), and preview the ADM2 external area.
 4. **Geospatial Data Processing**: Run OSM preprocessing with Osmium and the QGIS model processing steps (data preparation, classification of central places, grid generation and assignment, intensity estimates and intramunicipal centralities both within the study area and nationwide, and transport zone generation).
-5. **Visum Import and Analysis**:
+5. **Link Types & Ferry Parameters**: Configure OSM road categories, lane classes, speed brackets, allowed transport systems (`TSysSet`), hourly capacities (`CapPrT`), separate impedance factors (Car, Bike, Walk), special link types, and ferry wait time.
+6. **Visum Import and Processing**:
    - Import the link network (Links) and transport zones (Zones).
+   - Derive access nodes and connect ferry terminals.
+   - Restructure link types using the configuration from Step 5.
    - Generate connectors (Connectors).
    - Generate straight-line distance matrices (Direct Line Matrices).
-   - Run the procedure sequence (RIN network categorization and accessibility analyses).
+   - Run the procedure sequence (RIN network categorization, POI/ADM GeoJSON import, and accessibility analyses).
    - Save the final Visum file and apply graphic parameters.
-6. **Results**: View an overview and export selected result data and analyses to QGIS/Visum.
-7. **Report**: Generate nine QGIS maps and a PDF report using the actual project inputs and calculated parameters, preview it and save a copy. Templates, maps and PDF are stored in the project’s `report/` folder.
+7. **Results & Evaluation**: View an overview and export selected result data and analyses to QGIS/Visum.
+8. **Report**: Generate nine QGIS maps and a PDF report using the actual project inputs and calculated parameters, preview it and save a copy. Templates, maps and PDF are stored in the project’s `report/` folder.
 
 ---
 

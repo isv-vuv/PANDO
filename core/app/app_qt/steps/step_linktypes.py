@@ -103,8 +103,7 @@ class _CategoryItemDelegate(_Q_DELEGATE_BASE):
     """Two-line styled card delegate for hierarchical OSM categories."""
 
     def sizeHint(self, option, index):
-        hint = super().sizeHint(option, index)
-        return QtCore.QSize(hint.width(), 52)
+        return QtCore.QSize(160, 42)
 
     def paint(self, painter, option, index):
         if QtWidgets is None:
@@ -112,37 +111,77 @@ class _CategoryItemDelegate(_Q_DELEGATE_BASE):
         painter.save()
         opt = QtWidgets.QStyleOptionViewItem(option)
         self.initStyleOption(opt, index)
+        user_role = qt_enum(Qt, "UserRole", "ItemDataRole")
         is_selected = bool(opt.state & qt_enum(QtWidgets.QStyle, "State_Selected", "StateFlag"))
         is_hover = bool(opt.state & qt_enum(QtWidgets.QStyle, "State_MouseOver", "StateFlag"))
-        is_ramp = bool(index.data(qt_enum(Qt, "UserRole", "ItemDataRole") + 2))
-        enabled = bool(index.data(qt_enum(Qt, "UserRole", "ItemDataRole") + 3))
+        is_ramp = bool(index.data(user_role + 2))
+        enabled = bool(index.data(user_role + 3))
 
-        rect = opt.rect.adjusted(3, 2, -3, -2)
+        rect = opt.rect.adjusted(2, 1, -2, -1)
         bg = QtGui.QColor("#eff6ff") if is_selected else (QtGui.QColor("#f8fafc") if is_hover else QtGui.QColor("#ffffff"))
         border = QtGui.QColor("#3b82f6") if is_selected else QtGui.QColor("#e2e8f0")
         painter.setRenderHint(QtGui.QPainter.RenderHint.Antialiasing if hasattr(QtGui.QPainter, "RenderHint") else QtGui.QPainter.Antialiasing)
         painter.setBrush(bg)
         painter.setPen(QtGui.QPen(border, 1.2 if is_selected else 1.0))
-        painter.drawRoundedRect(rect, 6, 6)
+        painter.drawRoundedRect(rect, 5, 5)
 
-        left_pad = 22 if is_ramp else 10
-        text_rect = rect.adjusted(left_pad, 5, -10, -5)
-        title = str(index.data(qt_enum(Qt, "UserRole", "ItemDataRole") + 4) or index.data() or "")
-        subtitle = str(index.data(qt_enum(Qt, "UserRole", "ItemDataRole") + 1) or "")
+        x_cursor = rect.left() + (18 if is_ramp else 8)
+        if is_ramp:
+            # Crisp vector L-connector for _link sub-categories
+            conn_pen = QtGui.QPen(QtGui.QColor("#94a3b8"), 1.3)
+            conn_pen.setCapStyle(qt_enum(Qt, "RoundCap", "PenCapStyle"))
+            conn_pen.setJoinStyle(qt_enum(Qt, "RoundJoin", "PenJoinStyle"))
+            painter.setPen(conn_pen)
+            cx = rect.left() + 9
+            cy = rect.top() + 14
+            painter.drawPolyline(QtGui.QPolygon([
+                QtCore.QPoint(cx, rect.top() + 5),
+                QtCore.QPoint(cx, cy),
+                QtCore.QPoint(cx + 6, cy),
+            ]))
 
-        title_font = app_font(10, qfont_bold())
+        # Crisp vector status badge (checkmark or cross)
+        badge_size = 13
+        badge_rect = QtCore.QRect(x_cursor, rect.top() + 5, badge_size, badge_size)
+        badge_bg = QtGui.QColor("#dbeafe" if enabled else "#f1f5f9")
+        badge_border = QtGui.QColor("#3b82f6" if enabled else "#cbd5e1")
+        painter.setBrush(badge_bg)
+        painter.setPen(QtGui.QPen(badge_border, 1.0))
+        painter.drawEllipse(badge_rect)
+
+        icon_pen = QtGui.QPen(QtGui.QColor("#1d4ed8" if enabled else "#94a3b8"), 1.5)
+        icon_pen.setCapStyle(qt_enum(Qt, "RoundCap", "PenCapStyle"))
+        icon_pen.setJoinStyle(qt_enum(Qt, "RoundJoin", "PenJoinStyle"))
+        painter.setPen(icon_pen)
+        bx, by = badge_rect.left(), badge_rect.top()
+        if enabled:
+            painter.drawPolyline(QtGui.QPolygon([
+                QtCore.QPoint(bx + 3, by + 7),
+                QtCore.QPoint(bx + 6, by + 10),
+                QtCore.QPoint(bx + 10, by + 4),
+            ]))
+        else:
+            painter.drawLine(bx + 4, by + 4, bx + 9, by + 9)
+            painter.drawLine(bx + 9, by + 4, bx + 4, by + 9)
+
+        text_left = badge_rect.right() + 7
+        text_width = max(10, rect.right() - 8 - text_left)
+        title = str(index.data(user_role + 4) or index.data() or "")
+        subtitle = str(index.data(user_role + 1) or "")
+
+        title_font = app_font(9, qfont_bold())
         sub_font = app_font(8)
         title_color = QtGui.QColor("#1e40af" if is_selected else ("#0f172a" if enabled else "#94a3b8"))
         sub_color = QtGui.QColor("#3b82f6" if is_selected else ("#64748b" if enabled else "#cbd5e1"))
 
         painter.setFont(title_font)
         painter.setPen(title_color)
-        title_box = QtCore.QRect(text_rect.left(), text_rect.top(), text_rect.width(), 20)
+        title_box = QtCore.QRect(text_left, rect.top() + 3, text_width, 17)
         painter.drawText(title_box, qt_enum(Qt, "AlignLeft", "AlignmentFlag") | qt_enum(Qt, "AlignVCenter", "AlignmentFlag"), title)
 
         painter.setFont(sub_font)
         painter.setPen(sub_color)
-        sub_box = QtCore.QRect(text_rect.left(), text_rect.top() + 21, text_rect.width(), 18)
+        sub_box = QtCore.QRect(text_left, rect.top() + 20, text_width, 16)
         elided_sub = painter.fontMetrics().elidedText(subtitle, qt_enum(Qt, "ElideRight", "TextElideMode"), sub_box.width())
         painter.drawText(sub_box, qt_enum(Qt, "AlignLeft", "AlignmentFlag") | qt_enum(Qt, "AlignVCenter", "AlignmentFlag"), elided_sub)
         painter.restore()
@@ -521,9 +560,9 @@ class LinkTypesEditorWidget(_Q_WIDGET_BASE):
         left_layout.setSpacing(6)
 
         self.category_list = QtWidgets.QListWidget(left_box)
-        self.category_list.setMinimumWidth(285)
-        self.category_list.setMaximumWidth(360)
-        self.category_list.setSpacing(4)
+        self.category_list.setMinimumWidth(240)
+        self.category_list.setSpacing(2)
+        self.category_list.setHorizontalScrollBarPolicy(qt_enum(Qt, "ScrollBarAlwaysOff", "ScrollBarPolicy"))
         self.category_list.setStyleSheet(
             "QListWidget { border: none; background: transparent; outline: none; } "
             "QListWidget::item { background: transparent; border: none; }"
@@ -541,6 +580,7 @@ class LinkTypesEditorWidget(_Q_WIDGET_BASE):
         # Right panel: Selected category details cleanly organized
         right_scroll = QtWidgets.QScrollArea(page)
         right_scroll.setWidgetResizable(True)
+        right_scroll.setHorizontalScrollBarPolicy(qt_enum(Qt, "ScrollBarAlwaysOff", "ScrollBarPolicy"))
         right_scroll.setFrameShape(qt_enum(QtWidgets.QFrame, "NoFrame", "Shape"))
 
         right_widget = QtWidgets.QWidget(right_scroll)
@@ -666,6 +706,7 @@ class LinkTypesEditorWidget(_Q_WIDGET_BASE):
         splitter.addWidget(right_scroll)
         splitter.setStretchFactor(0, 0)
         splitter.setStretchFactor(1, 1)
+        splitter.setSizes([300, 640])
         layout.addWidget(splitter, 1)
 
         # Bottom bus-lane option
@@ -1011,7 +1052,7 @@ class LinkTypesEditorWidget(_Q_WIDGET_BASE):
         else:
             spd_str = f"{speeds[0]}–{speeds[-1]}"
         tsys_count = len(cat_cfg.get("tsys", ()))
-        return f"{spec.abbr} · L {lanes_str} · V {spd_str} km/h · {tsys_count} TSys · GType {spec.gtype}"
+        return f"{spec.abbr} · L {lanes_str} · V {spd_str} km/h · {tsys_count} TSys"
 
     def _refresh_category_list_labels(self) -> None:
         user_role = qt_enum(Qt, "UserRole", "ItemDataRole")
@@ -1021,8 +1062,7 @@ class LinkTypesEditorWidget(_Q_WIDGET_BASE):
             spec = STRUCTURED_BY_KEY[key]
             cat_cfg = self._config["categories"][key]
             enabled = bool(cat_cfg["enabled"])
-            prefix = "✓" if enabled else "✗"
-            title = f"{prefix} {spec.key}" if not spec.is_ramp else f"↳ {prefix} {spec.key}"
+            title = spec.key
             subtitle = self._format_category_subtitle(spec, cat_cfg)
             item.setText(f"{title} ({subtitle})")
             item.setData(user_role + 1, subtitle)
