@@ -118,6 +118,17 @@ class ProcessingStepWidget(_Q_WIDGET_BASE):
     status_changed = pyqtSignal(str) if pyqtSignal is not None else None
     next_requested = pyqtSignal() if pyqtSignal is not None else None
 
+    _START_STEP_OPTIONS: tuple[tuple[Optional[str], str, str], ...] = (
+        (None, "step4_combo_auto", "Automatisch (nur fehlende oder geänderte Schritte berechnen)"),
+        ("osm_phase_a", "step4_combo_step1_osm_base", "Schritt 1: Komplett ab OSM-Basisdaten (Regionen zusammenführen, Siedlungsflächen & Orte)"),
+        ("model1", "step4_combo_step2_model1", "Schritt 2: Ab Modell 1 – Datenaufbereitung (Bevölkerungsraster & Grenzen)"),
+        ("model2", "step4_combo_step3_model2", "Schritt 3: Ab Modell 2 – Zentrale Orte klassifizieren (ADM2)"),
+        ("model3", "step4_combo_step4_model3", "Schritt 4: Ab Modell 3 – Untersuchungsgitter & Raumkategorien (Modell 3–4)"),
+        ("osm_phase_c", "step4_combo_step5_osm_net", "Schritt 5: Ab OSM-Straßennetz & POIs (hierarchisches Netz, Fähren & Einrichtungen)"),
+        ("model5", "step4_combo_step6_model5", "Schritt 6: Ab Modell 5 – Innergemeindliche Zentralitäten & Intensitätsschätzung"),
+        ("model6", "step4_combo_step7_model6", "Schritt 7: Ab Modell 6 – Finale Verkehrszellen zusammenführen"),
+    )
+
     _MODEL2_FIELDS = (
         ("minimum_population_level_0", "min_pop_0", "Mindestbevölkerung Metropolregion (Stufe 0)", 1, 100_000_000),
         ("minimum_population_level_1", "min_pop_1", "Mindestbevölkerung Oberzentrum (Stufe 1)", 1, 100_000_000),
@@ -193,6 +204,8 @@ class ProcessingStepWidget(_Q_WIDGET_BASE):
         self.nw_min_intensity_edit = None
         self.nw_min_intensity_l3_edit = None
         self.readiness_label = None
+        self.step_label = None
+        self.step_combo = None
         self.start_button = None
         self.restart_button = None
         self.stop_button = None
@@ -580,6 +593,18 @@ class ProcessingStepWidget(_Q_WIDGET_BASE):
         self.elapsed_label = QtWidgets.QLabel("00:00", execution_box)
         self.overall_progress = AnimatedProgressBar(execution_box, sync_taskbar=True)
         self.phase_progress = AnimatedProgressBar(execution_box, sync_taskbar=False)
+        self.step_label = QtWidgets.QLabel(
+            self.localizer.get_string("step4_label_start_from_step", default="Starten ab Schritt:"),
+            execution_box,
+        )
+        self.step_label.setFont(app_font(9, qfont_bold()))
+        self.step_combo = QtWidgets.QComboBox(execution_box)
+        for phase_key, locale_key, default_text in self._START_STEP_OPTIONS:
+            self.step_combo.addItem(
+                self.localizer.get_string(locale_key, default=default_text),
+                phase_key,
+            )
+
         self.start_button = QtWidgets.QPushButton(self.localizer.get_string("step4_button_start"), execution_box)
         self.start_button.setStyleSheet(
             "QPushButton:enabled { background-color: #dcfce7; color: #166534; "
@@ -591,32 +616,36 @@ class ProcessingStepWidget(_Q_WIDGET_BASE):
         self.restart_button.setToolTip(
             self.localizer.get_string(
                 "step4_tooltip_restart",
-                default="Verwirft die gespeicherten Modellfortschritte ab Modell 1; die OSM-Vorverarbeitung Phase A wird weiterhin wiederverwendet."
+                default="Verwirft alle bisherigen Berechnungen und führt OSM-Basisdaten, Straßennetz/POIs sowie alle Modelle neu aus."
             )
         )
+        self.restart_button.hide()
         self.stop_button = QtWidgets.QPushButton(self.localizer.get_string("step4_button_stop"), execution_box)
         self.stop_button.setEnabled(False)
         self.start_button.clicked.connect(self.start_pipeline)
         self.restart_button.clicked.connect(self.restart_pipeline)
         self.stop_button.clicked.connect(self.stop_pipeline)
 
+        execution.addWidget(self.step_label, 1, 0)
+        execution.addWidget(self.step_combo, 1, 1, 1, 2)
+
         lbl_step = QtWidgets.QLabel(self.localizer.get_string("step4_label_current_step"), execution_box)
-        execution.addWidget(lbl_step, 1, 0)
+        execution.addWidget(lbl_step, 2, 0)
 
         step_row_layout = QtWidgets.QHBoxLayout()
         step_row_layout.addWidget(self.phase_label, 1)
         step_row_layout.addWidget(self.elapsed_label)
-        execution.addLayout(step_row_layout, 1, 1, 1, 2)
+        execution.addLayout(step_row_layout, 2, 1, 1, 2)
 
         lbl_phase_prog = QtWidgets.QLabel(self.localizer.get_string("step4_label_step_progress"), execution_box)
-        execution.addWidget(lbl_phase_prog, 2, 0)
-        execution.addWidget(self.phase_progress, 2, 1, 1, 2)
+        execution.addWidget(lbl_phase_prog, 3, 0)
+        execution.addWidget(self.phase_progress, 3, 1, 1, 2)
 
         lbl_overall_prog = QtWidgets.QLabel(self.localizer.get_string("step4_label_overall_progress"), execution_box)
-        execution.addWidget(lbl_overall_prog, 3, 0)
-        execution.addWidget(self.overall_progress, 3, 1, 1, 2)
+        execution.addWidget(lbl_overall_prog, 4, 0)
+        execution.addWidget(self.overall_progress, 4, 1, 1, 2)
 
-        # Bottom 3-button row starting at column 1 (X = 240px offset, aligned with Stopp button starting line)
+        # Bottom button row starting at column 1 (X = 240px offset, aligned with Stopp button starting line)
         exec_buttons_widget = QtWidgets.QWidget(execution_box)
         exec_buttons_layout = QtWidgets.QHBoxLayout(exec_buttons_widget)
         exec_buttons_layout.setContentsMargins(0, 0, 0, 0)
@@ -624,7 +653,7 @@ class ProcessingStepWidget(_Q_WIDGET_BASE):
         exec_buttons_layout.addWidget(self.stop_button, 1)
         exec_buttons_layout.addWidget(self.restart_button, 1)
         exec_buttons_layout.addWidget(self.start_button, 1)
-        execution.addWidget(exec_buttons_widget, 4, 1, 1, 2)
+        execution.addWidget(exec_buttons_widget, 5, 1, 1, 2)
 
         layout.addWidget(execution_box)
 
@@ -685,20 +714,37 @@ class ProcessingStepWidget(_Q_WIDGET_BASE):
             self.start_button.setEnabled(not blockers and self._thread is None)
         if self.restart_button is not None:
             self.restart_button.setEnabled(not blockers and self._thread is None)
+        if getattr(self, "step_combo", None) is not None:
+            self.step_combo.setEnabled(not blockers and self._thread is None)
+
+    def _selected_start_phase(self) -> Optional[str]:
+        combo = getattr(self, "step_combo", None)
+        if combo is None:
+            return None
+        return combo.currentData()
 
     def start_pipeline(self) -> None:
-        self._start_pipeline(force_restart_models=False)
+        start_phase = self._selected_start_phase()
+        self._start_pipeline(
+            force_restart_models=(start_phase == "osm_phase_a"),
+            start_from_phase=start_phase,
+        )
 
     def restart_pipeline(self) -> None:
         if not Dialogs.confirm(
             self,
-            self.localizer.get_string("step4_dialog_confirm_restart_title", default="Alle Modelle neu berechnen"),
-            self.localizer.get_string("step4_dialog_confirm_restart_body", default="Sollen Modell 1 bis Modell 6 und OSM Phase C wirklich neu berechnet werden?"),
+            self.localizer.get_string("step4_dialog_confirm_restart_title", default="Alles neu berechnen"),
+            self.localizer.get_string("step4_dialog_confirm_restart_body", default="Sollen die OSM-Basisdaten, Straßennetz/POIs sowie alle Modelle (Modell 1 bis Modell 6) wirklich neu berechnet werden?"),
         ):
             return
-        self._start_pipeline(force_restart_models=True)
+        self._start_pipeline(force_restart_models=True, start_from_phase="osm_phase_a")
 
-    def _start_pipeline(self, *, force_restart_models: bool) -> None:
+    def _start_pipeline(
+        self,
+        *,
+        force_restart_models: bool,
+        start_from_phase: Optional[str] = None,
+    ) -> None:
         self._stopped_by_user = False
         self.refresh_readiness()
         if not self.start_button.isEnabled() or self._thread is not None:
@@ -726,6 +772,7 @@ class ProcessingStepWidget(_Q_WIDGET_BASE):
             "custom_census": census_val,
             "no_local_reference": not self.rb_ref_yes.isChecked(),
             "force_restart_models": force_restart_models,
+            "start_from_phase": start_from_phase,
             "run_nationwide_intensity": self.rb_nationwide_yes.isChecked(),
             "nationwide_parameters": {
                 "radius": self._read_int_field(self.nw_radius_edit, 500),
@@ -745,7 +792,7 @@ class ProcessingStepWidget(_Q_WIDGET_BASE):
             if blocker.startswith(("Projekt", "Keine PBF", "PBF fehlt", "Mindestens eine PA"))
         ]
         if basic_blockers:
-            self.log_box.appendPlainText(self.localizer.get_string("step4_log_phase_a_waiting", blockers="; ".join(basic_blockers), default="OSM-Phase A wartet: " + "; ".join(basic_blockers)))
+            self.log_box.appendPlainText(self.localizer.get_string("step4_log_phase_a_waiting", blockers="; ".join(basic_blockers), default="OSM-Basisdaten warten: " + "; ".join(basic_blockers)))
             return
         reusable = UrbanActPipeline(
             self.project_path, self.step_data
@@ -754,14 +801,14 @@ class ProcessingStepWidget(_Q_WIDGET_BASE):
             self._outputs.update(reusable)
             self.phase_progress.setRange(0, 100)
             self.phase_progress.setValue(100)
-            self.phase_progress.setFormat(self.localizer.get_string("step4_format_phase_a_ready", default="%p% – OSM-Vorverarbeitung vorhanden"))
-            self.phase_label.setText(self.localizer.get_string("step4_status_phase_a_ready", default="OSM-Vorverarbeitung bereits vorhanden"))
+            self.phase_progress.setFormat(self.localizer.get_string("step4_format_phase_a_ready", default="%p% – OSM-Basisdaten vorhanden"))
+            self.phase_label.setText(self.localizer.get_string("step4_status_phase_a_ready", default="OSM-Basisdaten (Regionen, Siedlungsflächen & Orte) bereits vorhanden"))
             self.log_box.appendPlainText(
-                self.localizer.get_string("step4_log_phase_a_reused", default="Vorhandene OSM-Phase-A-Dateien werden wiederverwendet; keine Neuberechnung nötig.")
+                self.localizer.get_string("step4_log_phase_a_reused", default="Vorhandene OSM-Basisdaten (zusammengeführtes PBF, Siedlungsflächen, Orte) werden wiederverwendet; keine Neuberechnung nötig.")
             )
             for key, path in reusable.items():
                 self.log_box.appendPlainText(f"{key}: {path}")
-            self.status_changed.emit(self.localizer.get_string("step4_status_phase_a_ready", default="OSM-Vorverarbeitung bereits vorhanden"))
+            self.status_changed.emit(self.localizer.get_string("step4_status_phase_a_ready", default="OSM-Basisdaten bereits vorhanden"))
             self.refresh_readiness()
             return
         self._start_worker({}, phase_a_only=True)
@@ -791,6 +838,8 @@ class ProcessingStepWidget(_Q_WIDGET_BASE):
         self._thread.finished.connect(self._clear_worker)
         self.start_button.setEnabled(False)
         self.restart_button.setEnabled(False)
+        if getattr(self, "step_combo", None) is not None:
+            self.step_combo.setEnabled(False)
         self.stop_button.setEnabled(True)
         self.overall_progress.start_animation()
         self.phase_progress.start_animation()
@@ -905,9 +954,9 @@ class ProcessingStepWidget(_Q_WIDGET_BASE):
         self.overall_progress.stop_animation()
         self.phase_progress.stop_animation()
         if self._phase_a_only:
-            self.phase_label.setText(self.localizer.get_string("step4_status_phase_a_done", default="OSM-Vorverarbeitung abgeschlossen"))
-            self.log_box.appendPlainText(self.localizer.get_string("step4_log_phase_a_done", default="OSM-Phase A abgeschlossen; Parameter können freigegeben werden."))
-            self.status_changed.emit(self.localizer.get_string("step4_status_phase_a_done", default="OSM-Vorverarbeitung abgeschlossen"))
+            self.phase_label.setText(self.localizer.get_string("step4_status_phase_a_done", default="OSM-Basisdaten (Regionen, Siedlungsflächen & Orte) aufbereitet"))
+            self.log_box.appendPlainText(self.localizer.get_string("step4_log_phase_a_done", default="OSM-Basisdaten aufbereitet; Modellverarbeitung kann gestartet werden."))
+            self.status_changed.emit(self.localizer.get_string("step4_status_phase_a_done", default="OSM-Basisdaten aufbereitet"))
         else:
             self._is_completed = True
             self._stopped_by_user = False

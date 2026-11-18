@@ -87,3 +87,50 @@ class ParameterValidationTests(TestCase):
             with patch.object(module, "pipeline_readiness", return_value=[]):
                 Widget.refresh_readiness(page)
             self.assertEqual(enabled, {"start": not errors, "restart": not errors})
+
+    def test_start_step_dropdown_options_and_selective_invalidation(self):
+        import os
+        import tempfile
+        from core.app.app_core.osm_pipeline import canonical_osm_outputs
+        from core.app.app_core.pipeline import ORDERED_PIPELINE_PHASES, UrbanActPipeline
+        from core.app.app_core.project import tool_root
+        from core.locales import localizer
+
+        localizer.load_translations(os.path.join(tool_root(), "core", "locales"))
+        self.assertEqual(len(Widget._START_STEP_OPTIONS), 8)
+        for phase_key, locale_key, default_text in Widget._START_STEP_OPTIONS:
+            self.assertTrue(phase_key is None or phase_key in ORDERED_PIPELINE_PHASES)
+            for lang in ("de", "en"):
+                localizer.set_language(lang)
+                label = localizer.get_string(locale_key, default=default_text)
+                self.assertNotIn("phase a", label.lower())
+                self.assertNotIn("phase c", label.lower())
+        localizer.set_language("de")
+
+        with tempfile.TemporaryDirectory() as tmp:
+            project = Path(tmp)
+            osm_out = canonical_osm_outputs(project)
+            osm_out["merged_pbf"].parent.mkdir(parents=True, exist_ok=True)
+            osm_out["merged_pbf"].write_bytes(b"pbf")
+            osm_out["network_modified"].parent.mkdir(parents=True, exist_ok=True)
+            osm_out["network_modified"].write_text("<osm/>", encoding="utf-8")
+            osm_out["study_area_points"].parent.mkdir(parents=True, exist_ok=True)
+            osm_out["study_area_points"].write_bytes(b"poi")
+
+            manifest = {
+                "phases": {key: {"status": "done"} for key in ORDERED_PIPELINE_PHASES},
+                "runtime": {},
+            }
+            pipeline = UrbanActPipeline(str(project), {})
+            forced = pipeline.prepare_start_phase_invalidation(
+                manifest,
+                start_from_phase="osm_phase_c",
+            )
+            self.assertEqual(forced, {"osm_phase_c", "model5", "model6"})
+            for kept in ("osm_phase_a", "model1", "model2", "model3", "model3_4", "model4"):
+                self.assertIn(kept, manifest["phases"])
+            for cleared in ("osm_phase_c", "model5", "model6"):
+                self.assertNotIn(cleared, manifest["phases"])
+            self.assertTrue(osm_out["merged_pbf"].is_file())
+            self.assertFalse(osm_out["network_modified"].exists())
+            self.assertFalse(osm_out["study_area_points"].exists())
