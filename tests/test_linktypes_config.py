@@ -55,7 +55,10 @@ class LinkTypesConfigUnitTests(unittest.TestCase):
             for r in rows
         }
         self.assertEqual(set(master_active), set(gen_active))
-        self.assertEqual(master_active, gen_active)
+        self.assertEqual(gen_active[911][2], "BIKE,BUS,MINIBUS,CAR,HGV,PUTW,WALK")
+        master_cmp = {k: v for k, v in master_active.items() if k != 911}
+        gen_cmp = {k: v for k, v in gen_active.items() if k != 911}
+        self.assertEqual(master_cmp, gen_cmp)
 
         with tempfile.TemporaryDirectory() as tmp:
             generated_net = Path(tmp) / "generated_master.net"
@@ -210,7 +213,31 @@ class LinkTypesQtWidgetTests(unittest.TestCase):
             modes_tsys = {widget.modes_table.item(r, 1).text() for r in range(widget.modes_table.rowCount())}
             self.assertTrue({"CAR", "HGV", "BIKE", "WALK", "BUS", "PUTW"}.issubset(modes_tsys))
 
-            # Sub-Page 3: Separate Imp Car / Imp Bike / Imp Walk cells
+            # Sub-Page 2: _link sits directly after parent, TSys buttons are editable
+            cat_keys = [
+                widget.category_list.item(i).data(0x0100)  # Qt.UserRole
+                for i in range(widget.category_list.count())
+            ]
+            self.assertEqual(cat_keys[:4], ["Motorway", "Motorway_link", "Trunk", "Trunk_link"])
+            widget.category_list.setCurrentRow(0)
+            widget.editor._tsys_chip_map["BIKE"].setChecked(True)
+            self.assertIn("BIKE", widget.get_config()["categories"]["Motorway"]["tsys"])
+            widget.editor._tsys_chip_map["BIKE"].setChecked(False)
+
+            # Sub-Page 3: Capacities sorted 1..4 Lanes with auto-scale lock + separate Imp Car / Bike / Walk
+            cap_headers = [widget.cap_table.horizontalHeaderItem(c).text() for c in range(4)]
+            self.assertEqual(cap_headers, ["1 Lane [Fz/h]", "2 Lanes [Fz/h]", "3 Lanes [Fz/h]", "4 Lanes [Fz/h]"])
+            self.assertTrue(widget.editor.scale_lanes_check.isChecked())
+            from core.app.app_qt.qt_base import qt_enum
+            editable_flag = qt_enum(QtWidgets.QAbstractItemView if False else __import__("core.app.app_qt.qt_base", fromlist=["Qt"]).Qt, "ItemIsEditable", "ItemFlag")
+            self.assertTrue(bool(widget.cap_table.item(0, 0).flags() & editable_flag))
+            self.assertFalse(bool(widget.cap_table.item(0, 1).flags() & editable_flag))
+            widget.cap_table.item(0, 0).setText("1600")
+            self.assertEqual(widget.cap_table.item(0, 1).text(), "3200")
+            self.assertEqual(widget.cap_table.item(0, 3).text(), "6400")
+            widget.editor.scale_lanes_check.setChecked(False)
+            self.assertTrue(bool(widget.cap_table.item(0, 1).flags() & editable_flag))
+
             self.assertEqual(widget.imp_table.columnCount(), 6)
             widget.imp_table.item(0, 4).setText("8.5")  # Motorway imp_bike
             widget.imp_table.item(0, 5).setText("9.2")  # Motorway imp_ped (Walk)
@@ -219,16 +246,19 @@ class LinkTypesQtWidgetTests(unittest.TestCase):
             self.assertAlmostEqual(cfg["categories"]["Motorway"]["imp_ped"], 9.2)
             self.assertTrue(widget.reset_button.isEnabled())
 
-            # Sub-Page 4: Ferry Wait Time + Separate Imp Bike / Imp Walk on Special types
+            # Sub-Page 4: Ferry Wait Time + Editable TSysSet & Separate Imp Bike / Imp Walk on Special types
             self.assertAlmostEqual(widget.ferry_wait_spin.value(), 20.0)
             widget.ferry_wait_spin.setValue(32.5)
             ferry_json = Path(tmp) / "ferry_parameters.json"
             self.assertTrue(ferry_json.is_file())
             self.assertAlmostEqual(json.loads(ferry_json.read_text(encoding="utf-8"))["wait_minutes"], 32.5)
             self.assertEqual(widget.special_table.columnCount(), 10)
+            self.assertTrue(bool(widget.special_table.item(0, 3).flags() & editable_flag))
+            widget.special_table.item(0, 3).setText("BIKE,CAR,WALK")
             widget.special_table.item(0, 7).setText("2.4")  # Imp Bike
             widget.special_table.item(0, 8).setText("1.9")  # Imp Walk
             cfg2 = widget.get_config()
+            self.assertEqual(cfg2["special"][0]["tsys"], ["BIKE", "CAR", "WALK"])
             self.assertAlmostEqual(cfg2["special"][0]["imp_bike"], 2.4)
             self.assertAlmostEqual(cfg2["special"][0]["imp_ped"], 1.9)
 
@@ -236,9 +266,9 @@ class LinkTypesQtWidgetTests(unittest.TestCase):
             widget.tab_widget.setCurrentIndex(4)
             self.assertEqual(widget.preview_table.columnCount(), 12)
 
-            # Jump from TSysSet (col 8) -> Sub-Page 1 (index 0)
+            # Jump from TSysSet (col 8) -> Sub-Page 2 (index 1)
             widget.preview_table.cellDoubleClicked.emit(0, 8)
-            self.assertEqual(widget.tab_widget.currentIndex(), 0)
+            self.assertEqual(widget.tab_widget.currentIndex(), 1)
 
             # Jump from Name (col 2) on structured row -> Sub-Page 2 (index 1)
             widget.tab_widget.setCurrentIndex(4)

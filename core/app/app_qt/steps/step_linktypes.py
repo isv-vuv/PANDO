@@ -10,6 +10,7 @@ from core.app.app_core.workflow_state import StepId
 from core.app.app_core.linktypes_config import (
     ALL_LANES,
     ALL_SPEEDS,
+    ALL_TSYS,
     STRUCTURED_BY_KEY,
     STRUCTURED_CATEGORIES,
     default_linktypes_config,
@@ -34,6 +35,117 @@ from core.app.app_qt.qt_base import (
 )
 
 _Q_WIDGET_BASE = QtWidgets.QWidget if QtWidgets is not None else object
+_Q_OBJECT_BASE = QtCore.QObject if QtCore is not None else object
+_Q_DELEGATE_BASE = QtWidgets.QStyledItemDelegate if QtWidgets is not None else object
+
+CAP_TABLE_LANES: tuple[int, ...] = (1, 2, 3, 4)
+
+
+def _apply_balanced_column_widths(table: QtWidgets.QTableWidget) -> None:
+    """Make all columns equal width unless content requires more space, then scale proportionally."""
+    if table is None or table.columnCount() <= 0:
+        return
+    col_count = table.columnCount()
+    header = table.horizontalHeader()
+    if table.property("_resizing_cols"):
+        return
+    table.setProperty("_resizing_cols", True)
+    try:
+        table.resizeColumnsToContents()
+        avail = max(0, table.viewport().width())
+        needed = [
+            max(header.sectionSizeHint(c), table.columnWidth(c), 48) + 12
+            for c in range(col_count)
+        ]
+        if avail <= col_count * 48:
+            return
+        equal_w = avail / col_count
+        if max(needed) <= equal_w:
+            stretch = qt_enum(QtWidgets.QHeaderView, "Stretch", "ResizeMode")
+            for c in range(col_count):
+                header.setSectionResizeMode(c, stretch)
+            return
+
+        interactive = qt_enum(QtWidgets.QHeaderView, "Interactive", "ResizeMode")
+        header.setStretchLastSection(False)
+        for c in range(col_count):
+            header.setSectionResizeMode(c, interactive)
+        raw_w = [max(equal_w, float(n)) for n in needed]
+        total_raw = sum(raw_w)
+        if sum(needed) <= avail and total_raw > 0:
+            widths = [max(48, int(avail * w / total_raw)) for w in raw_w]
+            diff = avail - sum(widths)
+            if widths and diff != 0:
+                widths[0] = max(48, widths[0] + diff)
+        else:
+            widths = needed
+        for c, width in enumerate(widths):
+            table.setColumnWidth(c, width)
+    finally:
+        table.setProperty("_resizing_cols", False)
+
+
+class _TableResizeWatcher(_Q_OBJECT_BASE):
+    """Re-balance table column widths whenever the table viewport resizes."""
+
+    def __init__(self, table: QtWidgets.QTableWidget):
+        super().__init__(table)
+        self._table = table
+        table.viewport().installEventFilter(self)
+
+    def eventFilter(self, obj, event):
+        if event is not None and event.type() == qt_enum(QtCore.QEvent, "Resize", "Type"):
+            _apply_balanced_column_widths(self._table)
+        return super().eventFilter(obj, event)
+
+
+class _CategoryItemDelegate(_Q_DELEGATE_BASE):
+    """Two-line styled card delegate for hierarchical OSM categories."""
+
+    def sizeHint(self, option, index):
+        hint = super().sizeHint(option, index)
+        return QtCore.QSize(hint.width(), 52)
+
+    def paint(self, painter, option, index):
+        if QtWidgets is None:
+            return
+        painter.save()
+        opt = QtWidgets.QStyleOptionViewItem(option)
+        self.initStyleOption(opt, index)
+        is_selected = bool(opt.state & qt_enum(QtWidgets.QStyle, "State_Selected", "StateFlag"))
+        is_hover = bool(opt.state & qt_enum(QtWidgets.QStyle, "State_MouseOver", "StateFlag"))
+        is_ramp = bool(index.data(qt_enum(Qt, "UserRole", "ItemDataRole") + 2))
+        enabled = bool(index.data(qt_enum(Qt, "UserRole", "ItemDataRole") + 3))
+
+        rect = opt.rect.adjusted(3, 2, -3, -2)
+        bg = QtGui.QColor("#eff6ff") if is_selected else (QtGui.QColor("#f8fafc") if is_hover else QtGui.QColor("#ffffff"))
+        border = QtGui.QColor("#3b82f6") if is_selected else QtGui.QColor("#e2e8f0")
+        painter.setRenderHint(QtGui.QPainter.RenderHint.Antialiasing if hasattr(QtGui.QPainter, "RenderHint") else QtGui.QPainter.Antialiasing)
+        painter.setBrush(bg)
+        painter.setPen(QtGui.QPen(border, 1.2 if is_selected else 1.0))
+        painter.drawRoundedRect(rect, 6, 6)
+
+        left_pad = 22 if is_ramp else 10
+        text_rect = rect.adjusted(left_pad, 5, -10, -5)
+        title = str(index.data(qt_enum(Qt, "UserRole", "ItemDataRole") + 4) or index.data() or "")
+        subtitle = str(index.data(qt_enum(Qt, "UserRole", "ItemDataRole") + 1) or "")
+
+        title_font = app_font(10, qfont_bold())
+        sub_font = app_font(8)
+        title_color = QtGui.QColor("#1e40af" if is_selected else ("#0f172a" if enabled else "#94a3b8"))
+        sub_color = QtGui.QColor("#3b82f6" if is_selected else ("#64748b" if enabled else "#cbd5e1"))
+
+        painter.setFont(title_font)
+        painter.setPen(title_color)
+        title_box = QtCore.QRect(text_rect.left(), text_rect.top(), text_rect.width(), 20)
+        painter.drawText(title_box, qt_enum(Qt, "AlignLeft", "AlignmentFlag") | qt_enum(Qt, "AlignVCenter", "AlignmentFlag"), title)
+
+        painter.setFont(sub_font)
+        painter.setPen(sub_color)
+        sub_box = QtCore.QRect(text_rect.left(), text_rect.top() + 21, text_rect.width(), 18)
+        elided_sub = painter.fontMetrics().elidedText(subtitle, qt_enum(Qt, "ElideRight", "TextElideMode"), sub_box.width())
+        painter.drawText(sub_box, qt_enum(Qt, "AlignLeft", "AlignmentFlag") | qt_enum(Qt, "AlignVCenter", "AlignmentFlag"), elided_sub)
+        painter.restore()
 
 # Exact fixed transport systems & modes defined in
 # core/scripts/visum/importer/PANDO_Importer/PANDO_Importer.net ($MODE & $TSYS)
@@ -150,7 +262,8 @@ class LinkTypesEditorWidget(_Q_WIDGET_BASE):
 
         self._lane_checks: dict[int, QtWidgets.QCheckBox] = {}
         self._speed_checks: dict[int, QtWidgets.QCheckBox] = {}
-        self._tsys_badges: list[QtWidgets.QLabel] = []
+        self._tsys_chip_map: dict[str, QtWidgets.QPushButton] = {}
+        self._table_watchers: list[_TableResizeWatcher] = []
         self._preview_rows: list[dict[str, Any]] = []
 
         self.setStyleSheet(_EDITOR_STYLE)
@@ -186,10 +299,7 @@ class LinkTypesEditorWidget(_Q_WIDGET_BASE):
         if not target:
             return
         cfg = self.get_config()
-        if is_default_linktypes_config(cfg):
-            reset_linktypes_config(target)
-        else:
-            save_linktypes_config(target, cfg)
+        save_linktypes_config(target, cfg)
         from core.scripts.visum.scripts.ferry_wait import save_wait_minutes
 
         save_wait_minutes(target, float(self.ferry_wait_spin.value()))
@@ -308,8 +418,9 @@ class LinkTypesEditorWidget(_Q_WIDGET_BASE):
             self.loc.get_string(
                 "linktypes_overview_modes_desc",
                 default=(
-                    "Modi und Verkehrssysteme (TSys) sind im Visum-Importer (PANDO_Importer.net) sowie in den "
-                    "Visum-Verfahrensskripten fest definiert und werden dort exakt unter diesen Namen erwartet."
+                    "Die verfügbaren Modi und Verkehrssystem-Codes (TSys) sind im Visum-Importer (PANDO_Importer.net) "
+                    "definiert. Welche Verkehrssysteme je Streckentyp zugelassen sind (TSysSet), können Sie auf den "
+                    "Unterseiten 2 und 4 frei anpassen."
                 ),
             ),
             modes_box,
@@ -329,7 +440,7 @@ class LinkTypesEditorWidget(_Q_WIDGET_BASE):
             self.loc.get_string("linktypes_overview_tsys_col", default="TSys-Code"),
             self.loc.get_string("linktypes_overview_name_col", default="Bezeichnung im Importer"),
             self.loc.get_string("linktypes_overview_type_col", default="Kategorie"),
-            self.loc.get_string("linktypes_overview_pcu_col", default="PKW-E"),
+            self.loc.get_string("linktypes_overview_pcu_col", default="PKW-E [Fz]"),
         ])
         for row_idx, row_vals in enumerate(FIXED_IMPORTER_TSYS):
             for col_idx, val in enumerate(row_vals):
@@ -337,9 +448,8 @@ class LinkTypesEditorWidget(_Q_WIDGET_BASE):
                 if col_idx in (1, 3, 4):
                     item.setTextAlignment(qt_enum(Qt, "AlignCenter", "AlignmentFlag"))
                 self.modes_table.setItem(row_idx, col_idx, item)
-        self.modes_table.resizeColumnsToContents()
-        header = self.modes_table.horizontalHeader()
-        header.setSectionResizeMode(2, qt_enum(QtWidgets.QHeaderView, "Stretch", "ResizeMode"))
+        self._table_watchers.append(_TableResizeWatcher(self.modes_table))
+        _apply_balanced_column_widths(self.modes_table)
         row_h = self.modes_table.verticalHeader().defaultSectionSize()
         self.modes_table.setMinimumHeight(min(320, max(220, row_h * len(FIXED_IMPORTER_TSYS) + 34)))
         modes_layout.addWidget(self.modes_table)
@@ -411,10 +521,17 @@ class LinkTypesEditorWidget(_Q_WIDGET_BASE):
         left_layout.setSpacing(6)
 
         self.category_list = QtWidgets.QListWidget(left_box)
-        self.category_list.setMinimumWidth(260)
-        self.category_list.setMaximumWidth(330)
+        self.category_list.setMinimumWidth(285)
+        self.category_list.setMaximumWidth(360)
+        self.category_list.setSpacing(4)
+        self.category_list.setStyleSheet(
+            "QListWidget { border: none; background: transparent; outline: none; } "
+            "QListWidget::item { background: transparent; border: none; }"
+        )
+        self._category_delegate = _CategoryItemDelegate(self.category_list)
+        self.category_list.setItemDelegate(self._category_delegate)
         for spec in STRUCTURED_CATEGORIES:
-            item = QtWidgets.QListWidgetItem(f"{spec.rank:>2}. {spec.key} ({spec.abbr} · GType {spec.gtype})")
+            item = QtWidgets.QListWidgetItem(spec.key)
             item.setData(qt_enum(Qt, "UserRole", "ItemDataRole"), spec.key)
             self.category_list.addItem(item)
         self.category_list.currentRowChanged.connect(self._on_category_selected)
@@ -514,12 +631,12 @@ class LinkTypesEditorWidget(_Q_WIDGET_BASE):
         speeds_vbox.addLayout(spd_btns)
         right_layout.addWidget(speeds_group)
 
-        # Fixed Allowed Transport Systems chips
+        # Editable Allowed Transport Systems chips
         tsys_group = QtWidgets.QGroupBox(
             escape_mnemonic(
                 self.loc.get_string(
                     "linktypes_lbl_tsys",
-                    default="Zugelassene Verkehrssysteme (TSysSet – im Importer vorgegeben)",
+                    default="Zugelassene Verkehrssysteme (TSysSet – anklickbar zum Anpassen)",
                 )
             ),
             right_widget,
@@ -527,13 +644,20 @@ class LinkTypesEditorWidget(_Q_WIDGET_BASE):
         tsys_row = QtWidgets.QHBoxLayout(tsys_group)
         tsys_row.setContentsMargins(12, 10, 12, 10)
         tsys_row.setSpacing(6)
-        self._tsys_chip_map: dict[str, QtWidgets.QLabel] = {}
-        for _mode, tsys_code, _name, _cat, _pcu in FIXED_IMPORTER_TSYS:
-            badge = QtWidgets.QLabel(tsys_code, tsys_group)
-            badge.setFont(app_font(8, qfont_bold()))
-            badge.setAlignment(qt_enum(Qt, "AlignCenter", "AlignmentFlag"))
-            tsys_row.addWidget(badge)
-            self._tsys_chip_map[tsys_code] = badge
+        self._tsys_chip_map = {}
+        for tsys_code in ALL_TSYS:
+            btn = QtWidgets.QPushButton(tsys_code, tsys_group)
+            btn.setCheckable(True)
+            btn.setFont(app_font(8, qfont_bold()))
+            btn.setCursor(qt_enum(Qt, "PointingHandCursor", "CursorShape"))
+            btn.setStyleSheet(
+                "QPushButton { background-color: #f8fafc; color: #94a3b8; border: 1px solid #e2e8f0; border-radius: 4px; padding: 4px 10px; } "
+                "QPushButton:hover { border-color: #93c5fd; color: #1e40af; } "
+                "QPushButton:checked { background-color: #dbeafe; color: #1e40af; border: 1px solid #60a5fa; }"
+            )
+            btn.toggled.connect(self._on_category_detail_changed)
+            tsys_row.addWidget(btn)
+            self._tsys_chip_map[tsys_code] = btn
         tsys_row.addStretch()
         right_layout.addWidget(tsys_group)
 
@@ -572,7 +696,7 @@ class LinkTypesEditorWidget(_Q_WIDGET_BASE):
             escape_mnemonic(
                 self.loc.get_string(
                     "linktypes_group_capacity",
-                    default="Kapazitätsmatrix CapPrT [Fz/h] nach Geschwindigkeit und Fahrstreifenanzahl",
+                    default="Kapazitätsmatrix CapPrT [Fz/h] nach V0PrT [km/h] und Fahrstreifenanzahl",
                 )
             ),
             page,
@@ -585,7 +709,7 @@ class LinkTypesEditorWidget(_Q_WIDGET_BASE):
         cap_hint = QtWidgets.QLabel(
             self.loc.get_string(
                 "linktypes_capacity_hint",
-                default="Stündliche Kapazitäten je Fahrstreifenklasse und V0PrT-Stufe (Doppelklick zum Bearbeiten).",
+                default="Stündliche Kapazitäten [Fz/h] je Fahrstreifenklasse und V0PrT-Stufe [km/h] (Doppelklick zum Bearbeiten).",
             ),
             cap_group,
         )
@@ -593,19 +717,29 @@ class LinkTypesEditorWidget(_Q_WIDGET_BASE):
         cap_hint.setStyleSheet("color: #475569;")
         cap_hdr.addWidget(cap_hint, 1)
 
-        btn_scale_lanes = QtWidgets.QPushButton(
-            self.loc.get_string("linktypes_btn_scale_lanes", default="2–4 Lanes aus 1-Lane-Kapazität skalieren (× L)"),
+        self.scale_lanes_check = QtWidgets.QCheckBox(
+            self.loc.get_string(
+                "linktypes_chk_scale_lanes",
+                default="2–4 Lanes aus 1-Lane-Kapazität berechnen (× L)",
+            ),
             cap_group,
         )
-        btn_scale_lanes.clicked.connect(self._scale_lanes_from_single)
-        cap_hdr.addWidget(btn_scale_lanes)
+        self.scale_lanes_check.setFont(app_font(8, qfont_bold()))
+        self.scale_lanes_check.toggled.connect(self._on_scale_lanes_toggled)
+        cap_hdr.addWidget(self.scale_lanes_check)
         cap_vbox.addLayout(cap_hdr)
 
         self.cap_table = QtWidgets.QTableWidget(len(ALL_SPEEDS), 4, cap_group)
         self.cap_table.setAlternatingRowColors(True)
-        self.cap_table.setHorizontalHeaderLabels(["4 Lanes", "3 Lanes", "2 Lanes", "1 Lane"])
+        self.cap_table.setHorizontalHeaderLabels([
+            "1 Lane [Fz/h]",
+            "2 Lanes [Fz/h]",
+            "3 Lanes [Fz/h]",
+            "4 Lanes [Fz/h]",
+        ])
         self.cap_table.setVerticalHeaderLabels([f"{spd} km/h" for spd in ALL_SPEEDS])
-        self.cap_table.horizontalHeader().setSectionResizeMode(qt_enum(QtWidgets.QHeaderView, "Stretch", "ResizeMode"))
+        self._table_watchers.append(_TableResizeWatcher(self.cap_table))
+        _apply_balanced_column_widths(self.cap_table)
         self.cap_table.itemChanged.connect(self._on_cap_item_changed)
         cap_vbox.addWidget(self.cap_table, 1)
         splitter.addWidget(cap_group)
@@ -641,13 +775,12 @@ class LinkTypesEditorWidget(_Q_WIDGET_BASE):
         self.imp_table.setHorizontalHeaderLabels([
             self.loc.get_string("linktypes_col_category", default="Kategorie"),
             self.loc.get_string("linktypes_col_abbr", default="Kürzel"),
-            "GType",
-            self.loc.get_string("linktypes_col_imp_car", default="Imp Pkw (Car)"),
-            self.loc.get_string("linktypes_col_imp_bike", default="Imp Rad (Bike)"),
-            self.loc.get_string("linktypes_col_imp_walk", default="Imp Fuß (Walk)"),
+            "GType [-]",
+            self.loc.get_string("linktypes_col_imp_car", default="Imp Pkw (Car) [-]"),
+            self.loc.get_string("linktypes_col_imp_bike", default="Imp Rad (Bike) [-]"),
+            self.loc.get_string("linktypes_col_imp_walk", default="Imp Fuß (Walk) [-]"),
         ])
-        hdr = self.imp_table.horizontalHeader()
-        hdr.setSectionResizeMode(0, qt_enum(QtWidgets.QHeaderView, "Stretch", "ResizeMode"))
+        self._table_watchers.append(_TableResizeWatcher(self.imp_table))
         self.imp_table.itemChanged.connect(self._on_imp_item_changed)
         imp_vbox.addWidget(self.imp_table, 1)
         splitter.addWidget(imp_group)
@@ -736,16 +869,16 @@ class LinkTypesEditorWidget(_Q_WIDGET_BASE):
         self.special_table.setHorizontalHeaderLabels([
             "No",
             "Name",
-            "GType",
+            "GType [-]",
             "TSysSet",
             "V0PrT [km/h]",
-            "CapPrT",
-            self.loc.get_string("linktypes_col_imp_car", default="Imp Pkw (Car)"),
-            self.loc.get_string("linktypes_col_imp_bike", default="Imp Rad (Bike)"),
-            self.loc.get_string("linktypes_col_imp_walk", default="Imp Fuß (Walk)"),
+            "CapPrT [Fz/h]",
+            self.loc.get_string("linktypes_col_imp_car", default="Imp Pkw (Car) [-]"),
+            self.loc.get_string("linktypes_col_imp_bike", default="Imp Rad (Bike) [-]"),
+            self.loc.get_string("linktypes_col_imp_walk", default="Imp Fuß (Walk) [-]"),
             self.loc.get_string("linktypes_col_desc", default="Beschreibung"),
         ])
-        self.special_table.horizontalHeader().setSectionResizeMode(9, qt_enum(QtWidgets.QHeaderView, "Stretch", "ResizeMode"))
+        self._table_watchers.append(_TableResizeWatcher(self.special_table))
         self.special_table.itemChanged.connect(self._on_special_item_changed)
         sp_vbox.addWidget(self.special_table, 1)
         layout.addWidget(special_group, 1)
@@ -794,18 +927,19 @@ class LinkTypesEditorWidget(_Q_WIDGET_BASE):
         self.preview_table.verticalHeader().setVisible(False)
         self.preview_table.setHorizontalHeaderLabels([
             "TypNo",
-            "GType",
+            "GType [-]",
             "Name",
             self.loc.get_string("linktypes_col_category", default="Kategorie"),
-            "Rank",
-            "Lanes",
-            "CapPrT",
-            "V0PrT",
+            "Rank [-]",
+            "Lanes [-]",
+            "CapPrT [Fz/h]",
+            "V0PrT [km/h]",
             "TSysSet",
-            self.loc.get_string("linktypes_col_imp_car", default="Imp Pkw (Car)"),
-            self.loc.get_string("linktypes_col_imp_bike", default="Imp Rad (Bike)"),
-            self.loc.get_string("linktypes_col_imp_walk", default="Imp Fuß (Walk)"),
+            self.loc.get_string("linktypes_col_imp_car", default="Imp Pkw (Car) [-]"),
+            self.loc.get_string("linktypes_col_imp_bike", default="Imp Rad (Bike) [-]"),
+            self.loc.get_string("linktypes_col_imp_walk", default="Imp Fuß (Walk) [-]"),
         ])
+        self._table_watchers.append(_TableResizeWatcher(self.preview_table))
         self.preview_table.cellDoubleClicked.connect(self._on_preview_cell_double_clicked)
         layout.addWidget(self.preview_table, 1)
         return page
@@ -846,6 +980,7 @@ class LinkTypesEditorWidget(_Q_WIDGET_BASE):
         self._syncing = True
         try:
             self.bus_lanes_check.setChecked(bool(self._config.get("include_bus_lanes", True)))
+            self.scale_lanes_check.setChecked(bool(self._config.get("scale_lanes_from_single", True)))
             self._refresh_category_list_labels()
             if self.category_list.currentRow() < 0 and self.category_list.count() > 0:
                 self.category_list.setCurrentRow(0)
@@ -865,18 +1000,36 @@ class LinkTypesEditorWidget(_Q_WIDGET_BASE):
             return None
         return item.data(qt_enum(Qt, "UserRole", "ItemDataRole"))
 
+    def _format_category_subtitle(self, spec, cat_cfg: Mapping[str, Any]) -> str:
+        lanes = sorted({int(x) for x in cat_cfg.get("lanes", ())})
+        lanes_str = ",".join(str(x) for x in lanes) if lanes else "—"
+        speeds = sorted({int(x) for x in cat_cfg.get("speeds", ())}, reverse=True)
+        if not speeds:
+            spd_str = "—"
+        elif len(speeds) == 1:
+            spd_str = f"{speeds[0]}"
+        else:
+            spd_str = f"{speeds[0]}–{speeds[-1]}"
+        tsys_count = len(cat_cfg.get("tsys", ()))
+        return f"{spec.abbr} · L {lanes_str} · V {spd_str} km/h · {tsys_count} TSys · GType {spec.gtype}"
+
     def _refresh_category_list_labels(self) -> None:
+        user_role = qt_enum(Qt, "UserRole", "ItemDataRole")
         for i in range(self.category_list.count()):
             item = self.category_list.item(i)
-            key = item.data(qt_enum(Qt, "UserRole", "ItemDataRole"))
+            key = item.data(user_role)
             spec = STRUCTURED_BY_KEY[key]
-            enabled = bool(self._config["categories"][key]["enabled"])
+            cat_cfg = self._config["categories"][key]
+            enabled = bool(cat_cfg["enabled"])
             prefix = "✓" if enabled else "✗"
-            item.setText(f"{prefix} {spec.rank:>2}. {spec.key} ({spec.abbr} · GType {spec.gtype})")
-            font = item.font()
-            font.setBold(enabled)
-            item.setFont(font)
-            item.setForeground(QtGui.QColor("#0f172a" if enabled else "#94a3b8"))
+            title = f"{prefix} {spec.key}" if not spec.is_ramp else f"↳ {prefix} {spec.key}"
+            subtitle = self._format_category_subtitle(spec, cat_cfg)
+            item.setText(f"{title} ({subtitle})")
+            item.setData(user_role + 1, subtitle)
+            item.setData(user_role + 2, bool(spec.is_ramp))
+            item.setData(user_role + 3, enabled)
+            item.setData(user_role + 4, title)
+        self.category_list.viewport().update()
 
     def _on_category_selected(self, _row: int) -> None:
         self._load_selected_category()
@@ -901,17 +1054,8 @@ class LinkTypesEditorWidget(_Q_WIDGET_BASE):
                 cb.setChecked(spd in cat_cfg["speeds"])
 
             active_tsys = set(cat_cfg["tsys"])
-            for code, badge in self._tsys_chip_map.items():
-                if code in active_tsys:
-                    badge.setStyleSheet(
-                        "background-color: #dbeafe; color: #1e40af; border: 1px solid #93c5fd; "
-                        "border-radius: 4px; padding: 3px 8px;"
-                    )
-                else:
-                    badge.setStyleSheet(
-                        "background-color: #f8fafc; color: #94a3b8; border: 1px solid #e2e8f0; "
-                        "border-radius: 4px; padding: 3px 8px;"
-                    )
+            for code, btn in self._tsys_chip_map.items():
+                btn.setChecked(code in active_tsys)
         finally:
             self._syncing = False
 
@@ -926,6 +1070,7 @@ class LinkTypesEditorWidget(_Q_WIDGET_BASE):
         cat_cfg["enabled"] = bool(self.cat_enabled_check.isChecked())
         cat_cfg["lanes"] = [l for l in spec.default_lanes if self._lane_checks[l].isChecked()]
         cat_cfg["speeds"] = [s for s in ALL_SPEEDS if self._speed_checks[s].isChecked()]
+        cat_cfg["tsys"] = [code for code, btn in self._tsys_chip_map.items() if btn.isChecked()]
 
         self._refresh_category_list_labels()
         self._refresh_preview_table()
@@ -967,13 +1112,25 @@ class LinkTypesEditorWidget(_Q_WIDGET_BASE):
         self._syncing = True
         try:
             caps = self._config["capacities"]
+            auto_scale = bool(self._config.get("scale_lanes_from_single", True))
+            ro_flags = qt_enum(Qt, "ItemIsSelectable", "ItemFlag") | qt_enum(Qt, "ItemIsEnabled", "ItemFlag")
             for row, spd in enumerate(ALL_SPEEDS):
                 spd_map = caps.get(str(spd), {})
-                for col, lanes in enumerate(ALL_LANES):
-                    val = int(spd_map.get(str(lanes), 0))
+                base = int(spd_map.get("1", 0))
+                for col, lanes in enumerate(CAP_TABLE_LANES):
+                    if auto_scale and lanes >= 2:
+                        val = int(base * lanes)
+                        spd_map[str(lanes)] = val
+                    else:
+                        val = int(spd_map.get(str(lanes), 0))
                     item = QtWidgets.QTableWidgetItem(str(val))
                     item.setTextAlignment(qt_enum(Qt, "AlignCenter", "AlignmentFlag"))
+                    if auto_scale and lanes >= 2:
+                        item.setFlags(ro_flags)
+                        item.setBackground(QtGui.QColor("#f1f5f9"))
+                        item.setForeground(QtGui.QColor("#64748b"))
                     self.cap_table.setItem(row, col, item)
+            _apply_balanced_column_widths(self.cap_table)
         finally:
             self._syncing = False
 
@@ -981,7 +1138,7 @@ class LinkTypesEditorWidget(_Q_WIDGET_BASE):
         if self._syncing:
             return
         spd = ALL_SPEEDS[item.row()]
-        lanes = ALL_LANES[item.column()]
+        lanes = CAP_TABLE_LANES[item.column()]
         try:
             val = max(0, int(float(item.text().strip().replace(",", "."))))
         except ValueError:
@@ -991,14 +1148,29 @@ class LinkTypesEditorWidget(_Q_WIDGET_BASE):
             self._syncing = False
             return
         self._config["capacities"][str(spd)][str(lanes)] = val
+        if lanes == 1 and bool(self._config.get("scale_lanes_from_single", True)):
+            self._syncing = True
+            try:
+                for col_idx, mult_lanes in enumerate(CAP_TABLE_LANES):
+                    if mult_lanes >= 2:
+                        scaled = int(val * mult_lanes)
+                        self._config["capacities"][str(spd)][str(mult_lanes)] = scaled
+                        target_item = self.cap_table.item(item.row(), col_idx)
+                        if target_item is not None:
+                            target_item.setText(str(scaled))
+            finally:
+                self._syncing = False
         self._refresh_preview_table()
         self._refresh_summary()
         self._emit_changed()
 
     def _commit_capacity_table(self) -> None:
         caps = self._config["capacities"]
+        auto_scale = bool(self._config.get("scale_lanes_from_single", True))
         for row, spd in enumerate(ALL_SPEEDS):
-            for col, lanes in enumerate(ALL_LANES):
+            for col, lanes in enumerate(CAP_TABLE_LANES):
+                if auto_scale and lanes >= 2:
+                    continue
                 it = self.cap_table.item(row, col)
                 if it is None:
                     continue
@@ -1006,14 +1178,16 @@ class LinkTypesEditorWidget(_Q_WIDGET_BASE):
                     caps[str(spd)][str(lanes)] = max(0, int(float(it.text().strip().replace(",", "."))))
                 except ValueError:
                     pass
+            if auto_scale:
+                base = int(caps[str(spd)]["1"])
+                for lanes in (2, 3, 4):
+                    caps[str(spd)][str(lanes)] = int(base * lanes)
 
-    def _scale_lanes_from_single(self) -> None:
+    def _on_scale_lanes_toggled(self, checked: bool) -> None:
+        if self._syncing:
+            return
         self._commit_capacity_table()
-        caps = self._config["capacities"]
-        for spd in ALL_SPEEDS:
-            base = int(caps[str(spd)]["1"])
-            for lanes in (2, 3, 4):
-                caps[str(spd)][str(lanes)] = int(base * lanes)
+        self._config["scale_lanes_from_single"] = bool(checked)
         self._populate_capacity_table()
         self._refresh_preview_table()
         self._refresh_summary()
@@ -1038,7 +1212,7 @@ class LinkTypesEditorWidget(_Q_WIDGET_BASE):
                     item = QtWidgets.QTableWidgetItem(f"{float(cat_cfg[field_key]):g}")
                     item.setTextAlignment(qt_enum(Qt, "AlignCenter", "AlignmentFlag"))
                     self.imp_table.setItem(row, col, item)
-            self.imp_table.resizeColumnsToContents()
+            _apply_balanced_column_widths(self.imp_table)
         finally:
             self._syncing = False
 
@@ -1091,12 +1265,12 @@ class LinkTypesEditorWidget(_Q_WIDGET_BASE):
                 )
                 for col, text in enumerate(vals):
                     item = QtWidgets.QTableWidgetItem(text)
-                    if col not in (4, 5, 6, 7, 8):
+                    if col not in (3, 4, 5, 6, 7, 8):
                         item.setFlags(ro_flags)
                     if col in (0, 2, 4, 5, 6, 7, 8):
                         item.setTextAlignment(qt_enum(Qt, "AlignCenter", "AlignmentFlag"))
                     self.special_table.setItem(row, col, item)
-            self.special_table.resizeColumnsToContents()
+            _apply_balanced_column_widths(self.special_table)
         finally:
             self._syncing = False
 
@@ -1104,6 +1278,10 @@ class LinkTypesEditorWidget(_Q_WIDGET_BASE):
         if not (0 <= row < len(self._config["special"])):
             return
         sp = self._config["special"][row]
+        tsys_item = self.special_table.item(row, 3)
+        if tsys_item is not None:
+            tokens = [t.strip().upper() for t in tsys_item.text().split(",") if t.strip()]
+            sp["tsys"] = tokens
         for col, key, is_int in (
             (4, "v0", True),
             (5, "cap", True),
@@ -1123,7 +1301,7 @@ class LinkTypesEditorWidget(_Q_WIDGET_BASE):
     def _on_special_item_changed(self, item: QtWidgets.QTableWidgetItem) -> None:
         if self._syncing:
             return
-        if item.column() < 4 or item.column() > 8:
+        if item.column() < 3 or item.column() > 8:
             return
         self._apply_special_row(item.row())
         self._refresh_preview_table()
@@ -1176,7 +1354,7 @@ class LinkTypesEditorWidget(_Q_WIDGET_BASE):
                 str(r["rank"]),
                 str(r["lanes"]),
                 str(r["cap"]),
-                f"{r['v0']} km/h",
+                str(r["v0"]),
                 str(r["tsys"]),
                 f"{r['imp_car']:g}",
                 f"{r['imp_bike']:g}",
@@ -1187,7 +1365,7 @@ class LinkTypesEditorWidget(_Q_WIDGET_BASE):
                 if col in (0, 1, 4, 5, 6, 7, 9, 10, 11):
                     item.setTextAlignment(qt_enum(Qt, "AlignCenter", "AlignmentFlag"))
                 self.preview_table.setItem(idx, col, item)
-        self.preview_table.resizeColumnsToContents()
+        _apply_balanced_column_widths(self.preview_table)
 
     def _on_preview_cell_double_clicked(self, row: int, col: int) -> None:
         """Jump from a double-clicked preview cell to its corresponding detail sub-page."""
@@ -1215,18 +1393,12 @@ class LinkTypesEditorWidget(_Q_WIDGET_BASE):
                 self.special_table.setFocus()
             return
 
-        # Fixed Modes / TSysSet -> Sub-Page 1 (index 0)
-        if col == 8:
-            self.tab_widget.setCurrentIndex(0)
-            self.modes_table.setFocus()
-            return
-
         # CapPrT -> Sub-Page 3 Capacity Matrix (index 2)
         if col == 6:
             self.tab_widget.setCurrentIndex(2)
             try:
                 spd_idx = ALL_SPEEDS.index(int(row_data["v0"]))
-                lane_idx = ALL_LANES.index(int(row_data["lanes"]))
+                lane_idx = CAP_TABLE_LANES.index(int(row_data["lanes"]))
             except ValueError:
                 spd_idx, lane_idx = 0, 0
             item = self.cap_table.item(spd_idx, lane_idx)
@@ -1278,7 +1450,7 @@ class LinkTypesEditorWidget(_Q_WIDGET_BASE):
             text = self.loc.get_string(
                 "linktypes_summary_default",
                 count=len(rows),
-                default=f"Standard-Voreinstellung aktiv ({len(rows)} Streckentypen, identisch zu master_linktypes.net)",
+                default=f"Standard-Voreinstellung aktiv ({len(rows)} aktive Streckentypen)",
             )
         else:
             text = self.loc.get_string(
