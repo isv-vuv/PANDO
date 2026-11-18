@@ -831,7 +831,7 @@ $LINKTYPE:NO;GTYPE;NAME;STRICT;RANK;TSYSSET;NUMLANES;CAPPRT;V0PRT;VMINPRT;VMAX_P
 908;0;free;1;1000;0;0;0;0;0;0;0;0;0;0;0;0;0;0;10;10;10
 909;1;Road;1;999;BIKE,BUS,MINIBUS,CAR,HGV,PUTW,WALK;1;200;30;1;20;130;100;4;80;50;4;50;50;50;1;1,4;1;Classification not determined
 910;1;Living_Street;1;999;BIKE,BUS,MINIBUS,CAR,HGV,PUTW,WALK;1;200;30;1;20;130;100;4;80;50;4;50;50;50;1;1,4;1;Street with pedestrian priority, traffic-calmed, very low speed ("Verkehrsberuhigter Bereich")
-911;1;Service;1;999;BIKE,PUTW,WALK;1;200;30;1;20;130;100;4;80;50;4;50;50;50;1,3;1,5;1;Minor road for access to properties, parking, or industrial sites ("Erschlieﬂungsweg")
+911;1;Service;1;999;BIKE,BUS,MINIBUS,CAR,HGV,PUTW,WALK;1;200;30;1;20;130;100;4;80;50;4;50;50;50;1,3;1,5;1;Minor road for access to properties, parking, or industrial sites ("Erschlieﬂungsweg")
 912;1;free;1;1000;0;0;0;0;0;0;0;0;0;0;0;0;0;0;10;10;10
 913;1;free;1;1000;0;0;0;0;0;0;0;0;0;0;0;0;0;0;10;10;10
 914;1;free;1;1000;0;0;0;0;0;0;0;0;0;0;0;0;0;0;10;10;10

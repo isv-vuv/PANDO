@@ -308,7 +308,7 @@ DEFAULT_SPECIAL_TYPES: tuple[dict[str, Any], ...] = (
     },
     {
         "no": 911, "gtype": 1, "name": "Service", "rank": 999,
-        "tsys": ["BIKE", "PUTW", "WALK"], "lanes": 1, "cap": 200, "v0": 30,
+        "tsys": ["BIKE", "BUS", "MINIBUS", "CAR", "HGV", "PUTW", "WALK"], "lanes": 1, "cap": 200, "v0": 30,
         "imp_bike": 1.3, "imp_car": 1.5, "imp_ped": 1.0,
         "osm_ref": 'Minor road for access to properties, parking, or industrial sites ("Erschließungsweg")',
     },
