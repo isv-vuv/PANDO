@@ -418,6 +418,7 @@ class VisumStepWidget(_Q_WIDGET_BASE):
         log_layout.addWidget(self.log_edit)
 
         main_layout.addWidget(self.log_group, stretch=1)
+        self._load_persisted_log()
 
     def _populate_combo_items(self) -> None:
         curr_idx = self.step_combo.currentIndex() if self.step_combo.count() > 0 else 0
@@ -453,6 +454,8 @@ class VisumStepWidget(_Q_WIDGET_BASE):
         self.edit_session = project_session(self.parent(), path)
         if self.selective_update:
             self.prepare_centrality_update()
+        else:
+            self._load_persisted_log()
 
     def prepare_centrality_update(self):
         self.selective_update = True
@@ -500,6 +503,7 @@ class VisumStepWidget(_Q_WIDGET_BASE):
 
         self.phase_label.setText(self.localizer.get_string("step5_status_running", default="Visum-Verarbeitung läuft..."))
         self.log_edit.clear()
+        self._clear_persisted_log()
         self._log_import_phase = None
         self._update_log_title()
         self.append_log(self.localizer.get_string("step5_log_starting", project_path=self.project_path, start_step=start_step))
@@ -590,6 +594,37 @@ class VisumStepWidget(_Q_WIDGET_BASE):
         mins, secs = divmod(self._visum_seconds, 60)
         self.elapsed_label.setText(f"{mins:02d}:{secs:02d}")
 
+    def _visum_log_file(self) -> Optional[Path]:
+        if not self.project_path:
+            return None
+        return Path(self.project_path) / "processed" / "visum" / "visum_processing.log"
+
+    def _clear_persisted_log(self) -> None:
+        log_file = self._visum_log_file()
+        if log_file is None:
+            return
+        try:
+            log_file.parent.mkdir(parents=True, exist_ok=True)
+            log_file.write_text("", encoding="utf-8")
+        except OSError:
+            pass
+
+    def _load_persisted_log(self) -> None:
+        if self.selective_update:
+            return
+        log_file = self._visum_log_file()
+        if log_file is None or not log_file.is_file():
+            return
+        try:
+            content = log_file.read_text(encoding="utf-8")
+        except OSError:
+            return
+        if content.strip():
+            self.log_edit.setPlainText(content.rstrip("\n"))
+            sb = self.log_edit.verticalScrollBar()
+            if sb:
+                sb.setValue(sb.maximum())
+
     def append_log(self, text: str) -> None:
         if text.startswith("PROGRESS_INLINE:"):
             text = text[len("PROGRESS_INLINE:"):].strip()
@@ -597,6 +632,14 @@ class VisumStepWidget(_Q_WIDGET_BASE):
         sb = self.log_edit.verticalScrollBar()
         if sb:
             sb.setValue(sb.maximum())
+        log_file = self._visum_log_file()
+        if log_file is not None and not self.selective_update:
+            try:
+                log_file.parent.mkdir(parents=True, exist_ok=True)
+                with open(log_file, "a", encoding="utf-8") as fh:
+                    fh.write(text + "\n")
+            except OSError:
+                pass
 
     def _on_finished(self, success: bool, message: str) -> None:
         if self._visum_timer is not None and self._visum_timer.isActive():
@@ -628,9 +671,7 @@ class VisumStepWidget(_Q_WIDGET_BASE):
             self.phase_progress.setFormat("%p% – Abgeschlossen")
             self.overall_progress.setValue(100)
             self.phase_label.setText(self.localizer.get_string("step5_status_completed", default="Status: Erfolgreich abgeschlossen"))
-            title = self.localizer.get_string("step5_title_success", default="Erfolg")
-            msg = self.localizer.get_string("step5_msg_success", default=message)
-            Dialogs.info(self, title, msg)
+            self.append_log(self.localizer.get_string("step5_msg_success", default=message))
             self.finished.emit(True, message)
         else:
             try:

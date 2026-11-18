@@ -601,7 +601,6 @@ class UrbanActQtMainWindow(BaseMainWindow):
         step5_widget = VisumStepWidget(localizer, self, project_path=project_path)
         if selective:
             step5_widget.prepare_centrality_update()
-        step5_widget.finished.connect(lambda ok, msg: self._show_results_step() if ok else None)
         if hasattr(step5_widget, "running_state_changed") and step5_widget.running_state_changed is not None:
             step5_widget.running_state_changed.connect(self._handle_step5_running_state_changed)
         self._show_step(
