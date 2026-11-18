@@ -34,7 +34,18 @@ STANDARD_POI_ATTRS = frozenset({
     'LABELPOSRELX', 'LABELPOSRELY', 'USEIMAGEFILE', 'USEIMAGEHEIGHT',
 })
 
-GEODATA_SUFFIXES = ('.shp', '.geojson', '.json')
+INTEGER_POI_ATTRS = frozenset({'FID', 'ZONENO', 'MAINZONENO', 'POP'})
+BOOLEAN_POI_ATTRS = frozenset({'IS_POLYGON'})
+IGNORED_POI_ATTRS = frozenset({'PATH'})
+SHP_TRUNCATED_ATTR_MAP = {
+    'CLASSIFICA': 'CLASSIFICATION',
+    'DESCRIPTIO': 'DESCRIPTION',
+    'PRIMARY_TA': 'PRIMARY_TAG',
+    'SECONDARY_': 'SECONDARY_TAG',
+}
+OBSOLETE_POI_UDAS = frozenset({'PATH', *SHP_TRUNCATED_ATTR_MAP.keys()})
+
+GEODATA_SUFFIXES = ('.geojson', '.json', '.shp')
 
 
 def category_for_file(path, administrative=False):
@@ -141,8 +152,15 @@ def clean_poi_name(value):
     return ' '.join(text.replace('\ufffd', '').replace(';', ',').split())
 
 
+@dataclass(frozen=True)
+class VisumAttrSpec:
+    attr_id: str
+    value_type: int
+    dec_places: int
+
+
 def iter_poi_geodata_files(visum_directory: Path | str) -> list[tuple[Path, int, bool]]:
-    """Collect POI and administrative boundary files (.shp preferred over .geojson/.json per stem)."""
+    """Collect POI and administrative boundary files (.geojson preferred over .json and .shp per stem)."""
     discovered: list[tuple[Path, int, bool]] = []
     suffix_rank = {ext: idx for idx, ext in enumerate(GEODATA_SUFFIXES)}
     for folder, administrative in (('POI', False), ('Zones', True)):
@@ -168,30 +186,179 @@ def iter_poi_geodata_files(visum_directory: Path | str) -> list[tuple[Path, int,
     return discovered
 
 
-def map_geodata_dtype_to_visum(series) -> tuple[int, int]:
-    """Map a GeoDataFrame column series/dtype to a Visum (ValueType, dec_places) pair."""
+def _infer_visum_attr_spec(series, attr_id: str | None = None) -> VisumAttrSpec:
+    """Infer a Visum attribute specification from a column series and optional target attribute ID."""
     import pandas as pd
+
+    target_id = str(attr_id or '').upper()
+    if target_id in INTEGER_POI_ATTRS:
+        return VisumAttrSpec(attr_id=target_id, value_type=VISUM_VALUETYPE_INT, dec_places=0)
+    if target_id in BOOLEAN_POI_ATTRS:
+        return VisumAttrSpec(attr_id=target_id, value_type=VISUM_VALUETYPE_BOOL, dec_places=0)
 
     dtype = getattr(series, 'dtype', series)
     if pd.api.types.is_bool_dtype(dtype):
-        return VISUM_VALUETYPE_BOOL, 0
+        return VisumAttrSpec(attr_id=target_id, value_type=VISUM_VALUETYPE_BOOL, dec_places=0)
     if pd.api.types.is_integer_dtype(dtype):
         try:
             non_null = series.dropna()
             if len(non_null):
                 min_v, max_v = int(non_null.min()), int(non_null.max())
                 if min_v < _INT32_MIN or max_v > _INT32_MAX:
-                    return VISUM_VALUETYPE_REAL, 0
+                    return VisumAttrSpec(attr_id=target_id, value_type=VISUM_VALUETYPE_REAL, dec_places=0)
         except Exception:
             pass
-        return VISUM_VALUETYPE_INT, 0
+        return VisumAttrSpec(attr_id=target_id, value_type=VISUM_VALUETYPE_INT, dec_places=0)
     if pd.api.types.is_float_dtype(dtype):
-        return VISUM_VALUETYPE_REAL, 4
+        return VisumAttrSpec(attr_id=target_id, value_type=VISUM_VALUETYPE_REAL, dec_places=4)
     if dtype == object and hasattr(series, 'dropna'):
         non_null = series.dropna()
         if len(non_null) and all(isinstance(v, bool) for v in non_null.iloc[:50]):
-            return VISUM_VALUETYPE_BOOL, 0
-    return VISUM_VALUETYPE_STRING, 0
+            return VisumAttrSpec(attr_id=target_id, value_type=VISUM_VALUETYPE_BOOL, dec_places=0)
+    return VisumAttrSpec(attr_id=target_id, value_type=VISUM_VALUETYPE_STRING, dec_places=0)
+
+
+def map_geodata_dtype_to_visum(series, attr_id: str | None = None) -> tuple[int, int]:
+    """Map a GeoDataFrame column series/dtype to a Visum (ValueType, dec_places) pair."""
+    spec = _infer_visum_attr_spec(series, attr_id=attr_id)
+    return spec.value_type, spec.dec_places
+
+
+def _normalize_geodata_attributes(
+    frame,
+    *,
+    drop_attrs=IGNORED_POI_ATTRS,
+    int_attrs=INTEGER_POI_ATTRS,
+    bool_attrs=BOOLEAN_POI_ATTRS,
+):
+    """Drop ignored POI columns, cast integer attrs to Int64, and cast bool attrs to bool."""
+    import pandas as pd
+
+    drop_set = {str(a).upper() for a in (drop_attrs or ())}
+    int_set = {str(a).upper() for a in (int_attrs or ())}
+    bool_set = {str(a).upper() for a in (bool_attrs or ())}
+
+    drop_cols = [
+        col for col in frame.columns
+        if col != 'geometry' and str(col).upper() in drop_set
+    ]
+    cast_cols = [
+        col for col in frame.columns
+        if col != 'geometry' and col not in drop_cols
+        and str(col).upper() in int_set
+        and not pd.api.types.is_integer_dtype(frame[col].dtype)
+    ]
+    cast_bool_cols = [
+        col for col in frame.columns
+        if col != 'geometry' and col not in drop_cols and col not in cast_cols
+        and str(col).upper() in bool_set
+        and not pd.api.types.is_bool_dtype(frame[col].dtype)
+    ]
+
+    if not drop_cols and not cast_cols and not cast_bool_cols:
+        return frame, False
+
+    clean = frame.drop(columns=drop_cols).copy() if drop_cols else frame.copy()
+    for col in cast_cols:
+        clean[col] = pd.to_numeric(clean[col], errors='coerce').round().astype('Int64')
+    for col in cast_bool_cols:
+        series = clean[col]
+        if pd.api.types.is_numeric_dtype(series.dtype):
+            clean[col] = series.fillna(0).ne(0).astype(bool)
+        else:
+            clean[col] = series.map(
+                lambda v: False if (pd.isna(v) or str(v).strip().lower() in ('', '0', '0.0', 'false', 'no', 'n')) else bool(v)
+            ).astype(bool)
+    return clean, True
+
+
+def _write_rfc7946_geojson(frame, target_path: Path) -> None:
+    """Write a GeoDataFrame as RFC 7946 GeoJSON (WGS84, no top-level 'crs' member)."""
+    export_frame = frame
+    crs = getattr(export_frame, 'crs', None)
+    if crs is not None:
+        try:
+            if crs.to_epsg() != 4326:
+                export_frame = export_frame.to_crs('EPSG:4326')
+        except Exception:
+            export_frame = export_frame.to_crs('EPSG:4326')
+    try:
+        export_frame.to_file(target_path, driver='GeoJSON', RFC7946='YES')
+    except TypeError:
+        export_frame.to_file(target_path, driver='GeoJSON')
+
+
+def _geojson_has_stale_schema(path: Path) -> bool:
+    """Return True if an existing GeoJSON has 'crs', ignored attrs ('path'), or float booleans."""
+    try:
+        head = path.read_text(encoding='utf-8', errors='ignore')[:4096]
+    except OSError:
+        return True
+    if '"crs"' in head:
+        return True
+    head_lower = head.lower()
+    for ignored in IGNORED_POI_ATTRS:
+        if f'"{ignored.lower()}"' in head_lower:
+            return True
+    for bool_attr in BOOLEAN_POI_ATTRS:
+        attr_lower = bool_attr.lower()
+        if f'"{attr_lower}": 0.0' in head_lower or f'"{attr_lower}": 1.0' in head_lower:
+            return True
+    return False
+
+
+def ensure_poi_geojson_files(visum_directory: Path | str, log=logging.info) -> int:
+    """Ensure untruncated RFC 7946 GeoJSON exports exist for Model 1 ADM and Model 5 POI layers."""
+    import geopandas as gpd
+
+    visum_dir = Path(visum_directory).resolve()
+    if visum_dir.name.lower() != 'visum' or visum_dir.parent.name.lower() != 'processed':
+        return 0
+    project_root = visum_dir.parent.parent
+    qgis_out = project_root / 'processed' / 'qgis_output'
+    if not qgis_out.is_dir():
+        return 0
+
+    candidates: list[tuple[Path, Path]] = []
+    model1_dir = qgis_out / 'model1_DataPrep'
+    zones_dir = visum_dir / 'shapefile' / 'Zones'
+    if model1_dir.is_dir():
+        for level in range(4):
+            src = model1_dir / f'adm{level}.gpkg'
+            if src.is_file():
+                candidates.append((src, zones_dir / f'adm{level}.geojson'))
+
+    model5_dir = qgis_out / 'model5_UrbanCentrality'
+    poi_dir = visum_dir / 'shapefile' / 'POI'
+    if model5_dir.is_dir():
+        for src in sorted(model5_dir.glob('sector_*_points.gpkg')):
+            if category_for_file(src, administrative=False) is None:
+                continue
+            candidates.append((src, poi_dir / f'{src.stem}.geojson'))
+
+    written = 0
+    for src, dst in candidates:
+        needs_write = (
+            not dst.is_file()
+            or src.stat().st_mtime > dst.stat().st_mtime
+            or _geojson_has_stale_schema(dst)
+        )
+        if not needs_write:
+            continue
+        dst.parent.mkdir(parents=True, exist_ok=True)
+        frame = gpd.read_file(src)
+        frame, _ = _normalize_geodata_attributes(frame)
+        tmp_dst = dst.with_name(f'{dst.stem}.tmp.geojson')
+        try:
+            _write_rfc7946_geojson(frame, tmp_dst)
+            tmp_dst.replace(dst)
+        except Exception:
+            if tmp_dst.exists():
+                tmp_dst.unlink(missing_ok=True)
+            raise
+        written += 1
+        log(f'GeoJSON für Visum-POI-Import aktualisiert: {dst.name}')
+    return written
 
 
 def _sanitize_visum_attr_id(column_name: str, used_ids: set[str]) -> str:
@@ -220,26 +387,51 @@ def build_attribute_mapping(frame) -> tuple[dict[str, str], list[tuple[str, str,
             continue
         col_str = str(col)
         upper = col_str.upper()
-        if upper in STANDARD_POI_ATTRS and upper not in used_ids:
-            attr_id = upper
+        normalized_upper = SHP_TRUNCATED_ATTR_MAP.get(upper, upper)
+        if upper in IGNORED_POI_ATTRS or normalized_upper in IGNORED_POI_ATTRS:
+            continue
+        if normalized_upper in STANDARD_POI_ATTRS and normalized_upper not in used_ids:
+            attr_id = normalized_upper
             used_ids.add(attr_id)
             attr_map[col_str] = attr_id
             continue
-        attr_id = _sanitize_visum_attr_id(col_str, used_ids | set(STANDARD_POI_ATTRS))
+        attr_id = _sanitize_visum_attr_id(normalized_upper, used_ids | set(STANDARD_POI_ATTRS))
         used_ids.add(attr_id)
         attr_map[col_str] = attr_id
-        vt, dec_places = map_geodata_dtype_to_visum(frame[col])
-        uda_defs.append((attr_id, col_str, vt, dec_places))
+        uda_label = normalized_upper.lower() if normalized_upper != upper else col_str
+        vt, dec_places = map_geodata_dtype_to_visum(frame[col], attr_id=attr_id)
+        uda_defs.append((attr_id, uda_label, vt, dec_places))
     return attr_map, uda_defs
+
+
+def _ensure_poi_udas(pois, uda_defs: list[tuple[str, str, int, int]]) -> None:
+    """Create missing UDAs, recreate UDAs with mismatched ValueTypes, and drop obsolete UDAs."""
+    for obsolete_id in sorted(OBSOLETE_POI_UDAS):
+        try:
+            if pois.AttrExists(obsolete_id) is True:
+                pois.DeleteUserDefinedAttribute(obsolete_id)
+        except Exception:
+            pass
+
+    for attr_id, col_name, vt, dec_places in uda_defs:
+        exists = pois.AttrExists(attr_id)
+        if exists is True:
+            try:
+                attr_obj = pois.Attributes.ItemByKey(attr_id)
+                existing_vt = getattr(attr_obj, 'ValueType', None)
+                if isinstance(existing_vt, int) and existing_vt != vt:
+                    pois.DeleteUserDefinedAttribute(attr_id)
+                    exists = False
+            except Exception:
+                pass
+        if not exists or exists is False:
+            pois.AddUserDefinedAttribute(attr_id, col_name, col_name, vt, dec_places)
 
 
 def ensure_poi_attributes_for_frame(category, frame) -> dict[str, str]:
     """Create missing User-Defined Attributes on a Visum POI category matching geodata column types."""
     attr_map, uda_defs = build_attribute_mapping(frame)
-    pois = category.POIs
-    for attr_id, col_name, vt, dec_places in uda_defs:
-        if not pois.AttrExists(attr_id):
-            pois.AddUserDefinedAttribute(attr_id, col_name, col_name, vt, dec_places)
+    _ensure_poi_udas(category.POIs, uda_defs)
     return attr_map
 
 
@@ -302,8 +494,18 @@ def _validate_geodataframe_fast(path: Path, category_no: int, administrative: bo
     import pandas as pd
 
     orig_crs = frame.crs
-    reprojected = frame.to_crs(target_crs)
-    crs_changed = orig_crs != target_crs
+    is_geojson = path.suffix.lower() in ('.geojson', '.json')
+    try:
+        is_wgs84 = orig_crs is not None and orig_crs.to_epsg() == 4326
+    except Exception:
+        is_wgs84 = False
+
+    if is_geojson and is_wgs84:
+        reprojected = frame
+        crs_changed = False
+    else:
+        reprojected = frame.to_crs(target_crs)
+        crs_changed = orig_crs != target_crs
 
     fields = {str(key).lower(): key for key in reprojected.columns}
     name_field = next((fields[key] for key in (f'name_{category_no - 10}', 'name') if key in fields), None)
@@ -379,7 +581,7 @@ def _validate_geodataframe_fast(path: Path, category_no: int, administrative: bo
         clean_frame = reprojected.copy() if any_modified else reprojected
 
     if geom_modified and cleaned_geoms is not None:
-        clean_frame = clean_frame.set_geometry(cleaned_geoms, crs=target_crs)
+        clean_frame = clean_frame.set_geometry(cleaned_geoms, crs=reprojected.crs)
         if not keep_mask.all():
             clean_frame = clean_frame.loc[keep_mask].copy()
             if name_values is not None:
@@ -391,6 +593,9 @@ def _validate_geodataframe_fast(path: Path, category_no: int, administrative: bo
 
     if name_modified and name_field is not None and name_values is not None:
         clean_frame[name_field] = name_values
+
+    clean_frame, attrs_modified = _normalize_geodata_attributes(clean_frame)
+    any_modified = any_modified or attrs_modified
 
     # Build PreparedPOI records without eagerly computing .representative_point()/.wkt for valid polygons.
     final_geoms = clean_frame.geometry.tolist()
@@ -426,6 +631,7 @@ def prepare_project_pois(visum, visum_directory, log=logging.info):
     from pyproj import CRS
 
     log('Prüfe alle POIs und Verwaltungsflächen vor dem Import...')
+    ensure_poi_geojson_files(visum_directory, log=log)
     target_crs = CRS.from_wkt(str(visum.Net.AttValue('PROJECTIONDEFINITION')))
     prepared: list[PreparedPOI] = []
     source_entries: list[PreparedPOISource] = []
@@ -579,10 +785,7 @@ def _import_source_native(visum, category, source: PreparedPOISource, temp_dir: 
         need_rewrite = source.modified or _geojson_needs_rfc7946_rewrite(source.path, source.frame)
         if need_rewrite:
             import_path = temp_dir / f'{source.path.stem}_clean.geojson'
-            export_frame = source.frame
-            if getattr(export_frame, 'crs', None) is not None and export_frame.crs.to_epsg() != 4326:
-                export_frame = export_frame.to_crs('EPSG:4326')
-            export_frame.to_file(import_path, driver='GeoJSON')
+            _write_rfc7946_geojson(source.frame, import_path)
         else:
             import_path = source.path
 

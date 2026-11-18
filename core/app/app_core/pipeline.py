@@ -1613,6 +1613,88 @@ def export_vector_file_to_shapefile(input_gpkg: str, output_shp: str, target_crs
     return False
 
 
+def export_vector_file_to_geojson(
+    input_gpkg: str,
+    output_geojson: str,
+    drop_fields: Optional[tuple[str, ...] | list[str]] = None,
+    int_fields: Optional[tuple[str, ...] | list[str]] = None,
+) -> bool:
+    """Export a GeoPackage vector file to RFC 7946 GeoJSON (EPSG:4326) preserving full field names."""
+    if not os.path.isfile(input_gpkg):
+        return False
+    out_dir = os.path.dirname(output_geojson)
+    if out_dir:
+        os.makedirs(out_dir, exist_ok=True)
+    drop_set = {str(name).lower() for name in (drop_fields or ())}
+
+    # Strategy 1: GeoPandas (guarantees nullable Int64 normalization and RFC 7946 WGS84 output)
+    tmp_path = f"{output_geojson}.tmp.geojson"
+    try:
+        import geopandas as gpd
+        from core.scripts.visum.scripts.poi_import import (
+            _normalize_geodata_attributes,
+            _write_rfc7946_geojson,
+        )
+
+        gdf = gpd.read_file(input_gpkg)
+        gdf, _ = _normalize_geodata_attributes(
+            gdf,
+            drop_attrs=drop_fields or (),
+            int_attrs=int_fields or (),
+        )
+        _write_rfc7946_geojson(gdf, Path(tmp_path))
+        os.replace(tmp_path, output_geojson)
+        return True
+    except Exception:
+        if os.path.isfile(tmp_path):
+            try:
+                os.remove(tmp_path)
+            except OSError:
+                pass
+
+    # Strategy 2: PyQGIS QgsVectorFileWriter
+    try:
+        from qgis.core import QgsVectorLayer, QgsVectorFileWriter, QgsCoordinateTransformContext, QgsCoordinateReferenceSystem
+        layer = QgsVectorLayer(input_gpkg, "export_layer", "ogr")
+        if layer.isValid():
+            options = QgsVectorFileWriter.SaveVectorOptions()
+            options.driverName = "GeoJSON"
+            options.fileEncoding = "UTF-8"
+            options.layerOptions = ["RFC7946=YES"]
+            options.overrideCrs = QgsCoordinateReferenceSystem("EPSG:4326")
+            if drop_set:
+                options.attributes = [
+                    idx for idx, fld in enumerate(layer.fields())
+                    if fld.name().lower() not in drop_set
+                ]
+            write_fn = getattr(QgsVectorFileWriter, "writeAsVectorFormatV3", None) or getattr(QgsVectorFileWriter, "writeAsVectorFormatV2", None) or QgsVectorFileWriter.writeAsVectorFormat
+            writer_res = write_fn(
+                layer, output_geojson, QgsCoordinateTransformContext(), options
+            )
+            err = writer_res[0] if isinstance(writer_res, tuple) else writer_res
+            if err == QgsVectorFileWriter.NoError:
+                return True
+    except Exception:
+        pass
+
+    # Strategy 3: OSGeo GDAL / OGR
+    try:
+        from osgeo import gdal
+        options = gdal.VectorTranslateOptions(
+            format="GeoJSON",
+            dstSRS="EPSG:4326",
+            layerCreationOptions=["RFC7946=YES"],
+        )
+        ds = gdal.VectorTranslate(output_geojson, input_gpkg, options=options)
+        if ds is not None:
+            ds = None
+            return True
+    except Exception:
+        pass
+
+    return False
+
+
 def extract_centrality_points_from_zone_gpkg(model5_dir: str, local_crs: Optional[str] = None, log=None) -> Optional[str]:
     """Extract discrete centrality points from zone_pa_ia1_ia2.gpkg using XCoord/YCoord in local CRS."""
     src_gpkg = os.path.join(model5_dir, "zone_pa_ia1_ia2.gpkg")
@@ -1844,13 +1926,20 @@ def post_process_exports_and_styles(project_path: str, *, log: Optional[Callable
                     if log:
                         log(f"Warnung beim Kopieren von ADM{i}-Style: {e}")
 
-    # 3. Export Shapefiles for Zones & Mainzones in local CRS
+    # 3. Export Shapefiles & RFC 7946 GeoJSON for Zones & Mainzones
     visum_zones_dir = os.path.join(project_path, "processed", "visum", "shapefile", "Zones")
+    int_poi_fields = ("fid", "zoneno", "mainzoneno", "pop")
     for level in range(4):
         source = os.path.join(model1_dir, f"adm{level}.gpkg")
         if os.path.isfile(source):
             export_vector_file_to_shapefile(
                 source, os.path.join(visum_zones_dir, f"adm{level}.shp"), target_crs=local_crs)
+            export_vector_file_to_geojson(
+                source,
+                os.path.join(visum_zones_dir, f"adm{level}.geojson"),
+                drop_fields=("path",),
+                int_fields=int_poi_fields,
+            )
     for zone_name in ("zones", "mainzones"):
         gpkg_path = os.path.join(model6_dir, f"{zone_name}.gpkg")
         shp_path = os.path.join(visum_zones_dir, f"{zone_name}.shp")
@@ -1859,7 +1948,7 @@ def post_process_exports_and_styles(project_path: str, *, log: Optional[Callable
             if ok and log:
                 log(f"Visum-Shapefile exportiert: {shp_path}")
 
-    # 4. Export Shapefiles for POI Sector Points from Model 5
+    # 4. Export Shapefiles & RFC 7946 GeoJSON for POI Sector Points from Model 5
     visum_poi_dir = os.path.join(project_path, "processed", "visum", "shapefile", "POI")
     if os.path.isdir(model5_dir):
         for filename in os.listdir(model5_dir):
@@ -1870,6 +1959,15 @@ def post_process_exports_and_styles(project_path: str, *, log: Optional[Callable
                 ok = export_vector_file_to_shapefile(gpkg_path, shp_path, target_crs=local_crs)
                 if ok and log:
                     log(f"Visum-POI-Shapefile exportiert: {shp_path}")
+                geojson_path = os.path.join(visum_poi_dir, filename.replace(".gpkg", ".geojson"))
+                gj_ok = export_vector_file_to_geojson(
+                    gpkg_path,
+                    geojson_path,
+                    drop_fields=("path",),
+                    int_fields=int_poi_fields,
+                )
+                if gj_ok and log:
+                    log(f"Visum-POI-GeoJSON exportiert: {geojson_path}")
 
     # 5. Populate Visum template GPA files
     populate_visum_gpa_files(project_path)
