@@ -528,7 +528,9 @@ class VisumStepWidget(_Q_WIDGET_BASE):
         self._thread.start()
 
     def stop_visum_pipeline(self) -> None:
-        if self.selective_update and self._thread is not None:
+        if self._thread is None:
+            return
+        if self.selective_update:
             self._worker.stop_event.set()
             self.stop_button.setEnabled(False)
             self.append_log(self.localizer.get_string('centres_update_stopping'))
