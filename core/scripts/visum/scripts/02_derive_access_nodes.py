@@ -765,6 +765,24 @@ class AccessNodeDeriver:
         df_newnodes = zk_agg[~mask_1er][['ZK_CLUSTER_ID', 'ZK_TYP_DETAIL', 'XCOORD', 'YCOORD', 'ZK_TYP']].copy()
         df_newnodes.rename(columns={'ZK_CLUSTER_ID': 'NO'}, inplace=True)
 
+        reach_attr = next(
+            (attr for attr in ("Reachable_Node", "REACHABLE_NODE", "REACHABLE_NODE_PKW")
+             if self.Visum.Net.Nodes.AttrExists(attr)),
+            None,
+        )
+        if reach_attr and not df_newnodes.empty:
+            self.nf.Init()
+            reach_rows = self.Visum.Net.Nodes.GetMultipleAttributes(["NO", reach_attr], OnlyActive=False)
+            node_reach = {int(no): bool(val) for no, val in reach_rows}
+            cluster_reach = [
+                1 if any(node_reach.get(int(n), False) for n in member_nos) else 0
+                for member_nos in zk_agg.loc[~mask_1er, 'NO']
+            ]
+            df_newnodes[reach_attr.upper()] = cluster_reach
+            logging.info(
+                f"Erreichbarkeits-Attribut ('{reach_attr} = True') für {sum(cluster_reach)} von {len(cluster_reach)} neuen Cluster-Zugangsknoten übernommen."
+            )
+
         lt777 = self.Visum.Net.AddLinkType(777)
         lt777.SetAttValue("NAME", 'ZK_Hilfsstrecken')
         lt777.SetAttValue("V0PRT", 20)
@@ -797,10 +815,14 @@ class AccessNodeDeriver:
             file.write(f"\n* Tabelle: Strecken\n$LINK:{';'.join(df_newlinks.columns).upper()}\n")
             df_newlinks.to_csv(file, header=False, sep=";", index=False, lineterminator='\n')
 
-            zone_df = df_newnodes[['NO', 'XCOORD', 'YCOORD']].copy()
+            reachable_zones_src = df_newnodes
+            if reach_attr and reach_attr.upper() in df_newnodes.columns:
+                reachable_zones_src = df_newnodes[df_newnodes[reach_attr.upper()] == 1]
+
+            zone_df = reachable_zones_src[['NO', 'XCOORD', 'YCOORD']].copy()
             zone_df["NODENO"] = zone_df["NO"]
             new_zone_no = self.new_object_number('Zones')
-            zone_df["NO"] = zone_df.index + new_zone_no
+            zone_df["NO"] = range(new_zone_no, new_zone_no + len(zone_df))
             zone_df["TYPENO"] = 99
 
             file.write(f"\n* Tabelle: Bezirke\n$ZONE:{';'.join(zone_df.drop('NODENO', axis=1).columns).upper()}\n")
@@ -818,19 +840,6 @@ class AccessNodeDeriver:
 
         with timed_step('self.Visum.IO.LoadNet'):
             self.Visum.IO.LoadNet(str(netfile_path), ReadAdditive=True)
-
-        # Assign Reachable_Node = True to newly created access nodes (ZK_TYP <= 5)
-        self.nf.Init()
-        if self.Visum.Net.Nodes.AttrExists("ZK_TYP"):
-            self.nf.AddCondition("OP_NONE", False, "ZK_TYP", "LessEqualVal", 5)
-            count_new = self.Visum.Net.Nodes.CountActive
-            if count_new > 0:
-                for reach_attr in ["Reachable_Node", "REACHABLE_NODE", "REACHABLE_NODE_PKW"]:
-                    if self.Visum.Net.Nodes.AttrExists(reach_attr):
-                        self.Visum.Net.Nodes.SetAllAttValues(reach_attr, True, OnlyActive=True)
-                        logging.info(
-                            f"Erreichbarkeits-Attribut ('{reach_attr} = True') für {count_new} neue Zugangsknoten gesetzt.")
-                        break
         self.nf.Init()
 
     @measured
