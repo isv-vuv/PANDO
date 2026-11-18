@@ -212,7 +212,7 @@ def export_report_maps(root, output, data, progress):
         QgsLegendStyle, Qgis, QgsSingleSymbolRenderer)
     from qgis.PyQt.QtGui import QFont, QColor, QFontDatabase
     from core.app.app_core.project import tool_root
-    for font in (Path(tool_root()) / f"core/report_template_{data.get('language', 'de')}/fonts").glob("*.ttf"):
+    for font in (Path(tool_root()) / f"core/report/templates/{data.get('language', 'de')}/fonts").glob("*.ttf"):
         QFontDatabase.addApplicationFont(str(font))
     from core.app.app_core.report_language import report_text
     tr = lambda text: report_text(text, data.get('language', 'de'))

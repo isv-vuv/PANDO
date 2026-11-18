@@ -54,6 +54,19 @@ class ReportStepWidget(_BASE):
             self.language_buttons[language] = button
             actions.addWidget(button)
         actions.addStretch(); layout.addLayout(actions)
+        self.disclaimer_check = QtWidgets.QCheckBox(
+            self.localizer.get_string(
+                'report_disclaimer_checkbox',
+                default=(
+                    'Ich akzeptiere die Datenschutz- und Lizenzbedingungen der verwendeten Daten/Werkzeuge '
+                    'und nehme zur Kenntnis, dass dies ein automatisch erstellter Modellbericht ohne Gewähr '
+                    'auf Richtigkeit ist – er dient lediglich als Anregung und Grundlage für eigene Planungen.'
+                ),
+            ),
+            self,
+        )
+        self.disclaimer_check.toggled.connect(lambda _checked: self._readiness())
+        layout.addWidget(self.disclaimer_check)
         self.progress = AnimatedProgressBar(self, sync_taskbar=True); layout.addWidget(self.progress)
         self.status = QtWidgets.QLabel(); self.status.setWordWrap(True); layout.addWidget(self.status)
         controls = QtWidgets.QHBoxLayout()
@@ -99,14 +112,24 @@ class ReportStepWidget(_BASE):
         blockers = report_blockers(self.project_path)
         if self.edit_session.busy:
             blockers.insert(0, self.text('report_busy'))
-        self.generate_button.setEnabled(not blockers)
+        if hasattr(self, 'disclaimer_check') and not self.disclaimer_check.isChecked():
+            blockers.append(
+                self.localizer.get_string(
+                    'report_disclaimer_blocker',
+                    default='Bitte bestätigen Sie zunächst den Datenschutz-, Lizenz- und Planungshinweis.',
+                )
+            )
+        self.generate_button.setEnabled(not blockers and self.process is None)
         self.status.setText(self.text('report_blocked') + '\n' + '\n'.join(blockers) if blockers else self.text('report_ready'))
         return not blockers
 
     def _controls(self, running):
         for button in self.language_buttons.values():
             button.setEnabled(not running)
-        self.generate_button.setEnabled(not running and not self.edit_session.busy and not report_blockers(self.project_path))
+        if hasattr(self, 'disclaimer_check'):
+            self.disclaimer_check.setEnabled(not running)
+        disclaimer_ok = (not hasattr(self, 'disclaimer_check')) or self.disclaimer_check.isChecked()
+        self.generate_button.setEnabled(not running and disclaimer_ok and not self.edit_session.busy and not report_blockers(self.project_path))
         self.cancel_button.setEnabled(running)
         self.save_button.setEnabled(not running and self.pdf_path.is_file())
         self.zoom_out.setEnabled(not running and self.document is not None)

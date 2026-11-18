@@ -798,8 +798,9 @@ class UrbanActPipeline:
             text = str(message)
             log_lines.append(text)
             callbacks.log(text)
-            Path(paths["osm_log"]).parent.mkdir(parents=True, exist_ok=True)
-            with open(paths["osm_log"], "a", encoding="utf-8") as stream:
+            project_log_path = Path(self.project_path) / "pipeline.log"
+            project_log_path.parent.mkdir(parents=True, exist_ok=True)
+            with open(project_log_path, "a", encoding="utf-8") as stream:
                 stream.write(text + "\n")
 
         callbacks.phase_started("OSM-Basisdaten (Regionen zusammenführen, Siedlungsflächen & Orte)", 1, 9)
@@ -1050,20 +1051,18 @@ class UrbanActPipeline:
         stored_export_net_mtime = (manifest.get("runtime") or {}).get("export_network_mtime")
         logs: list[str] = []
         project_log_path = Path(self.project_path) / "pipeline.log"
-        osm_log_path = Path(paths["osm_log"])
 
         def log(message: str) -> None:
             text = str(message)
             logs.append(text)
             callbacks.log(text)
-            for log_file in (osm_log_path, project_log_path):
-                try:
-                    log_file.parent.mkdir(parents=True, exist_ok=True)
-                    with open(log_file, "a", encoding="utf-8") as stream:
-                        stream.write(text + "\n")
-                        stream.flush()
-                except Exception:
-                    pass
+            try:
+                project_log_path.parent.mkdir(parents=True, exist_ok=True)
+                with open(project_log_path, "a", encoding="utf-8") as stream:
+                    stream.write(text + "\n")
+                    stream.flush()
+            except Exception:
+                pass
 
         forced_recalc_keys = self.prepare_start_phase_invalidation(
             manifest,

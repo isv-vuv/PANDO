@@ -17,8 +17,10 @@ from typing import Any, Iterable, Mapping, Optional
 
 from core.app.app_core.project import tool_root
 
-CONFIG_FILENAME = "linktypes_config.json"
-CUSTOM_NET_FILENAME = "custom_export_excel_linktypes.net"
+CONFIG_FILENAME = "config.json"
+LEGACY_CONFIG_FILENAME = "linktypes_config.json"
+CUSTOM_NET_FILENAME = "net/custom_linktypes.net"
+LEGACY_CUSTOM_NET_FILENAME = "custom_export_excel_linktypes.net"
 
 ALL_SPEEDS: tuple[int, ...] = (130, 120, 110, 100, 90, 80, 70, 60, 50, 40, 30, 20)
 ALL_LANES: tuple[int, ...] = (4, 3, 2, 1)
@@ -855,45 +857,96 @@ def export_linktypes_net(
     return out_path
 
 
+def _read_project_json(path: Path) -> dict[str, Any]:
+    if not path.is_file():
+        return {}
+    try:
+        loaded = json.loads(path.read_text(encoding="utf-8"))
+        return dict(loaded) if isinstance(loaded, dict) else {}
+    except Exception:
+        return {}
+
+
+def _has_saved_linktypes_config(base: Path) -> bool:
+    cfg = _read_project_json(base / CONFIG_FILENAME)
+    visum_cfg = cfg.get("visum")
+    if isinstance(visum_cfg, Mapping) and isinstance(visum_cfg.get("linktypes"), Mapping):
+        return True
+    return (base / LEGACY_CONFIG_FILENAME).is_file()
+
+
 def load_linktypes_config(project_dir: str | Path | None) -> dict[str, Any]:
-    """Load project-specific link-type configuration or return defaults."""
+    """Load project-specific link-type configuration from config.json (or legacy linktypes_config.json)."""
     if not project_dir:
         return default_linktypes_config()
-    cfg_path = Path(project_dir) / CONFIG_FILENAME
-    if not cfg_path.is_file():
-        return default_linktypes_config()
-    try:
-        raw = json.loads(cfg_path.read_text(encoding="utf-8"))
-        return normalize_linktypes_config(raw)
-    except Exception:
-        return default_linktypes_config()
+    base = Path(project_dir)
+    cfg = _read_project_json(base / CONFIG_FILENAME)
+    visum_cfg = cfg.get("visum")
+    if isinstance(visum_cfg, Mapping) and isinstance(visum_cfg.get("linktypes"), Mapping):
+        return normalize_linktypes_config(visum_cfg["linktypes"])
+    legacy_path = base / LEGACY_CONFIG_FILENAME
+    if legacy_path.is_file():
+        try:
+            raw = json.loads(legacy_path.read_text(encoding="utf-8"))
+            return normalize_linktypes_config(raw)
+        except Exception:
+            pass
+    return default_linktypes_config()
 
 
 def save_linktypes_config(
     project_dir: str | Path,
     config: Mapping[str, Any],
 ) -> tuple[Path, Path]:
-    """Persist link-type configuration JSON and export Visum `.net` for the project."""
+    """Persist link-type configuration into config.json['visum']['linktypes'] and export Visum `.net`."""
     base = Path(project_dir)
     norm = normalize_linktypes_config(config)
 
     cfg_path = base / CONFIG_FILENAME
+    cfg_path.parent.mkdir(parents=True, exist_ok=True)
+    root_cfg = _read_project_json(cfg_path)
+    visum_cfg = root_cfg.get("visum")
+    if not isinstance(visum_cfg, dict):
+        visum_cfg = {}
+        root_cfg["visum"] = visum_cfg
+    visum_cfg["linktypes"] = norm
+
     tmp_cfg = cfg_path.with_suffix(".json.tmp")
-    tmp_cfg.write_text(json.dumps(norm, indent=2, ensure_ascii=False), encoding="utf-8")
+    tmp_cfg.write_text(json.dumps(root_cfg, indent=2, ensure_ascii=False), encoding="utf-8")
     tmp_cfg.replace(cfg_path)
 
     visum_dir = base / "processed" / "visum"
+    for stale in (base / LEGACY_CONFIG_FILENAME, visum_dir / LEGACY_CUSTOM_NET_FILENAME):
+        if stale.is_file():
+            try:
+                stale.unlink()
+            except OSError:
+                pass
+
     net_path = visum_dir / CUSTOM_NET_FILENAME
     export_linktypes_net(norm, net_path)
     return cfg_path, net_path
 
 
 def reset_linktypes_config(project_dir: str | Path) -> dict[str, Any]:
-    """Reset project link-type configuration back to `master_linktypes.net` defaults."""
+    """Reset project link-type configuration back to defaults and remove custom `.net`."""
     base = Path(project_dir)
+    cfg_path = base / CONFIG_FILENAME
+    if cfg_path.is_file():
+        root_cfg = _read_project_json(cfg_path)
+        visum_cfg = root_cfg.get("visum")
+        if isinstance(visum_cfg, dict) and "linktypes" in visum_cfg:
+            visum_cfg.pop("linktypes", None)
+            if not visum_cfg:
+                root_cfg.pop("visum", None)
+            tmp_cfg = cfg_path.with_suffix(".json.tmp")
+            tmp_cfg.write_text(json.dumps(root_cfg, indent=2, ensure_ascii=False), encoding="utf-8")
+            tmp_cfg.replace(cfg_path)
+
     for path in (
-        base / CONFIG_FILENAME,
+        base / LEGACY_CONFIG_FILENAME,
         base / "processed" / "visum" / CUSTOM_NET_FILENAME,
+        base / "processed" / "visum" / LEGACY_CUSTOM_NET_FILENAME,
     ):
         if path.is_file():
             try:
@@ -912,12 +965,12 @@ def resolve_project_master_net(
     if not project_dir:
         return fallback
     base = Path(project_dir)
-    cfg_path = base / CONFIG_FILENAME
     visum_dir = base / "processed" / "visum"
     custom_net = visum_dir / CUSTOM_NET_FILENAME
-    if cfg_path.is_file():
+    if _has_saved_linktypes_config(base):
         cfg = load_linktypes_config(base)
-        if not custom_net.is_file() or custom_net.stat().st_mtime < cfg_path.stat().st_mtime:
+        src_cfg = base / CONFIG_FILENAME if (base / CONFIG_FILENAME).is_file() else (base / LEGACY_CONFIG_FILENAME)
+        if not custom_net.is_file() or custom_net.stat().st_mtime < src_cfg.stat().st_mtime:
             export_linktypes_net(cfg, custom_net, template_net_path=fallback if fallback.is_file() else None)
         return custom_net
 

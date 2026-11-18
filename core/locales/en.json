@@ -699,6 +699,8 @@
     "report_generate": "Generate report",
     "report_cancel": "Cancel",
     "report_save": "Save PDF as …",
+    "report_disclaimer_checkbox": "I accept the privacy and license terms of the underlying data and tools and acknowledge that this is an automatically generated model report without warranty of accuracy—intended solely as a stimulus and basis for my own planning.",
+    "report_disclaimer_blocker": "Please confirm the privacy, license, and planning disclaimer first.",
     "report_ready": "Ready to generate the report. Each run updates the maps and PDF.",
     "report_busy": "An edit or calculation is running.",
     "report_blocked": "The report cannot be generated yet:",

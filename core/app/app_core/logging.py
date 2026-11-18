@@ -158,14 +158,13 @@ def add_project_file_handler(
     project_path: str | Path,
     level: int = logging.INFO,
 ) -> Optional[str]:
-    """Attach FileHandlers targeting [project_path]/pipeline.log and [project_path]/temp/pando.log."""
+    """Attach a FileHandler targeting [project_path]/pipeline.log."""
     if not project_path:
         return None
     try:
         project_dir = Path(project_path)
-        temp_dir = project_dir / "temp"
-        temp_dir.mkdir(parents=True, exist_ok=True)
-        log_files = [project_dir / "pipeline.log", temp_dir / "pando.log"]
+        project_dir.mkdir(parents=True, exist_ok=True)
+        log_files = [project_dir / "pipeline.log"]
 
         first_file = str(log_files[0])
         for log_file in log_files:

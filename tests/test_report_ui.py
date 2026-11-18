@@ -44,6 +44,8 @@ class ReportPreviewTests(unittest.TestCase):
         from core.locales import localizer
         from core.app.app_qt.qt_base import AnimatedProgressBar
         self.assertIsInstance(self.widget.progress, AnimatedProgressBar)
+        self.assertFalse(self.widget.disclaimer_check.isChecked())
+        self.assertFalse(self.widget.generate_button.isEnabled())
         self.assertTrue(self.widget.language_buttons[localizer.get_current_language()].isChecked())
         other = 'en' if localizer.get_current_language() == 'de' else 'de'
         self.widget.language_buttons[other].click()

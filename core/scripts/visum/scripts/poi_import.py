@@ -715,7 +715,8 @@ def prepare_project_pois(visum, visum_directory, log=logging.info):
     elif not prepared:
         errors.append('Keine importierbaren POIs oder Verwaltungsflächen vorhanden.')
 
-    report = Path(visum_directory) / 'poi_validation_report.json'
+    report = Path(visum_directory) / 'shapefile' / 'POI' / 'poi_validation_report.json'
+    report.parent.mkdir(parents=True, exist_ok=True)
     report.write_text(
         json.dumps({'errors': errors, 'corrections': corrections,
                     'ready_to_import': len(prepared)}, ensure_ascii=False, indent=2),

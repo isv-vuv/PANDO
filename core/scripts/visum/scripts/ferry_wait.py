@@ -7,8 +7,20 @@ FERRY_LINK_TYPES = frozenset({'Ferry', 'Ferry_Access'})
 
 
 def load_wait_minutes(root):
-    path = Path(root) / 'ferry_parameters.json'
-    value = json.loads(path.read_text(encoding='utf-8'))['wait_minutes'] if path.exists() else 20
+    root_path = Path(root)
+    config_path = root_path / 'config.json'
+    value = None
+    if config_path.is_file():
+        try:
+            cfg = json.loads(config_path.read_text(encoding='utf-8'))
+            visum_cfg = cfg.get('visum') if isinstance(cfg, dict) else None
+            if isinstance(visum_cfg, dict) and 'ferry_wait_minutes' in visum_cfg:
+                value = visum_cfg['ferry_wait_minutes']
+        except Exception:
+            value = None
+    if value is None:
+        legacy_path = root_path / 'ferry_parameters.json'
+        value = json.loads(legacy_path.read_text(encoding='utf-8'))['wait_minutes'] if legacy_path.exists() else 20
     value = float(value)
     if not math.isfinite(value) or value < 0:
         raise ValueError('Ferry waiting time must be finite and non-negative')
@@ -19,12 +31,32 @@ def save_wait_minutes(root, minutes):
     value = float(minutes)
     if not math.isfinite(value) or value < 0:
         raise ValueError('Ferry waiting time must be finite and non-negative')
-    path = Path(root) / 'ferry_parameters.json'
-    path.parent.mkdir(parents=True, exist_ok=True)
-    temporary = path.with_suffix('.json.tmp')
-    temporary.write_text(json.dumps({'wait_minutes': value}, indent=2), encoding='utf-8')
-    temporary.replace(path)
-    return path
+    root_path = Path(root)
+    config_path = root_path / 'config.json'
+    config_path.parent.mkdir(parents=True, exist_ok=True)
+    cfg = {}
+    if config_path.is_file():
+        try:
+            loaded = json.loads(config_path.read_text(encoding='utf-8'))
+            if isinstance(loaded, dict):
+                cfg = loaded
+        except Exception:
+            cfg = {}
+    visum_cfg = cfg.get('visum')
+    if not isinstance(visum_cfg, dict):
+        visum_cfg = {}
+        cfg['visum'] = visum_cfg
+    visum_cfg['ferry_wait_minutes'] = value
+    temporary = config_path.with_suffix('.json.tmp')
+    temporary.write_text(json.dumps(cfg, indent=2, ensure_ascii=False), encoding='utf-8')
+    temporary.replace(config_path)
+    legacy_path = root_path / 'ferry_parameters.json'
+    if legacy_path.is_file():
+        try:
+            legacy_path.unlink()
+        except OSError:
+            pass
+    return config_path
 
 
 def apply_ferry_wait(visum, minutes):

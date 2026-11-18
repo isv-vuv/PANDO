@@ -85,7 +85,7 @@ class LinkTypesConfigUnitTests(unittest.TestCase):
             self.assertTrue(cfg_path.is_file())
             self.assertTrue(net_path.is_file())
             self.assertEqual(cfg_path.name, CONFIG_FILENAME)
-            self.assertEqual(net_path.name, CUSTOM_NET_FILENAME)
+            self.assertTrue(str(net_path).replace("\\", "/").endswith(CUSTOM_NET_FILENAME))
             self.assertEqual(resolve_project_master_net(project, fallback), net_path)
 
             brackets = calculate_dynamic_brackets(parse_net_link_types(net_path))
@@ -99,7 +99,7 @@ class LinkTypesConfigUnitTests(unittest.TestCase):
             self.assertAlmostEqual(loaded["categories"]["Primary"]["imp_car"], 1.15)
 
             reset_linktypes_config(project)
-            self.assertFalse(cfg_path.exists())
+            self.assertTrue(is_default_linktypes_config(load_linktypes_config(project)))
             self.assertFalse(net_path.exists())
             self.assertEqual(resolve_project_master_net(project, fallback), fallback)
 
@@ -249,9 +249,9 @@ class LinkTypesQtWidgetTests(unittest.TestCase):
             # Sub-Page 4: Ferry Wait Time + Editable TSysSet & Separate Imp Bike / Imp Walk on Special types
             self.assertAlmostEqual(widget.ferry_wait_spin.value(), 20.0)
             widget.ferry_wait_spin.setValue(32.5)
-            ferry_json = Path(tmp) / "ferry_parameters.json"
-            self.assertTrue(ferry_json.is_file())
-            self.assertAlmostEqual(json.loads(ferry_json.read_text(encoding="utf-8"))["wait_minutes"], 32.5)
+            cfg_json = Path(tmp) / "config.json"
+            self.assertTrue(cfg_json.is_file())
+            self.assertAlmostEqual(json.loads(cfg_json.read_text(encoding="utf-8"))["visum"]["ferry_wait_minutes"], 32.5)
             self.assertEqual(widget.special_table.columnCount(), 10)
             self.assertTrue(bool(widget.special_table.item(0, 3).flags() & editable_flag))
             widget.special_table.item(0, 3).setText("BIKE,CAR,WALK")
@@ -330,9 +330,9 @@ class LinkTypesQtWidgetTests(unittest.TestCase):
             self.assertNotIn(130, updated["categories"]["Motorway"]["speeds"])
 
             save_linktypes_config(tmp, updated)
-            self.assertTrue((Path(tmp) / CONFIG_FILENAME).is_file())
+            self.assertIn("linktypes", json.loads((Path(tmp) / CONFIG_FILENAME).read_text(encoding="utf-8"))["visum"])
             reset_linktypes_config(tmp)
-            self.assertFalse((Path(tmp) / CONFIG_FILENAME).exists())
+            self.assertTrue(is_default_linktypes_config(load_linktypes_config(tmp)))
             widget.close()
             dlg.close()
 

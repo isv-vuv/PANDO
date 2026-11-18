@@ -20,7 +20,7 @@ def generate_report(project_path, progress=emit, language='de'):
     root = Path(project_path).resolve()
     data = build_report_inputs(root, language=language)
     report = root / 'report'
-    template = Path(tool_root()) / f'core/report_template_{language}'
+    template = Path(tool_root()) / f'core/report/templates/{language}'
     progress(1, 'report_progress_prepare')
     report.mkdir(parents=True, exist_ok=True)
     # Retire only the known fonts copied by the old report generator.

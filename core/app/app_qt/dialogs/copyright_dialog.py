@@ -61,7 +61,7 @@ COPYRIGHT_SOURCES = [
         "id": "report",
         "title": "7. Report",
         "sub_title": "Typst, Inter, PDFium & CSL",
-        "rel_path": os.path.join("core", "report_licenses", "_source.txt"),
+        "rel_path": os.path.join("core", "report", "licenses", "_source.txt"),
     },
 ]
 

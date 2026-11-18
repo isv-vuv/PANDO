@@ -701,6 +701,8 @@
     "report_generate": "Bericht generieren",
     "report_cancel": "Abbrechen",
     "report_save": "PDF speichern unter …",
+    "report_disclaimer_checkbox": "Ich akzeptiere die Datenschutz- und Lizenzbedingungen der verwendeten Daten/Werkzeuge und nehme zur Kenntnis, dass dies ein automatisch erstellter Modellbericht ohne Gewähr auf Richtigkeit ist – er dient lediglich als Anregung und Grundlage für eigene Planungen.",
+    "report_disclaimer_blocker": "Bitte bestätigen Sie zunächst den Datenschutz-, Lizenz- und Planungshinweis.",
     "report_ready": "Bereit zur Berichtserstellung. Bei jeder Generierung werden die Karten und das PDF aktualisiert.",
     "report_busy": "Eine Bearbeitung oder Berechnung läuft.",
     "report_blocked": "Der Bericht kann noch nicht erstellt werden:",
