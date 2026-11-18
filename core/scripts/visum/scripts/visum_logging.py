@@ -16,14 +16,14 @@ def measured(function):
 @contextmanager
 def timed_step(label):
     started = perf_counter()
-    logging.info("[Messung] Start: %s", label)
+    logging.debug("[Messung] Start: %s", label)
     try:
         yield
     except BaseException:
         logging.error("[Messung] Abgebrochen: %s | Dauer %.2f s", label, perf_counter() - started)
         raise
     else:
-        logging.info("[Messung] Ende: %s | Dauer %.2f s", label, perf_counter() - started)
+        logging.debug("[Messung] Ende: %s | Dauer %.2f s", label, perf_counter() - started)
 
 
 def log_network_counts(visum, label):

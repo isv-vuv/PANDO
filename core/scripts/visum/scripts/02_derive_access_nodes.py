@@ -161,7 +161,7 @@ class AccessNodeDeriver:
     @measured
     def get_multi_netobj_atts_with_id(self, netobj, atts_dict_withdtype: dict) -> pd.DataFrame:
         """Liest Attribute inkl. Visum-ID als Pandas DataFrame aus."""
-        logging.info("[Diagnose] Angeforderte Attribute: %s", list(atts_dict_withdtype))
+        logging.debug("[Diagnose] Angeforderte Attribute: %s", list(atts_dict_withdtype))
         netobj_type = netobj._oleobj_.GetTypeInfo().GetDocumentation(-1)[0]
 
         if netobj_type != 'ILinks':
@@ -200,13 +200,13 @@ class AccessNodeDeriver:
                     netobj.GetMultiAttValues("LINK_IDENTIFIER", OnlyActive=False),
                     columns=["VISUM_ID", "LINK_IDENTIFIER"]
                 ).astype({"VISUM_ID": int, "LINK_IDENTIFIER": str})
-            logging.info("[Diagnose] Streckenabruf: %d aktive Zeilen; %d globale Kennungen für Indexzuordnung", len(df_links), len(df_links_index))
+            logging.debug("[Diagnose] Streckenabruf: %d aktive Zeilen; %d globale Kennungen für Indexzuordnung", len(df_links), len(df_links_index))
             with timed_step("Attributabruf: globale Kennungen mit aktiven Strecken verknüpfen"):
                 df_links = pd.merge(df_links, df_links_index, on='LINK_IDENTIFIER')
             v_id = df_links.pop('VISUM_ID')
             df_links.insert(0, 'VISUM_ID', v_id)
             df_netobj = df_links.copy()
-        logging.info("[Diagnose] Attributabruf %s: %d aktive Datensätze, %d Spalten", netobj_type, len(df_netobj), len(df_netobj.columns))
+        logging.debug("[Diagnose] Attributabruf %s: %d aktive Datensätze, %d Spalten", netobj_type, len(df_netobj), len(df_netobj.columns))
         return df_netobj
 
     @measured
