@@ -851,9 +851,13 @@ def build_hierarchical_network(merged_pbf, osm_dir, osmium_exe, bin_dir, poly_pa
                     if route_stats.get("selected_ways", 0) > 0 and os.path.isfile(abs_ferry_routed):
                         merge_inputs.append(rel_net_ferry_access_routed)
 
-                    # Extract river/canal centerlines separately (NOT merged into road network so PANDO_Importer never imports waterways as roads)
-                    filter_waterways = "w/waterway=river,canal,tidal_channel,fairway"
-                    run_osmium([osmium_exe, "tags-filter", rel_ferry_buf_extract, filter_waterways, "-o", rel_ferry_waterways, "--overwrite"])
+                    # Extract river/canal centerlines and coastlines separately (NOT merged into road network so PANDO_Importer never imports water features as roads)
+                    run_osmium([
+                        osmium_exe, "tags-filter", rel_ferry_buf_extract,
+                        "w/waterway=river,canal,tidal_channel,fairway",
+                        "w/natural=coastline",
+                        "-o", rel_ferry_waterways, "--overwrite",
+                    ])
                     abs_temp_waterways = os.path.join(osm_dir, rel_ferry_waterways)
                     if os.path.isfile(abs_temp_waterways) and os.path.getsize(abs_temp_waterways) > 0:
                         target_dir = os.path.dirname(output_modified) or osm_dir

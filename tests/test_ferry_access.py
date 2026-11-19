@@ -629,6 +629,59 @@ class FerryOsmRoutingTests(unittest.TestCase):
         self.assertEqual(stats["routed"], 1)
         self.assertEqual(kept, {"30"})
 
+    def test_roadless_island_blocked_by_coastlines_while_mainland_pier_connects(self):
+        from shapely.geometry import LineString
+
+        # Mainland coastline at x = 0; mainland road at x = -200
+        # Mainland pier at x = +30 (just offshore: 1 coastline crossing to x = -200 -> ALLOWED)
+        # Roadless island at x = +2000 with island coastline at x = +1900 (2 coastline crossings to x = -200 -> BLOCKED!)
+        nodes_df = pd.DataFrame([
+            {"NO": 1, "XCOORD": 30.0, "YCOORD": 0.0, "OSM_NODE_ID": "1", "OSM_FerryTerminal": True},
+            {"NO": 2, "XCOORD": 2000.0, "YCOORD": 0.0, "OSM_NODE_ID": "2", "OSM_FerryTerminal": True},
+            {"NO": 10, "XCOORD": -200.0, "YCOORD": 0.0, "OSM_NODE_ID": "10", "OSM_FerryTerminal": False},
+            {"NO": 11, "XCOORD": -200.0, "YCOORD": 500.0, "OSM_NODE_ID": "11", "OSM_FerryTerminal": False},
+        ])
+        links_df = pd.DataFrame([
+            {"FROMNODENO": 1, "TONODENO": 2, "TYPENO": 94, "TSYSSET": "CAR,WALK"},
+            {"FROMNODENO": 2, "TONODENO": 1, "TYPENO": 94, "TSYSSET": "CAR,WALK"},
+            {"FROMNODENO": 10, "TONODENO": 11, "TYPENO": 30, "TSYSSET": "CAR,WALK"},
+            {"FROMNODENO": 11, "TONODENO": 10, "TYPENO": 30, "TSYSSET": "CAR,WALK"},
+        ])
+        coastlines = [
+            LineString([(0.0, -500.0), (0.0, 1000.0)]),       # mainland coast
+            LineString([(1900.0, -500.0), (1900.0, 500.0)]),  # island west coast
+        ]
+        classified = ferry_access.classify_ferry_nodes(nodes_df, links_df)
+        targets = ferry_access.select_same_bank_target_nodes(
+            classified,
+            links_df,
+            coastline_lines=coastlines,
+            max_distance_m=5000.0,
+        )
+
+        # Mainland pier 1 connects to mainland road 10 (1 coastline crossing)
+        self.assertEqual(targets.get(1), 10)
+        # Roadless island terminal 2 is omitted (left cleanly open-ended, no cross-sea link!)
+        self.assertNotIn(2, targets)
+
+    def test_extract_water_barriers_splits_waterways_and_coastlines(self):
+        osm_content = """<?xml version="1.0" encoding="utf-8"?>
+<osm version="0.6">
+  <node id="1" lat="10.60" lon="122.90"/>
+  <node id="2" lat="10.61" lon="122.90"/>
+  <node id="3" lat="10.60" lon="122.91"/>
+  <node id="4" lat="10.61" lon="122.91"/>
+  <way id="10"><nd ref="1"/><nd ref="2"/><tag k="waterway" v="river"/></way>
+  <way id="20"><nd ref="3"/><nd ref="4"/><tag k="natural" v="coastline"/></way>
+</osm>
+"""
+        with tempfile.TemporaryDirectory() as tmp:
+            p = Path(tmp) / "ferry_waterways.osm"
+            p.write_text(osm_content, encoding="utf-8")
+            ww, coast = ferry_access._extract_water_barriers_from_osm(p)
+        self.assertEqual(len(ww), 1)
+        self.assertEqual(len(coast), 1)
+
 
 if __name__ == "__main__":
     unittest.main()

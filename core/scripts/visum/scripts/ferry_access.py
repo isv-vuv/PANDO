@@ -400,15 +400,16 @@ def classify_ferry_nodes(
     return result.drop(columns=["_OSM_ID_NORM"])
 
 
-def _extract_waterway_lines_from_osm(
+def _extract_water_barriers_from_osm(
     osm_path: Path | None,
     proj_wkt: str = "",
-) -> list[LineString]:
-    """Parse river/canal centerlines from OSM XML into Visum XY LineStrings (optional barrier)."""
+) -> tuple[list[LineString], list[LineString]]:
+    """Parse river/canal centerlines and coastlines from OSM XML into Visum XY LineStrings."""
     if osm_path is None or not osm_path.is_file() or osm_path.suffix.lower() != ".osm":
-        return []
+        return [], []
     raw_nodes: dict[str, tuple[float, float]] = {}
-    way_refs: list[list[str]] = []
+    waterway_refs: list[list[str]] = []
+    coastline_refs: list[list[str]] = []
     waterway_values = {"river", "canal", "tidal_channel", "fairway"}
     for _ev, elem in ET.iterparse(str(osm_path), events=("end",)):
         if elem.tag == "node":
@@ -421,23 +422,93 @@ def _extract_waterway_lines_from_osm(
             elem.clear()
         elif elem.tag == "way":
             tags = {t.attrib.get("k", ""): t.attrib.get("v", "").strip().lower() for t in elem.findall("tag")}
-            if tags.get("waterway") in waterway_values:
+            is_ww = tags.get("waterway") in waterway_values
+            is_coast = tags.get("natural") == "coastline"
+            if is_ww or is_coast:
                 nds = [_normalize_osm_id(nd.attrib.get("ref")) for nd in elem.findall("nd")]
                 nds = [n for n in nds if n]
                 if len(nds) >= 2:
-                    way_refs.append(nds)
+                    if is_ww:
+                        waterway_refs.append(nds)
+                    if is_coast:
+                        coastline_refs.append(nds)
             elem.clear()
 
-    if not way_refs:
-        return []
-    used_ids = {nid for refs in way_refs for nid in refs if nid in raw_nodes}
+    if not waterway_refs and not coastline_refs:
+        return [], []
+    used_ids = {
+        nid
+        for refs in (*waterway_refs, *coastline_refs)
+        for nid in refs
+        if nid in raw_nodes
+    }
     proj_map = project_lonlats_to_visum_xy({nid: raw_nodes[nid] for nid in used_ids}, proj_wkt)
-    lines: list[LineString] = []
-    for refs in way_refs:
+    ww_lines: list[LineString] = []
+    for refs in waterway_refs:
         coords = [proj_map[n] for n in refs if n in proj_map]
         if len(coords) >= 2:
-            lines.append(LineString(coords))
-    return lines
+            ww_lines.append(LineString(coords))
+    coast_lines: list[LineString] = []
+    for refs in coastline_refs:
+        coords = [proj_map[n] for n in refs if n in proj_map]
+        if len(coords) >= 2:
+            coast_lines.append(LineString(coords))
+    return ww_lines, coast_lines
+
+
+def _extract_waterway_lines_from_osm(
+    osm_path: Path | None,
+    proj_wkt: str = "",
+) -> list[LineString]:
+    """Parse river/canal centerlines from OSM XML into Visum XY LineStrings (optional barrier)."""
+    ww_lines, _coast_lines = _extract_water_barriers_from_osm(osm_path, proj_wkt)
+    return ww_lines
+
+
+def _iter_intersection_points(geom) -> list[tuple[float, float]]:
+    """Extract representative (x, y) crossing points from any Shapely intersection geometry."""
+    if geom is None or geom.is_empty:
+        return []
+    gtype = geom.geom_type
+    if gtype == "Point":
+        return [(float(geom.x), float(geom.y))]
+    if gtype == "MultiPoint":
+        return [(float(p.x), float(p.y)) for p in geom.geoms]
+    if gtype == "LineString":
+        coords = list(geom.coords)
+        return [(float(coords[0][0]), float(coords[0][1])), (float(coords[-1][0]), float(coords[-1][1]))] if coords else []
+    if hasattr(geom, "geoms"):
+        pts: list[tuple[float, float]] = []
+        for sub in geom.geoms:
+            pts.extend(_iter_intersection_points(sub))
+        return pts
+    return []
+
+
+def _crosses_open_water_coastlines(
+    seg: LineString,
+    s_minx: float,
+    s_miny: float,
+    s_maxx: float,
+    s_maxy: float,
+    local_coastlines: list[tuple[LineString, float, float, float, float]],
+    dedup_tol_m: float = 10.0,
+) -> bool:
+    """Return True if `seg` crosses coastlines at >= 2 distinct points (leaving one landmass and entering another)."""
+    distinct_pts: list[tuple[float, float]] = []
+    tol_sq = dedup_tol_m * dedup_tol_m
+    for c_ls, c_minx, c_miny, c_maxx, c_maxy in local_coastlines:
+        if c_maxx < s_minx or c_minx > s_maxx or c_maxy < s_miny or c_miny > s_maxy:
+            continue
+        inter = seg.intersection(c_ls)
+        if inter.is_empty:
+            continue
+        for px, py in _iter_intersection_points(inter):
+            if not any((px - qx) ** 2 + (py - qy) ** 2 <= tol_sq for qx, qy in distinct_pts):
+                distinct_pts.append((px, py))
+                if len(distinct_pts) >= 2:
+                    return True
+    return False
 
 
 def select_same_bank_target_nodes(
@@ -447,17 +518,23 @@ def select_same_bank_target_nodes(
     ferry_typenos: Iterable[int] = (94,),
     ferry_wkt_rows: list[tuple[int, int, str]] | None = None,
     waterway_lines: list[LineString] | None = None,
+    coastline_lines: list[LineString] | None = None,
     max_distance_m: float = 5000.0,
     max_water_cone_cos: float = 0.20,
 ) -> dict[int, int]:
     """Select one same-bank `Road_Target_Node` for each `Isolated_Ferry` terminal.
 
-    Prevents `Ferry_Access` links from cutting across a river or harbor to a
-    closer road on the opposite bank by combining:
+    Prevents `Ferry_Access` links from cutting across a river, harbor, or open sea
+    (e.g. from a roadless small island back to the mainland) by combining:
     1) A geometric barrier check against non-incident ferry channel polylines
-       (plus optional `waterway=river/canal` centerlines), and
-    2) A water-departure half-space / cone filter (`cos_water <= max_water_cone_cos`)
+       and `waterway=river/canal` centerlines,
+    2) A coastline crossing check (`natural=coastline`: <= 1 crossing allowed for
+       pier-to-land, >= 2 crossings rejected as open-water jump), and
+    3) A water-departure half-space / cone filter (`cos_water <= max_water_cone_cos`)
        derived from the outgoing `route=ferry` tangents at each terminal.
+
+    Terminals with no barrier-free target on their own landmass are intentionally
+    omitted so their ferry remains cleanly open-ended.
     """
     if classified_df.empty:
         return {}
@@ -525,6 +602,9 @@ def select_same_bank_target_nodes(
     pre_waterway_barriers: list[tuple[LineString, float, float, float, float]] = [
         (w_ls, *w_ls.bounds) for w_ls in (waterway_lines or ())
     ]
+    pre_coastline_barriers: list[tuple[LineString, float, float, float, float]] = [
+        (c_ls, *c_ls.bounds) for c_ls in (coastline_lines or ())
+    ]
 
     tgt_nos = tgt_df["NO"].astype(int).to_numpy()
     tgt_coords = tgt_df[["XCOORD", "YCOORD"]].to_numpy(dtype=float)
@@ -566,6 +646,10 @@ def select_same_bank_target_nodes(
         for wb in pre_waterway_barriers:
             if wb[3] >= t_minx and wb[1] <= t_maxx and wb[4] >= t_miny and wb[2] <= t_maxy:
                 local_barriers.append(wb)
+        local_coastlines: list[tuple[LineString, float, float, float, float]] = [
+            cb for cb in pre_coastline_barriers
+            if cb[3] >= t_minx and cb[1] <= t_maxx and cb[4] >= t_miny and cb[2] <= t_maxy
+        ]
 
         dists, idxs = tgt_tree.query([tx, ty], k=k_query, distance_upper_bound=bound_pad)
         if np.ndim(dists) == 0:
@@ -573,7 +657,6 @@ def select_same_bank_target_nodes(
 
         best_both = None
         best_clear = None
-        best_any = None
 
         iso_comp_id = int(getattr(iso_row, "Road_Comp_ID", -1))
         for dist, idx in zip(dists, idxs):
@@ -583,8 +666,6 @@ def select_same_bank_target_nodes(
             if tgt_comp_ids is not None and iso_comp_id >= 0 and int(tgt_comp_ids[int(idx)]) == iso_comp_id:
                 continue
             rx, ry = float(tgt_coords[int(idx), 0]), float(tgt_coords[int(idx), 1])
-            if best_any is None:
-                best_any = r_no
 
             s_minx = tx if tx < rx else rx
             s_maxx = rx if tx < rx else tx
@@ -597,6 +678,9 @@ def select_same_bank_target_nodes(
                     if seg.intersects(b_ls):
                         crosses = True
                         break
+            if not crosses and local_coastlines:
+                if _crosses_open_water_coastlines(seg, s_minx, s_miny, s_maxx, s_maxy, local_coastlines):
+                    crosses = True
             if not crosses and best_clear is None:
                 best_clear = r_no
 
@@ -610,7 +694,7 @@ def select_same_bank_target_nodes(
                 best_both = r_no
                 break
 
-        chosen = best_both if best_both is not None else (best_clear if best_clear is not None else best_any)
+        chosen = best_both if best_both is not None else best_clear
         if chosen is not None:
             assignments[t_no] = int(chosen)
 
@@ -873,6 +957,7 @@ def connect_ferries_to_road_network(
         ferry_wkt_rows = None
 
     waterway_lines: list[LineString] = []
+    coastline_lines: list[LineString] = []
     waterway_files = _resolve_waterway_osm_files(resolved_osm, working_dir)
     if waterway_files:
         try:
@@ -880,7 +965,9 @@ def connect_ferries_to_road_network(
         except Exception:
             proj_wkt_cur = ""
         for wf in waterway_files:
-            waterway_lines.extend(_extract_waterway_lines_from_osm(wf, proj_wkt_cur))
+            ww, coast = _extract_water_barriers_from_osm(wf, proj_wkt_cur)
+            waterway_lines.extend(ww)
+            coastline_lines.extend(coast)
 
     same_bank_map = select_same_bank_target_nodes(
         classified,
@@ -888,8 +975,15 @@ def connect_ferries_to_road_network(
         ferry_typenos=ferry_typenos,
         ferry_wkt_rows=ferry_wkt_rows,
         waterway_lines=waterway_lines,
+        coastline_lines=coastline_lines,
         max_distance_m=max_distance_m,
     )
+    skipped_open_end = max(0, isolated_count - len(same_bank_map))
+    if skipped_open_end > 0:
+        log(
+            f"{skipped_open_end} isolierte Fähranleger ohne landseitiges Straßenziel "
+            f"(z. B. straßenlose Insel) bleiben bewusst mit offenem Ende."
+        )
     if same_bank_map:
         selected_targets = set(same_bank_map.values())
         classified = classified.copy()
@@ -911,6 +1005,7 @@ def connect_ferries_to_road_network(
         # Partition isolated terminals into:
         # 1) batch_nos: Euclidean-nearest node among selected_targets IS their same-bank target -> single ConnectNodes call
         # 2) override_groups: rare terminals where another terminal's target in selected_targets is Euclidean-closer across water
+        # 3) omitted (not in same_bank_map): roadless islands / barrier-blocked terminals left cleanly open-ended
         batch_nos: list[int] = []
         override_groups: dict[int, list[int]] = {}
         if same_bank_map:
@@ -936,15 +1031,16 @@ def connect_ferries_to_road_network(
             else:
                 batch_nos = [int(k) for k in same_bank_map]
 
-        override_visum_rows = []
-        if override_groups:
-            ovr_set = {s_no for src_list in override_groups.values() for s_no in src_list}
-            override_visum_rows = classified.loc[classified["NO"].isin(ovr_set), "VISUM_ID"].astype(int).tolist()
+        batch_set = set(batch_nos)
+        excluded_visum_rows = classified.loc[
+            classified["Isolated_Ferry"].astype(bool) & (~classified["NO"].isin(batch_set)),
+            "VISUM_ID",
+        ].astype(int).tolist()
 
         # Pass 1: Batch-connect all non-conflicting isolated terminals in one ConnectNodes call
-        if not same_bank_map or batch_nos:
-            if override_visum_rows:
-                nodes_obj.SetMultiAttValues("Isolated_Ferry", [(vid, 0) for vid in override_visum_rows])
+        if batch_nos:
+            if excluded_visum_rows:
+                nodes_obj.SetMultiAttValues("Isolated_Ferry", [(vid, 0) for vid in excluded_visum_rows])
             try:
                 visum.Filters.InitAll()
                 nf.Init()
@@ -962,8 +1058,8 @@ def connect_ferries_to_road_network(
                     except Exception:
                         pass
             finally:
-                if override_visum_rows:
-                    nodes_obj.SetMultiAttValues("Isolated_Ferry", [(vid, 1) for vid in override_visum_rows])
+                if excluded_visum_rows:
+                    nodes_obj.SetMultiAttValues("Isolated_Ferry", [(vid, 1) for vid in excluded_visum_rows])
 
         # Pass 2: Connect only the few across-water conflict terminals directly to their same-bank targets
         for tgt_no, src_nos in override_groups.items():
