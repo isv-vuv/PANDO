@@ -469,5 +469,166 @@ class FerryAccessUnitTests(unittest.TestCase):
         self.assertTrue(visum.Net.Links.LinkExistsByKey(20510, 15854))
 
 
+class FerryOsmRoutingTests(unittest.TestCase):
+    @staticmethod
+    def _load_export_network():
+        script = Path(__file__).resolve().parents[1] / "core/scripts/osm/export_network.py"
+        sp = importlib.util.spec_from_file_location("export_network_test", script)
+        mod = importlib.util.module_from_spec(sp)
+        sp.loader.exec_module(mod)
+        return mod
+
+    @staticmethod
+    def _write_osm(path: Path, nodes: list[tuple[str, float, float]], ways: list[tuple[str, list[str], dict]]):
+        lines = ['<?xml version="1.0" encoding="utf-8"?>', '<osm version="0.6">']
+        for nid, lon, lat in nodes:
+            lines.append(f'  <node id="{nid}" lat="{lat:.6f}" lon="{lon:.6f}"/>')
+        for wid, nds, tags in ways:
+            lines.append(f'  <way id="{wid}">')
+            for ref in nds:
+                lines.append(f'    <nd ref="{ref}"/>')
+            for k, v in tags.items():
+                lines.append(f'    <tag k="{k}" v="{v}"/>')
+            lines.append("  </way>")
+        lines.append("</osm>")
+        path.write_text("\n".join(lines), encoding="utf-8")
+
+    @staticmethod
+    def _read_way_ids(path: Path) -> set[str]:
+        import xml.etree.ElementTree as ET
+        if not path.is_file():
+            return set()
+        tree = ET.parse(path)
+        return {w.get("id") for w in tree.getroot().findall("way") if w.get("id")}
+
+    def test_plausible_pier_route_kept_and_side_streets_dropped(self):
+        en = self._load_export_network()
+        # 0.005 deg lat ~ 556 m; pier goes 1.11 km east from (0, 0) to primary road at lon=0.010
+        nodes = [
+            ("1", 122.900, 10.600),   # ferry terminal
+            ("2", 122.890, 10.600),   # mid-sea ferry end (far from roads)
+            ("3", 122.905, 10.600),   # mid pier
+            ("4", 122.910, 10.600),   # junction on primary
+            ("5", 122.910, 10.605),   # primary north
+            ("6", 122.905, 10.603),   # residential dead-end off pier (noise!)
+            ("7", 122.902, 10.604),   # disconnected residential street in buffer (Victorias noise!)
+            ("8", 122.904, 10.604),
+        ]
+        with tempfile.TemporaryDirectory() as tmp:
+            t = Path(tmp)
+            ferry_osm = t / "ferry.osm"
+            cand_osm = t / "cand.osm"
+            target_osm = t / "target.osm"
+            out_osm = t / "out.osm"
+
+            self._write_osm(ferry_osm, nodes[:2], [("10", ["2", "1"], {"route": "ferry"})])
+            self._write_osm(target_osm, [nodes[3], nodes[4]], [("20", ["4", "5"], {"highway": "primary"})])
+            self._write_osm(cand_osm, nodes, [
+                ("20", ["4", "5"], {"highway": "primary"}),
+                ("21", ["1", "3"], {"highway": "service"}),
+                ("22", ["3", "4"], {"highway": "residential"}),
+                ("23", ["3", "6"], {"highway": "residential"}),
+                ("24", ["7", "8"], {"highway": "residential"}),
+            ])
+
+            stats = en._route_ferry_access_ways(str(ferry_osm), str(cand_osm), str(target_osm), str(out_osm), log=lambda *_: None)
+            kept = self._read_way_ids(out_osm)
+
+        self.assertEqual(stats["routed"], 1)
+        self.assertEqual(kept, {"21", "22"})  # ONLY pier ways; side street 23 & disconnected 24 dropped!
+
+    def test_implausible_detour_rejected_for_ferry_access_fallback(self):
+        en = self._load_export_network()
+        # Air distance 1 -> 4 is ~550 m (0.005 deg lon), but road detours 2 km north and back (~4.5 km total, ratio > 2.5)
+        nodes = [
+            ("1", 122.900, 10.600),
+            ("2", 122.890, 10.600),
+            ("3", 122.900, 10.620),  # +2.2 km north
+            ("4", 122.905, 10.600),  # primary ~550 m east
+            ("5", 122.905, 10.605),
+        ]
+        with tempfile.TemporaryDirectory() as tmp:
+            t = Path(tmp)
+            ferry_osm = t / "ferry.osm"
+            cand_osm = t / "cand.osm"
+            target_osm = t / "target.osm"
+            out_osm = t / "out.osm"
+
+            self._write_osm(ferry_osm, nodes[:2], [("10", ["2", "1"], {"route": "ferry"})])
+            self._write_osm(target_osm, [nodes[3], nodes[4]], [("20", ["4", "5"], {"highway": "primary"})])
+            self._write_osm(cand_osm, nodes, [
+                ("20", ["4", "5"], {"highway": "primary"}),
+                ("21", ["1", "3", "4"], {"highway": "unclassified"}),
+            ])
+
+            stats = en._route_ferry_access_ways(str(ferry_osm), str(cand_osm), str(target_osm), str(out_osm), log=lambda *_: None)
+            kept = self._read_way_ids(out_osm)
+
+        self.assertEqual(stats["routed"], 0)
+        self.assertEqual(stats["selected_ways"], 0)
+        self.assertEqual(kept, set())
+
+    def test_oneway_port_loop_keeps_both_entry_and_exit_ways(self):
+        en = self._load_export_network()
+        nodes = [
+            ("1", 122.900, 10.600),   # ferry terminal
+            ("2", 122.890, 10.600),   # mid-sea
+            ("3", 122.904, 10.601),   # exit junction on secondary
+            ("4", 122.904, 10.599),   # entry junction on secondary
+            ("5", 122.902, 10.603),   # unrelated side street
+        ]
+        with tempfile.TemporaryDirectory() as tmp:
+            t = Path(tmp)
+            ferry_osm = t / "ferry.osm"
+            cand_osm = t / "cand.osm"
+            target_osm = t / "target.osm"
+            out_osm = t / "out.osm"
+
+            self._write_osm(ferry_osm, nodes[:2], [("10", ["2", "1"], {"route": "ferry"})])
+            self._write_osm(target_osm, [nodes[2], nodes[3]], [("20", ["3", "4"], {"highway": "secondary"})])
+            self._write_osm(cand_osm, nodes, [
+                ("20", ["3", "4"], {"highway": "secondary"}),
+                ("101", ["1", "3"], {"highway": "service", "oneway": "yes"}),
+                ("102", ["4", "1"], {"highway": "service", "oneway": "yes"}),
+                ("103", ["3", "5"], {"highway": "residential"}),
+            ])
+
+            stats = en._route_ferry_access_ways(str(ferry_osm), str(cand_osm), str(target_osm), str(out_osm), log=lambda *_: None)
+            kept = self._read_way_ids(out_osm)
+
+        self.assertEqual(stats["routed"], 1)
+        self.assertEqual(kept, {"101", "102"})
+
+    def test_offset_ferry_endpoint_within_200m_snaps_and_routes(self):
+        en = self._load_export_network()
+        # Ferry node 1 is ~80 m west of road start node 10
+        nodes = [
+            ("1", 122.9000, 10.6000),   # ferry endpoint (not on road)
+            ("2", 122.8900, 10.6000),   # mid-sea
+            ("10", 122.9007, 10.6000),  # pier start (~77 m east)
+            ("11", 122.9080, 10.6000),  # junction on primary (~800 m east)
+            ("12", 122.9080, 10.6050),  # primary north
+        ]
+        with tempfile.TemporaryDirectory() as tmp:
+            t = Path(tmp)
+            ferry_osm = t / "ferry.osm"
+            cand_osm = t / "cand.osm"
+            target_osm = t / "target.osm"
+            out_osm = t / "out.osm"
+
+            self._write_osm(ferry_osm, nodes[:2], [("10", ["2", "1"], {"route": "ferry"})])
+            self._write_osm(target_osm, [nodes[3], nodes[4]], [("20", ["11", "12"], {"highway": "primary"})])
+            self._write_osm(cand_osm, nodes[2:], [
+                ("20", ["11", "12"], {"highway": "primary"}),
+                ("30", ["10", "11"], {"highway": "unclassified"}),
+            ])
+
+            stats = en._route_ferry_access_ways(str(ferry_osm), str(cand_osm), str(target_osm), str(out_osm), log=lambda *_: None)
+            kept = self._read_way_ids(out_osm)
+
+        self.assertEqual(stats["routed"], 1)
+        self.assertEqual(kept, {"30"})
+
+
 if __name__ == "__main__":
     unittest.main()

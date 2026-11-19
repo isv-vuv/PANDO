@@ -1,3 +1,5 @@
+import heapq
+import math
 import os
 import subprocess
 import re
@@ -321,9 +323,98 @@ def impute_and_classify_osm(input_xml_path, output_xml_path, brackets_db, log=pr
     log(f"Bearbeitete Netzdatei erfolgreich aktualisiert: {output_xml_path}")
 
 
-def _write_ferry_terminal_buffer_poly(ferry_osm_path: str, poly_out_path: str, radius_m: float = 500.0) -> bool:
+_DRIVABLE_HIGHWAYS = frozenset({
+    "motorway", "motorway_link", "trunk", "trunk_link",
+    "primary", "primary_link", "secondary", "secondary_link",
+    "tertiary", "tertiary_link", "unclassified", "residential",
+    "living_street", "service", "road",
+})
+
+_DENY_ACCESS_VALUES = frozenset({"no", "private"})
+_ALLOW_ACCESS_VALUES = frozenset({"yes", "permissive", "destination", "customers"})
+
+
+def _is_car_drivable_way(tags: dict) -> bool:
+    """Return True if an OSM way's tags permit motorized car routing."""
+    if tags.get("highway") not in _DRIVABLE_HIGHWAYS:
+        return False
+    if tags.get("motor_vehicle") in _DENY_ACCESS_VALUES:
+        return False
+    if tags.get("motorcar") in _DENY_ACCESS_VALUES:
+        return False
+    if tags.get("vehicle") in _DENY_ACCESS_VALUES:
+        return False
+    if tags.get("access") in _DENY_ACCESS_VALUES:
+        if (
+            tags.get("motor_vehicle") not in _ALLOW_ACCESS_VALUES
+            and tags.get("motorcar") not in _ALLOW_ACCESS_VALUES
+        ):
+            return False
+    return True
+
+
+def _way_direction(tags: dict) -> int:
+    """Return 1 for forward-only, -1 for reverse-only, or 0 for bidirectional."""
+    oneway = (tags.get("oneway") or "").strip().lower()
+    if oneway in {"-1", "reverse"}:
+        return -1
+    if oneway in {"yes", "1", "true"}:
+        return 1
+    if oneway in {"no", "0", "false"}:
+        return 0
+    if (tags.get("junction") or "").strip().lower() in {"roundabout", "circular"}:
+        return 1
+    if tags.get("highway") in {"motorway", "motorway_link"}:
+        return 1
+    return 0
+
+
+def _metric_dist_m(lon1: float, lat1: float, lon2: float, lat2: float) -> float:
+    """Fast local equirectangular distance in meters (accurate to <0.05% within 10 km)."""
+    mid_lat = math.radians(0.5 * (lat1 + lat2))
+    dx = (lon2 - lon1) * 111320.0 * math.cos(mid_lat)
+    dy = (lat2 - lat1) * 111320.0
+    return math.hypot(dx, dy)
+
+
+def _dijkstra_to_targets(
+    start_node: str,
+    adj: dict,
+    target_nodes: set,
+    max_dist_m: float,
+):
+    """Shortest path from `start_node` to nearest node in `target_nodes` capped at `max_dist_m`.
+
+    Returns `(reached_target, total_dist_m, set_of_way_ids)` or `(None, inf, set())`.
+    """
+    heap = [(0.0, start_node)]
+    best = {start_node: 0.0}
+    parent = {}  # node -> (prev_node, way_id)
+
+    while heap:
+        dist, u = heapq.heappop(heap)
+        if dist > best.get(u, float("inf")):
+            continue
+        if u in target_nodes:
+            used_ways = set()
+            cur = u
+            while cur != start_node:
+                prev_node, wid = parent[cur]
+                used_ways.add(wid)
+                cur = prev_node
+            return u, dist, used_ways
+        for v, edge_len, wid in adj.get(u, ()):
+            ndist = dist + edge_len
+            if ndist <= max_dist_m and ndist < best.get(v, float("inf")):
+                best[v] = ndist
+                parent[v] = (u, wid)
+                heapq.heappush(heap, (ndist, v))
+
+    return None, float("inf"), set()
+
+
+def _write_ferry_terminal_buffer_poly(ferry_osm_path: str, poly_out_path: str, radius_m: float = 5000.0) -> bool:
     """Create an Osmium .poly file buffering all route=ferry way endpoints by `radius_m` meters."""
-    import math
     if not os.path.isfile(ferry_osm_path):
         return False
     try:
@@ -350,6 +441,7 @@ def _write_ferry_terminal_buffer_poly(ferry_osm_path: str, poly_out_path: str, r
             elem.clear()
 
     polys = []
+    n_verts = 16
     for nid in endpoint_ids:
         if nid not in node_coords:
             continue
@@ -358,8 +450,11 @@ def _write_ferry_terminal_buffer_poly(ferry_osm_path: str, poly_out_path: str, r
         cos_lat = max(0.1, math.cos(math.radians(lat)))
         dlon = radius_m / (111320.0 * cos_lat)
         pts = [
-            (lon + dlon * math.cos(k * math.pi / 4.0), lat + dlat * math.sin(k * math.pi / 4.0))
-            for k in range(8)
+            (
+                lon + dlon * math.cos(2.0 * math.pi * k / n_verts),
+                lat + dlat * math.sin(2.0 * math.pi * k / n_verts),
+            )
+            for k in range(n_verts)
         ]
         polys.append(Polygon(pts))
 
@@ -382,6 +477,236 @@ def _write_ferry_terminal_buffer_poly(ferry_osm_path: str, poly_out_path: str, r
     with open(poly_out_path, "w", encoding="utf-8") as f:
         f.write("\n".join(lines) + "\n")
     return poly_idx > 0
+
+
+def _route_ferry_access_ways(
+    ferry_osm_path: str,
+    candidates_osm_path: str,
+    target_roads_osm_path: str,
+    output_osm_path: str,
+    *,
+    max_route_m: float = 5000.0,
+    start_snap_m: float = 200.0,
+    max_detour_ratio: float = 2.5,
+    short_dist_m: float = 300.0,
+    short_detour_ratio: float = 4.0,
+    log=print,
+) -> dict:
+    """Select ONLY the OSM road ways on plausible car routes from isolated ferry endpoints
+    to the hierarchical target road network (`PA/IA1 + IA2 + OA`).
+
+    Terminals without a plausible bidirectional car route (or with an implausible detour
+    compared to straight-line distance) receive no buffer ways so Visum's `Ferry_Access`
+    fallback connects them cleanly without polluting the network with stray local streets.
+    """
+    stats = {
+        "endpoints": 0,
+        "already_connected": 0,
+        "routed": 0,
+        "fallback": 0,
+        "candidate_ways": 0,
+        "selected_ways": 0,
+    }
+    if not (os.path.isfile(ferry_osm_path) and os.path.isfile(candidates_osm_path)):
+        return stats
+
+    # 1. Read ferry way endpoints & coordinates
+    ferry_node_coords: dict[str, tuple[float, float]] = {}
+    endpoint_ids: set[str] = set()
+    for _ev, elem in ET.iterparse(ferry_osm_path, events=("end",)):
+        if elem.tag == "node":
+            nid = elem.get("id")
+            if nid and "lon" in elem.attrib and "lat" in elem.attrib:
+                ferry_node_coords[nid] = (float(elem.attrib["lon"]), float(elem.attrib["lat"]))
+            elem.clear()
+        elif elem.tag == "way":
+            tags = {t.get("k", ""): t.get("v", "") for t in elem.findall("tag")}
+            if tags.get("route") == "ferry":
+                nds = [nd.get("ref") for nd in elem.findall("nd") if nd.get("ref")]
+                if nds:
+                    endpoint_ids.add(nds[0])
+                    endpoint_ids.add(nds[-1])
+            elem.clear()
+
+    stats["endpoints"] = len(endpoint_ids)
+    if not endpoint_ids:
+        return stats
+
+    # 2. Read target road network nodes already present in hierarchical network (PA/IA1 + IA2 + OA)
+    target_node_ids: set[str] = set()
+    target_way_ids: set[str] = set()
+    if os.path.isfile(target_roads_osm_path) and os.path.getsize(target_roads_osm_path) > 0:
+        for _ev, elem in ET.iterparse(target_roads_osm_path, events=("end",)):
+            if elem.tag == "way":
+                tags = {t.get("k", ""): t.get("v", "") for t in elem.findall("tag")}
+                if _is_car_drivable_way(tags):
+                    wid = elem.get("id")
+                    if wid:
+                        target_way_ids.add(wid)
+                    for nd in elem.findall("nd"):
+                        ref = nd.get("ref")
+                        if ref:
+                            target_node_ids.add(ref)
+                elem.clear()
+            elif elem.tag == "node":
+                elem.clear()
+
+    if not target_node_ids:
+        stats["fallback"] = len(endpoint_ids)
+        return stats
+
+    # 3. Build directed car routing graph from 5 km candidate buffer extract
+    node_coords: dict[str, tuple[float, float]] = {}
+    fwd_adj: dict[str, list[tuple[str, float, str]]] = {}
+    rev_adj: dict[str, list[tuple[str, float, str]]] = {}
+    way_nodes: dict[str, list[str]] = {}
+    graph_node_ids: set[str] = set()
+
+    for _ev, elem in ET.iterparse(candidates_osm_path, events=("end",)):
+        if elem.tag == "node":
+            nid = elem.get("id")
+            if nid and "lon" in elem.attrib and "lat" in elem.attrib:
+                node_coords[nid] = (float(elem.attrib["lon"]), float(elem.attrib["lat"]))
+            elem.clear()
+        elif elem.tag == "way":
+            wid = elem.get("id")
+            tags = {t.get("k", ""): t.get("v", "") for t in elem.findall("tag")}
+            if wid and _is_car_drivable_way(tags):
+                stats["candidate_ways"] += 1
+                nds = [nd.get("ref") for nd in elem.findall("nd") if nd.get("ref")]
+                if len(nds) >= 2:
+                    way_nodes[wid] = nds
+                    direction = _way_direction(tags)
+                    for u, v in zip(nds, nds[1:]):
+                        if u not in node_coords or v not in node_coords:
+                            continue
+                        lon1, lat1 = node_coords[u]
+                        lon2, lat2 = node_coords[v]
+                        seg_m = _metric_dist_m(lon1, lat1, lon2, lat2)
+                        graph_node_ids.add(u)
+                        graph_node_ids.add(v)
+                        if direction in (0, 1):
+                            fwd_adj.setdefault(u, []).append((v, seg_m, wid))
+                            rev_adj.setdefault(v, []).append((u, seg_m, wid))
+                        if direction in (0, -1):
+                            fwd_adj.setdefault(v, []).append((u, seg_m, wid))
+                            rev_adj.setdefault(u, []).append((v, seg_m, wid))
+            elem.clear()
+
+    if not graph_node_ids:
+        stats["fallback"] = len(endpoint_ids)
+        return stats
+
+    # Optional spatial index for fast <= start_snap_m snapping of offset ferry endpoints
+    graph_ids_list = list(graph_node_ids)
+    mean_lat = sum(node_coords[n][1] for n in graph_ids_list) / len(graph_ids_list)
+    cos_mean = max(0.1, math.cos(math.radians(mean_lat)))
+    kdtree = None
+    try:
+        from scipy.spatial import cKDTree
+        pts_m = np.array(
+            [(node_coords[n][0] * 111320.0 * cos_mean, node_coords[n][1] * 111320.0) for n in graph_ids_list],
+            dtype=float,
+        )
+        kdtree = cKDTree(pts_m)
+    except Exception:
+        kdtree = None
+
+    def _find_start_node(fid: str):
+        if fid in graph_node_ids:
+            return fid
+        if fid not in ferry_node_coords:
+            return None
+        flon, flat = ferry_node_coords[fid]
+        if kdtree is not None:
+            dist, idx = kdtree.query([flon * 111320.0 * cos_mean, flat * 111320.0], distance_upper_bound=start_snap_m * 1.05)
+            if math.isfinite(dist) and idx < len(graph_ids_list):
+                cand = graph_ids_list[int(idx)]
+                if _metric_dist_m(flon, flat, *node_coords[cand]) <= start_snap_m:
+                    return cand
+            return None
+        best_nid = None
+        best_d = start_snap_m
+        dlat_lim = start_snap_m / 111320.0 * 1.1
+        dlon_lim = dlat_lim / cos_mean
+        for nid in graph_ids_list:
+            nlon, nlat = node_coords[nid]
+            if abs(nlat - flat) > dlat_lim or abs(nlon - flon) > dlon_lim:
+                continue
+            d = _metric_dist_m(flon, flat, nlon, nlat)
+            if d <= best_d:
+                best_d = d
+                best_nid = nid
+        return best_nid
+
+    def _is_plausible(start_nid: str, target_nid, route_len: float) -> bool:
+        if target_nid is None or route_len > max_route_m:
+            return False
+        air_dist = _metric_dist_m(*node_coords[start_nid], *node_coords[target_nid])
+        limit_ratio = short_detour_ratio if air_dist < short_dist_m else max_detour_ratio
+        return (route_len / max(air_dist, 50.0)) <= limit_ratio
+
+    # 4. Route each isolated ferry endpoint (forward & reverse) to the target road network
+    selected_way_ids: set[str] = set()
+    for fid in sorted(endpoint_ids):
+        if fid in target_node_ids:
+            stats["already_connected"] += 1
+            continue
+        start_nid = _find_start_node(fid)
+        if start_nid is None:
+            stats["fallback"] += 1
+            continue
+        if start_nid in target_node_ids:
+            stats["already_connected"] += 1
+            continue
+
+        t_fwd, dist_fwd, ways_fwd = _dijkstra_to_targets(start_nid, fwd_adj, target_node_ids, max_route_m)
+        t_rev, dist_rev, ways_rev = _dijkstra_to_targets(start_nid, rev_adj, target_node_ids, max_route_m)
+
+        if _is_plausible(start_nid, t_fwd, dist_fwd) and _is_plausible(start_nid, t_rev, dist_rev):
+            selected_way_ids.update(ways_fwd)
+            selected_way_ids.update(ways_rev)
+            stats["routed"] += 1
+        else:
+            stats["fallback"] += 1
+
+    # Exclude ways already present in the hierarchical base network
+    selected_way_ids -= target_way_ids
+    stats["selected_ways"] = len(selected_way_ids)
+    if not selected_way_ids:
+        log(
+            f"D2) Fähr-Routing: {stats['endpoints']} Endpunkte geprüft "
+            f"({stats['already_connected']} bereits angebunden, {stats['routed']} geroutet, "
+            f"{stats['fallback']} via Ferry_Access) -> 0 zusätzliche Zubringer-Ways."
+        )
+        return stats
+
+    needed_node_ids: set[str] = set()
+    for wid in selected_way_ids:
+        needed_node_ids.update(way_nodes.get(wid, ()))
+
+    # 5. Stream-write minimal sorted .osm XML containing ONLY selected ways & their nodes
+    out_root = ET.Element("osm", {"version": "0.6", "generator": "PANDO_FerryAccessRouter"})
+    for _ev, elem in ET.iterparse(candidates_osm_path, events=("end",)):
+        if elem.tag == "node":
+            if elem.get("id") in needed_node_ids:
+                out_root.append(elem)
+            else:
+                elem.clear()
+        elif elem.tag == "way":
+            if elem.get("id") in selected_way_ids:
+                out_root.append(elem)
+            else:
+                elem.clear()
+
+    ET.ElementTree(out_root).write(output_osm_path, encoding="utf-8", xml_declaration=True)
+    log(
+        f"D2) Fähr-Routing: {stats['endpoints']} Endpunkte geprüft "
+        f"({stats['already_connected']} bereits angebunden, {stats['routed']} über OSM-Netz geroutet, "
+        f"{stats['fallback']} via Ferry_Access) -> {stats['selected_ways']} von {stats['candidate_ways']} "
+        f"Puffer-Ways übernommen."
+    )
+    return stats
 
 
 # ==============================================================================
@@ -435,7 +760,10 @@ def build_hierarchical_network(merged_pbf, osm_dir, osmium_exe, bin_dir, poly_pa
     rel_ferry_osm = "temp_net_4_ferry.osm"
     rel_ferry_poly = "temp_ferry_buffer.poly"
     rel_ferry_buf_extract = "temp_ferry_buf_extract.osm.pbf"
-    rel_net_ferry_access = "temp_net_5_ferry_access.osm.pbf"
+    rel_ferry_candidates_osm = "temp_ferry_candidates.osm"
+    rel_temp_base_roads = "temp_net_base_roads.osm.pbf"
+    rel_ferry_target_osm = "temp_ferry_target_roads.osm"
+    rel_net_ferry_access_routed = "temp_net_5_ferry_access_routed.osm"
     rel_ferry_waterways = "temp_ferry_waterways.osm"
 
     rel_final = "hierarchical_network.osm"
@@ -492,17 +820,37 @@ def build_hierarchical_network(merged_pbf, osm_dir, osmium_exe, bin_dir, poly_pa
                 run_osmium([osmium_exe, "cat", rel_net_ferry, "-o", rel_ferry_osm, "--overwrite"])
                 abs_ferry_osm = os.path.join(osm_dir, rel_ferry_osm)
                 abs_ferry_poly = os.path.join(osm_dir, rel_ferry_poly)
-                if _write_ferry_terminal_buffer_poly(abs_ferry_osm, abs_ferry_poly, radius_m=1500.0):
-                    log("D2) Extrahiere lokale Zubringerstraßen im 1500 m-Puffer um Fähranleger ...")
+                if _write_ferry_terminal_buffer_poly(abs_ferry_osm, abs_ferry_poly, radius_m=5000.0):
+                    log("D2) Route isolierte Fähranleger im 5000 m-Suchraum ins hierarchische Straßennetz ...")
                     run_osmium([osmium_exe, "extract", "-p", rel_ferry_poly, merged_pbf, "-o", rel_ferry_buf_extract, "--overwrite"])
                     filter_ferry_access = (
                         "w/highway=motorway,motorway_link,trunk,trunk_link,primary,primary_link,"
                         "secondary,secondary_link,tertiary,tertiary_link,unclassified,residential,"
                         "living_street,service,road"
                     )
-                    run_osmium([osmium_exe, "tags-filter", rel_ferry_buf_extract, filter_ferry_access, "-o", rel_net_ferry_access, "--overwrite"])
-                    if os.path.isfile(os.path.join(osm_dir, rel_net_ferry_access)):
-                        merge_inputs.append(rel_net_ferry_access)
+                    run_osmium([osmium_exe, "tags-filter", rel_ferry_buf_extract, filter_ferry_access, "-o", rel_ferry_candidates_osm, "--overwrite"])
+                    run_osmium([osmium_exe, "merge", rel_net_pa_ia1, rel_net_ia2, rel_net_oa, "-o", rel_temp_base_roads, "--overwrite"])
+                    run_osmium([osmium_exe, "extract", "-p", rel_ferry_poly, rel_temp_base_roads, "-o", rel_ferry_target_osm, "--overwrite"])
+
+                    abs_ferry_candidates = os.path.join(osm_dir, rel_ferry_candidates_osm)
+                    abs_ferry_target = os.path.join(osm_dir, rel_ferry_target_osm)
+                    abs_ferry_routed = os.path.join(osm_dir, rel_net_ferry_access_routed)
+                    route_stats = _route_ferry_access_ways(
+                        abs_ferry_osm,
+                        abs_ferry_candidates,
+                        abs_ferry_target,
+                        abs_ferry_routed,
+                        max_route_m=5000.0,
+                        start_snap_m=200.0,
+                        max_detour_ratio=2.5,
+                        short_dist_m=300.0,
+                        short_detour_ratio=4.0,
+                        log=log,
+                    )
+                    merge_inputs = [rel_temp_base_roads, rel_net_ferry]
+                    if route_stats.get("selected_ways", 0) > 0 and os.path.isfile(abs_ferry_routed):
+                        merge_inputs.append(rel_net_ferry_access_routed)
+
                     # Extract river/canal centerlines separately (NOT merged into road network so PANDO_Importer never imports waterways as roads)
                     filter_waterways = "w/waterway=river,canal,tidal_channel,fairway"
                     run_osmium([osmium_exe, "tags-filter", rel_ferry_buf_extract, filter_waterways, "-o", rel_ferry_waterways, "--overwrite"])
@@ -512,7 +860,7 @@ def build_hierarchical_network(merged_pbf, osm_dir, osmium_exe, bin_dir, poly_pa
                         os.makedirs(target_dir, exist_ok=True)
                         shutil.copyfile(abs_temp_waterways, os.path.join(target_dir, "ferry_waterways.osm"))
             except Exception as buf_exc:
-                log(f"Hinweis: Lokaler Fährpuffer konnte nicht erzeugt werden ({buf_exc}).")
+                log(f"Hinweis: Fähranleger-Routing konnte nicht durchgeführt werden ({buf_exc}).")
 
         progress("network_merge", 7, total_steps)
         log("E) Führe alle Netz-Schichten zusammen ...")
@@ -549,7 +897,8 @@ def build_hierarchical_network(merged_pbf, osm_dir, osmium_exe, bin_dir, poly_pa
         for tmp in [
             rel_temp_pa_ia1, rel_net_pa_ia1, rel_temp_ia2, rel_net_ia2,
             rel_net_oa, rel_net_ferry, rel_ferry_osm, rel_ferry_poly,
-            rel_ferry_buf_extract, rel_net_ferry_access, rel_ferry_waterways,
+            rel_ferry_buf_extract, rel_ferry_candidates_osm, rel_temp_base_roads,
+            rel_ferry_target_osm, rel_net_ferry_access_routed, rel_ferry_waterways,
             abs_final_osm, abs_final_orig_xml, abs_final_mod_xml
         ]:
             abs_tmp = tmp if os.path.isabs(tmp) else os.path.join(osm_dir, tmp)
