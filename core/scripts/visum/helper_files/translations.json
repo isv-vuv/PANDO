@@ -40,7 +40,7 @@
     "de": "Berechnungen zurücksetzen"
   },
   "menu_set_defaults": {
-    "en": "Set Default Values",
+    "en": "Set Default Configuration",
     "de": "Defaultwerte übernehmen"
   },
   "menu_info": {
@@ -60,15 +60,15 @@
     "de": "Defaultwerte"
   },
   "toolbar_filter_inserted_links": {
-    "en": "Filtering of\ninserted links",
+    "en": "Filter inserted links",
     "de": "Filtern der\neingefügten Strecken"
   },
   "toolbar_delete_inserted_links": {
-    "en": "Deletion of\ninserted links",
+    "en": "Delete inserted links",
     "de": "Löschen der\neingefügten Strecken"
   },
   "status_set_defaults": {
-    "en": "Set Default Values",
+    "en": "Set Default Configuration",
     "de": "Default-Werte hergestellt"
   },
   "status_attribute_applied_reimport_reset": {
@@ -100,7 +100,7 @@
     "de": "die kombinierten Ergebnisse wurden in Visum importiert"
   },
   "setting_zone_attribute_centrality": {
-    "en": "traffic cells attribute\nfor centrality",
+    "en": "Zone attribute\nfor centrality",
     "de": "Attribut Verkehrszellen\nfür Zentralität"
   },
   "distance_calculation_setting": {
@@ -116,16 +116,16 @@
     "de": "Anzahl Versorger je VFS"
   },
   "setting_zone_attribute_origin": {
-    "en": "traffic cells attribute\n'is origin'",
-    "de": "Attribut Verkehrszellen\n\"ist Quelle\""
+    "en": "Zone attribute\n'is origin'\n(Optional)",
+    "de": "Attribut Verkehrszellen\n\"ist Quelle\"\n(Optional)"
   },
   "centrality": {
     "en": "Centrality",
     "de": "Zentralität"
   },
   "setting_zone_attribute_destination": {
-    "en": "traffic cell attribute\n'is destination'",
-    "de": "Attribut Verkehrszellen\n\"ist Ziel\""
+    "en": "Zone attribute\n'is destination'\n(Optional)",
+    "de": "Attribut Verkehrszellen\n\"ist Ziel\"\n(Optional)"
   },
   "setting_cfl": {
     "en": "Connectivity Function Level",
@@ -143,22 +143,21 @@
     "en": "Supply function:\nn supply centers",
     "de": "Versorgungsfunktion:\nn Versorgungszentren"
   },
-
   "setting_create_in_visum": {
-    "en": "Export to Visum as:",
-    "de": "Export nach Visum als:"
+    "en": "Export to Visum:",
+    "de": "Export nach Visum:"
   },
   "setting_import_to_visum": {
-    "en": "Export to Visum all CFL:\nlinks and matrices",
-    "de": "Export nach Visum alle VFS:\nStrecken und Matrizen"
+    "en": "Both",
+    "de": "Beide"
   },
   "label_distance_calculation_function": {
     "en": "function for distance calculation",
     "de": "Funktion Distanzberechnung"
   },
   "tab_main": {
-    "en": "Anwendung",
-    "de": "Application"
+    "en": "Application",
+    "de": "Anwendung"
   },
   "tab_log": {
     "en": "Log Messages",
@@ -189,27 +188,79 @@
     "de": " Export abgeschlossen für gewählte VFS."
   },
   "label_attr_zones_centrality": {
-    "en": "traffic cells attribute centrality",
+    "en": "Zone attribute centrality",
     "de": "Bezirke: Attr. Zentralität"
   },
   "cfl": {
     "en": "CFL",
     "de": "VFS"
   },
-    "application": {
+  "application": {
     "en": "application",
     "de": "Anwendung"
   },
-    "foundations": {
+  "foundations": {
     "en": "Fundamentals for calculating direct-line networks based on connectivity function levels",
     "de": "Grundlagen zur Ermittlung von Luftliniennetzen basierend auf Verbindungsfunktionsstufen"
   },
-    "documentation_code": {
+  "documentation_code": {
     "en": "code documentation",
     "de": "Dokumentation Code"
   },
   "connections": {
     "en": "connections",
     "de": "Verbindungen"
+  },
+  "setting_attribute_value_CFL": {
+    "en": "Attribute value centrality",
+    "de": "Attributwert zentralität"
+  },
+  "zone_attributes": {
+    "en": "Zone Attributes",
+    "de": "Attribut Verkehrszellen"
+  },
+  "cfl_vfs_settings": {
+    "en": "Calculation",
+    "de": "Berechnung"
+  },
+  "btn_calculate": {
+    "en": "Calculate",
+    "de": "Berechnen"
+  },
+  "export_to_visum_section": {
+    "en": "Export to Visum",
+    "de": "Nach Visum exportieren"
+  },
+  "setting_status": {
+    "en": "Status",
+    "de": "Status"
+  },
+  "status_not_calculated": {
+    "en": "Not Calculated",
+    "de": "Nicht berechnet"
+  },
+  "status_calculated": {
+    "en": "Calculated",
+    "de": "Berechnet"
+  },
+  "status_outdated": {
+    "en": "Outdated",
+    "de": "Veraltet"
+  },
+  "status_exported": {
+    "en": "Exported",
+    "de": "Exportiert"
+  },
+  "status_inactive": {
+    "en": "Inactive",
+    "de": "Inaktiv"
+  },
+  "btn_export_mtx": {
+    "en": "Matrices",
+    "de": "Matrizen"
+  },
+  "btn_export_net": {
+    "en": "Link Network",
+    "de": "Link Netz"
   }
 }

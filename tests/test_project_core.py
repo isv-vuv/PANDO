@@ -49,16 +49,10 @@ class ProjectCoreTests(unittest.TestCase):
             self.assertTrue(os.path.isdir(os.path.join(project_path, PROJECT_INPUT_DIR)))
             self.assertTrue(os.path.isdir(os.path.join(project_path, PROJECT_PROCESSED_DIR)))
             self.assertTrue(os.path.isdir(os.path.join(project_path, PROJECT_VISUM_DIR, "shapefile")))
-            for script_name in (
-                "dlnt_GUI.py",
-                "cfl_directlinenetwork_tool.py",
-                "language_management.py",
-                "translations.json",
-            ):
-                self.assertTrue(
-                    os.path.isfile(os.path.join(project_path, PROJECT_VISUM_DIR, "script", script_name)),
-                    f"Missing Visum script asset: {script_name}",
-                )
+            self.assertEqual(
+                os.listdir(os.path.join(project_path, PROJECT_VISUM_DIR, "script")),
+                ["dlnt_GUI.py"],
+            )
             self.assertTrue(os.path.isdir(workspace_data_dir(temp_dir)))
             self.assertTrue(os.path.isfile(os.path.join(project_path, PROJECT_METADATA_FILENAME)))
             self.assertEqual(load_project_metadata(project_path)["last_step"], 1)

@@ -221,29 +221,18 @@ def populate_visum_gpa_files(project_path: str, language: Optional[str] = None) 
 
 
 def populate_visum_script_files(project_path: str) -> list[str]:
-    """Copy the standalone Luftlinientool GUI bundle into processed/visum/script."""
+    """Copy the Luftlinientool GUI launcher script into processed/visum/script."""
     visum_script_dir = os.path.join(project_path, "processed", "visum", "script")
     os.makedirs(visum_script_dir, exist_ok=True)
 
     root = tool_root() if "tool_root" in globals() else os.path.abspath(os.path.join(os.path.dirname(__file__), "..", "..", ".."))
-    src_dir = os.path.join(root, "core", "scripts", "visum", "helper_files", "luftlinientool")
+    src = os.path.join(root, "core", "scripts", "visum", "scripts", "dlnt_GUI.py")
+    if not os.path.isfile(src):
+        return []
 
-    copied: list[str] = []
-    if not os.path.isdir(src_dir):
-        return copied
-
-    for dirpath, _dirnames, filenames in os.walk(src_dir):
-        rel_dir = os.path.relpath(dirpath, src_dir)
-        target_dir = visum_script_dir if rel_dir == "." else os.path.join(visum_script_dir, rel_dir)
-        os.makedirs(target_dir, exist_ok=True)
-        for filename in filenames:
-            if filename.endswith(".pyc") or "__pycache__" in dirpath:
-                continue
-            src = os.path.join(dirpath, filename)
-            dst = os.path.join(target_dir, filename)
-            shutil.copy2(src, dst)
-            copied.append(dst)
-    return copied
+    dst = os.path.join(visum_script_dir, "dlnt_GUI.py")
+    shutil.copy2(src, dst)
+    return [dst]
 
 
 def create_project_structure(project_path: str) -> None:

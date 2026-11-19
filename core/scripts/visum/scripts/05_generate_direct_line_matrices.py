@@ -68,18 +68,13 @@ def run_direct_line_matrix_generation(target_project_dir=None, visum=None):
     mtx_dir = visum_input_dir / "mtx"
     mtx_dir.mkdir(parents=True, exist_ok=True)
 
-    # Ensure standalone Luftlinientool GUI is available in processed/visum/script
-    dlnt_bundle_src = visum_helper_dir / "luftlinientool"
-    if dlnt_bundle_src.is_dir():
+    # Ensure Luftlinientool GUI script is available in processed/visum/script
+    dlnt_gui_src = Path(__file__).resolve().parent / "dlnt_GUI.py"
+    if dlnt_gui_src.is_file():
         import shutil
         script_dst = visum_input_dir / "script"
         script_dst.mkdir(parents=True, exist_ok=True)
-        for src_file in dlnt_bundle_src.rglob("*"):
-            if src_file.is_file() and src_file.suffix != ".pyc" and "__pycache__" not in src_file.parts:
-                rel = src_file.relative_to(dlnt_bundle_src)
-                dst_file = script_dst / rel
-                dst_file.parent.mkdir(parents=True, exist_ok=True)
-                shutil.copy2(src_file, dst_file)
+        shutil.copy2(dlnt_gui_src, script_dst / "dlnt_GUI.py")
 
     output_ver = ver_dir / "06_DirectLineMatrices_Added.ver"
 

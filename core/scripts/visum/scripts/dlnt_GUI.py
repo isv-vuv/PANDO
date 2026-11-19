@@ -31,19 +31,46 @@
 # Not all methods of the calculator class are available in the GUI.
 
 
+import importlib
 import sys
 from pathlib import Path
-_SCRIPT_DIR = str(Path(__file__).resolve().parent)
-if _SCRIPT_DIR not in sys.path:
-    sys.path.insert(0, _SCRIPT_DIR)
+
+
+def _resolve_pando_visum_dirs() -> tuple[Path | None, Path | None]:
+    """Locate PANDO's core/scripts/visum/{scripts,helper_files} from either core or a project's processed/visum/script."""
+    here = Path(__file__).resolve().parent
+    # Case 1: running directly inside core/scripts/visum/scripts
+    if (here / "05_cfl_directlinenetwork_tool.py").is_file():
+        return here, here.parent / "helper_files"
+    # Case 2: running from <PANDO_ROOT>/projects/<project>/processed/visum/script
+    for ancestor in here.parents:
+        cand_scripts = ancestor / "core" / "scripts" / "visum" / "scripts"
+        if (cand_scripts / "05_cfl_directlinenetwork_tool.py").is_file():
+            return cand_scripts, ancestor / "core" / "scripts" / "visum" / "helper_files"
+    return None, None
+
+
+_SCRIPT_DIR = Path(__file__).resolve().parent
+_PANDO_SCRIPTS_DIR, _PANDO_HELPER_DIR = _resolve_pando_visum_dirs()
+for _p in (_SCRIPT_DIR, _PANDO_SCRIPTS_DIR, _PANDO_HELPER_DIR):
+    if _p is not None and _p.is_dir() and str(_p) not in sys.path:
+        sys.path.insert(0, str(_p))
 
 import wx
 import wx.html2
-import cfl_directlinenetwork_tool as dlnt
 import logging
 import json
 import os
-from language_management import Translator
+
+try:
+    dlnt = importlib.import_module("05_cfl_directlinenetwork_tool")
+except ImportError:
+    import cfl_directlinenetwork_tool as dlnt
+
+try:
+    Translator = importlib.import_module("05_language_management").Translator
+except ImportError:
+    from language_management import Translator
 
 
 # ---------------------------------------------------------------------------
@@ -297,7 +324,7 @@ class DirectLineNetworkToolFrame(wx.Frame):
     ## Sets the values and ranges for the CFL buttons.
     #  Configures the range and initial values for the CFL value buttons based on the maximum value of the selected attribute.
     def __set_values_cfl_buttons__(self):
-        max_value_cfl = int(self.visum.Net.AttValue(f"Max:Zones\{self.attr_cfl}"))
+        max_value_cfl = int(self.visum.Net.AttValue(f"Max:Zones\\{self.attr_cfl}"))
         idx = 0
         for btn in self.buttons_cfl_value.values():
             btn.SetRange(0, max_value_cfl)
@@ -1298,8 +1325,13 @@ class LoadingSplash(wx.Frame):
 
 
 if __name__ == '__main__':
-    # Initialize translator outside the app
-    translator = Translator(Path(__file__).parent / "Translations.json", language="en")
+    # Initialize translator using PANDO's helper_files/translations.json (with local fallback)
+    _translations_path = (
+        (_PANDO_HELPER_DIR / "translations.json")
+        if (_PANDO_HELPER_DIR is not None and (_PANDO_HELPER_DIR / "translations.json").is_file())
+        else (Path(__file__).parent / "translations.json")
+    )
+    translator = Translator(_translations_path, language="en")
     app = wx.App()
 
     # Show the splash *before* any heavy work.  The timer starts inside __init__
