@@ -453,6 +453,42 @@ class _GridIntProxy:
         )
 
 
+class _CenteredBoolRenderer(wx.grid.GridCellRenderer):
+    """Draws a crisp, pixel-perfect centered PANDO checkbox inside column 0."""
+
+    def Draw(self, grid, attr, dc, rect, row, col, isSelected):
+        try:
+            bg = grid.GetSelectionBackground() if isSelected else attr.GetBackgroundColour()
+            dc.SetPen(wx.TRANSPARENT_PEN)
+            dc.SetBrush(wx.Brush(bg))
+            dc.DrawRectangle(rect)
+
+            checked = grid.GetCellValue(row, col) == "1"
+            box = 15
+            bx = rect.x + (rect.width - box) // 2
+            by = rect.y + (rect.height - box) // 2
+
+            if checked:
+                dc.SetPen(wx.Pen(_PANDO_BLUE, 1))
+                dc.SetBrush(wx.Brush(_PANDO_BLUE))
+                dc.DrawRoundedRectangle(bx, by, box, box, 3)
+                dc.SetPen(wx.Pen(wx.Colour(255, 255, 255), 2))
+                dc.DrawLine(bx + 3, by + 8, bx + 6, by + 11)
+                dc.DrawLine(bx + 6, by + 11, bx + 12, by + 4)
+            else:
+                dc.SetPen(wx.Pen(_PANDO_BORDER, 1))
+                dc.SetBrush(wx.Brush(_PANDO_CARD))
+                dc.DrawRoundedRectangle(bx, by, box, box, 3)
+        except Exception:
+            logging.exception("Error drawing centered checkbox cell")
+
+    def GetBestSize(self, grid, attr, dc, row, col):
+        return wx.Size(24, 24)
+
+    def Clone(self):
+        return _CenteredBoolRenderer()
+
+
 # ---------------------------------------------------------------------------
 # Shared config reader  (rin_config.json written by RIN_Matrizen.py)
 # ---------------------------------------------------------------------------
@@ -1280,9 +1316,10 @@ class MainTab(wx.Panel):
         cfl_num_font.SetWeight(wx.FONTWEIGHT_BOLD)
 
         for row_idx, cfl_key in enumerate(self._cfl_keys):
-            # Col 0: Active checkbox
-            self.cfl_grid.SetCellRenderer(row_idx, 0, wx.grid.GridCellBoolRenderer())
+            # Col 0: Active checkbox (centered PANDO style)
+            self.cfl_grid.SetCellRenderer(row_idx, 0, _CenteredBoolRenderer())
             self.cfl_grid.SetCellEditor(row_idx, 0, wx.grid.GridCellBoolEditor())
+            self.cfl_grid.SetCellAlignment(row_idx, 0, wx.ALIGN_CENTER, wx.ALIGN_CENTER)
             self.cfl_grid.SetCellValue(row_idx, 0, "")
             # Col 1: CFL number only (read-only, centered)
             self.cfl_grid.SetCellValue(row_idx, 1, str(row_idx))
