@@ -600,7 +600,8 @@ class DirectLineNetworkToolFrame(wx.Frame):
 
         if self.dln_calculator is not None:
             self.update_param_cfl()
-            self.dln_calculator.export_matrix(list_cfl=[cfl_level])
+            overwrite = bool(self.tabMain.cb_overwrite_matrix.GetValue())
+            self.dln_calculator.export_matrix(list_cfl=[cfl_level], overwrite_existing=overwrite)
 
         self.SetStatusText(f"{cfl_name}: {self.translator.translate('status_matrix_loaded_into_visum')}")
 
@@ -611,7 +612,8 @@ class DirectLineNetworkToolFrame(wx.Frame):
     def event_export_master(self, event):
         if self.dln_calculator is not None:
             self.update_param_cfl()
-            self.dln_calculator.export_matrix()
+            overwrite = bool(self.tabMain.cb_overwrite_matrix.GetValue())
+            self.dln_calculator.export_matrix(overwrite_existing=overwrite)
             self.dln_calculator.export_net(links_additive=True)
             self.dln_calculator.delete_unused_nodes()
             self.tabMain.mark_exported()
@@ -629,7 +631,8 @@ class DirectLineNetworkToolFrame(wx.Frame):
         if not selected:
             wx.MessageBox(self.translator.translate('error_no_calculator_instance'), 'Info', wx.OK | wx.ICON_INFORMATION)
             return
-        self.dln_calculator.export_matrix(list_cfl=selected)
+        overwrite = bool(self.tabMain.cb_overwrite_matrix.GetValue())
+        self.dln_calculator.export_matrix(list_cfl=selected, overwrite_existing=overwrite)
         names = ", ".join(self.button_cfl_active[c].Label for c in selected)
         self.SetStatusText(f"{names}: {self.translator.translate('status_matrix_loaded_into_visum')}")
         # Update status labels
@@ -921,6 +924,10 @@ class MainTab(wx.Panel):
         self.btn_export_master.SetMinSize(_btn_size)
         self._export_sizer.Add(self.btn_export_master, 0, wx.EXPAND | wx.ALL, 4)
 
+        self.cb_overwrite_matrix = wx.CheckBox(self, -1, self.translator.translate('setting_overwrite_matrix'))
+        self.cb_overwrite_matrix.SetValue(True)
+        self._export_sizer.Add(self.cb_overwrite_matrix, 0, wx.EXPAND | wx.ALL, 6)
+
         # Start with export buttons greyed out
         self._set_export_buttons_state(enabled=False)
 
@@ -1095,6 +1102,7 @@ class MainTab(wx.Panel):
         self.btn_export_master.SetLabel(self.translator.translate('setting_import_to_visum'))
         self.btn_export_mtx.SetLabel(self.translator.translate('btn_export_mtx'))
         self.btn_export_net.SetLabel(self.translator.translate('btn_export_net'))
+        self.cb_overwrite_matrix.SetLabel(self.translator.translate('setting_overwrite_matrix'))
 
         self.Layout()
         self.Refresh()

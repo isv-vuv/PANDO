@@ -262,5 +262,9 @@
   "btn_export_net": {
     "en": "Link Network",
     "de": "Link Netz"
+  },
+  "setting_overwrite_matrix": {
+    "en": "Overwrite existing matrix",
+    "de": "Bestehende Matrix überschreiben"
   }
 }

@@ -625,9 +625,9 @@ class DirectLineNetworkCalculator:
     # Existing matrices are overwritten.
     # @param visum: optional visum instance. Default None
     # @param list_cfl: optional set of CFL. Default: None (all of the object)
-    def export_matrix(self, list_cfl=None):
+    def export_matrix(self, list_cfl=None, overwrite_existing: bool = True):
         # If visum instance recognised:
-        # create & export data directly in visa (for networks with <1500 districts via SetValues otherwise using an mtx file in O-Fromat)
+        # create & export data directly in visum (for networks with <1500 zones via SetValues, otherwise via .mtx O-Format)
         # Otherwise: Save .mtx file
 
         if list_cfl is None:
@@ -653,10 +653,40 @@ class DirectLineNetworkCalculator:
                 # includes term regarding supply function
                 name_matrix = f"RIN_{cfl_label}_n={self.deg_neighbourhood_cfl[cfl]}_v={self.num_suppliers_cfl[cfl]}"
 
-            # get output directory (not used if matrix is written to Visum directly)
-            path_mat = self.path_output or Path.cwd() / 'mtx'
+            # Resolve target matrix in Visum (overwrite by NAME/CODE or create unique separate matrix)
+            target_matrix_name = name_matrix
+            existing_matrix_no = None
+            if self.visum is not None and self.visum.Net.Matrices.Count > 0:
+                raw_mats = self.visum.Net.Matrices.GetMultipleAttributes(["NO", "CODE", "NAME"])
+                existing_names_codes = set()
+                for m_no, m_code, m_name in raw_mats:
+                    code_s = str(m_code or "").strip()
+                    name_s = str(m_name or "").strip()
+                    existing_names_codes.add(code_s)
+                    existing_names_codes.add(name_s)
+                    if existing_matrix_no is None and (code_s == name_matrix or name_s == name_matrix):
+                        existing_matrix_no = int(m_no)
+
+                if not overwrite_existing and (name_matrix in existing_names_codes):
+                    suffix = 2
+                    while f"{name_matrix}_{suffix}" in existing_names_codes:
+                        suffix += 1
+                    target_matrix_name = f"{name_matrix}_{suffix}"
+                    existing_matrix_no = None
+
+            # get output directory (prefer Visum's configured mtx directory when available)
+            path_mat = self.path_output
+            if path_mat is None and self.visum is not None:
+                try:
+                    visum_mtx = Path(self.visum.GetPath(69))
+                    if visum_mtx.is_dir():
+                        path_mat = visum_mtx
+                except Exception:
+                    path_mat = None
+            if path_mat is None:
+                path_mat = Path.cwd() / 'mtx'
             path_mat.mkdir(parents=True, exist_ok=True)
-            path_mat_file = path_mat / f"{name_matrix}.mtx"
+            path_mat_file = path_mat / f"{target_matrix_name}.mtx"
 
             # Create the matrix in Visum, if necessary
 
@@ -700,38 +730,25 @@ class DirectLineNetworkCalculator:
 
             # If an instance exists, import content into Visum
             if self.visum is not None:
-
-                # chack if matrix has to be created
-                if self.visum.Net.Matrices.Count < 1:
-                    # create matrix
-                    matrix_instance = self.visum.Net.AddMatrix(-1, 2, 3)
-                    matrix_instance.SetAttValue("CODE", name_matrix)
-                    matrix_instance.SetAttValue("NAME", name_matrix)
+                if existing_matrix_no is not None:
+                    matrix_instance = self.visum.Net.Matrices.ItemByKey(existing_matrix_no)
+                    matrix_instance.SetAttValue("CODE", target_matrix_name)
+                    matrix_instance.SetAttValue("NAME", target_matrix_name)
+                    logging.info(f"Matrix '{target_matrix_name}' (No {existing_matrix_no}) exists, content will be overwritten.")
                 else:
-                    # search existing matrix with same name
-                    matrix_instances = self.visum.Net.Matrices.ItemsByRef(f'''Matrix([CODE]= "{name_matrix}") ''')
-                    if matrix_instances.Count < 1:
-                        del matrix_instances
-                        # create matrix
-                        matrix_instance = self.visum.Net.AddMatrix(-1, 2, 3)
-                        matrix_instance.SetAttValue("CODE", name_matrix)
-                        matrix_instance.SetAttValue("NAME", name_matrix)
-                    elif matrix_instances.Count > 1:
-                        logging.warning("Matrix code exists multiple times, the first matrix will be overwritten.")
-                        matrix_instance = matrix_instances.Iterator.Item
-                    else:
-                        matrix_instance = matrix_instances.Iterator.Item
-                        logging.info("Matrix code exists, content will be overwritten.")
+                    matrix_instance = self.visum.Net.AddMatrix(-1, 2, 3)
+                    matrix_instance.SetAttValue("CODE", target_matrix_name)
+                    matrix_instance.SetAttValue("NAME", target_matrix_name)
 
                 # set values
                 # If there are fewer than 1500 zones, you can work with SetValues without any problems.
                 # Otherwise an mtx file must be written
                 if self.visum.Net.Zones.Count < 1500:
                     matrix_instance.SetValues(matrix_cfl)
-                    logging.info(f'{name_matrix}: was read into Visum.')
+                    logging.info(f'{target_matrix_name}: was read into Visum.')
                 else:
-                    matrix_instance.Open(path_mat_file, ReadAdditive=False)
-                    logging.info(f'{name_matrix}: was read into Visum.')
+                    matrix_instance.Open(str(path_mat_file), ReadAdditive=False)
+                    logging.info(f'{target_matrix_name}: was read into Visum.')
 
             else:
                 logging.info(f'Visum is not running. Matrices were exported as files to: {path_mat}')
