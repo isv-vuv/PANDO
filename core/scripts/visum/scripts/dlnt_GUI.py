@@ -192,11 +192,9 @@ class DirectLineNetworkToolFrame(wx.Frame):
                 Visum = com.Dispatch(f"Visum.Visum.{version}")
                 logging.info('open visum file: {}'.format(source))
                 Visum.LoadVersion(source)
-                wx.SafeYield()  # let the splash timer fire after the heavy COM load
 
         self.visum = Visum
         self.list_attr = get_attr_zones(self.visum)
-        wx.SafeYield()  # let the splash timer fire after zone-attribute fetch
 
         # ── Read shared config (written by RIN_Matrizen.py) ──────────────
         # _rin_cfl_params is a list of five {"n", "v"} dicts, one per CFL tier.
@@ -473,10 +471,12 @@ class DirectLineNetworkToolFrame(wx.Frame):
         self.SetStatusText(self.translator.translate('status_loading_data') if
                            self.translator.translate('status_loading_data') != 'status_loading_data'
                            else "Loading data, please wait...")
+        self.Refresh()
+        self.Update()
         wx.BeginBusyCursor()
         try:
-            wx.SafeYield()  # Reentrant-safe paint update
             if self.visum is not None:
+                logging.info("Importing zone data from Visum...")
                 self.dln_calculator = dlnt.DirectLineNetworkCalculator(
                     self.visum,
                     attr_cfl=self.attr_cfl,
@@ -486,7 +486,6 @@ class DirectLineNetworkToolFrame(wx.Frame):
                     attr_dest=self.attr_destination,
                     translator=self.translator,
                 )
-                wx.SafeYield()
                 self.update_param_cfl()
                 self.SetStatusText(self.translator.translate('status_data_imported'))
             else:
@@ -499,6 +498,11 @@ class DirectLineNetworkToolFrame(wx.Frame):
         finally:
             if wx.IsBusy():
                 wx.EndBusyCursor()
+            for handler in logging.getLogger().handlers:
+                try:
+                    handler.flush()
+                except Exception:
+                    pass
 
     ## Event handler for the Info button.
     #  @param event The event object.
@@ -1334,7 +1338,6 @@ class LoadingSplash(wx.Frame):
         self._hint = text
         self.Refresh()
         self.Update()
-        wx.SafeYield()  # let the timer fire at least once before blocking again
 
     ## Stops the timer and destroys the splash window.
     def close(self):
