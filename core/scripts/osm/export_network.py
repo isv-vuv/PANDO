@@ -34,7 +34,12 @@ def parse_net_link_types(master_net_path, log=print):
                 continue
             link_type_lines.append([v.strip() for v in line_str.split(';')])
 
-    df = pd.DataFrame(link_type_lines, columns=headers[:len(link_type_lines[0])])
+    n_cols = len(headers)
+    normalized_rows = [
+        (row + [""] * (n_cols - len(row)))[:n_cols]
+        for row in link_type_lines
+    ]
+    df = pd.DataFrame(normalized_rows, columns=headers)
     df['TYPENO'] = pd.to_numeric(df['NO'], errors='coerce').fillna(0).astype(int)
     df['NUMLANES'] = pd.to_numeric(df['NUMLANES'], errors='coerce').fillna(1).astype(int)
     df['V0PRT'] = pd.to_numeric(df['V0PRT'], errors='coerce').fillna(30).astype(float)

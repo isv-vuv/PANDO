@@ -48,12 +48,17 @@ class FerryAccessUnitTests(unittest.TestCase):
             # Pier 4 already has incoming & outgoing CAR+WALK road link (4 <-> 6) -> Isolated_Ferry=False
             {"FROMNODENO": 4, "TONODENO": 6, "TYPENO": 30, "TSYSSET": "CAR,WALK"},
             {"FROMNODENO": 6, "TONODENO": 4, "TYPENO": 30, "TSYSSET": "CAR,WALK"},
-            # Node 5 is deg=1 ferry node with only a CAR-only (no WALK) road -> still Isolated_Ferry=True
-            {"FROMNODENO": 5, "TONODENO": 7, "TYPENO": 10, "TSYSSET": "CAR"},
-            {"FROMNODENO": 7, "TONODENO": 5, "TYPENO": 10, "TSYSSET": "CAR"},
+            # Node 5 is deg=1 ferry node with a CAR-only Trunk road (no WALK) -> already connected!
+            {"FROMNODENO": 5, "TONODENO": 7, "TYPENO": 20, "TSYSSET": "BUS,CAR,HGV"},
+            {"FROMNODENO": 7, "TONODENO": 5, "TYPENO": 20, "TSYSSET": "BUS,CAR,HGV"},
+            {"FROMNODENO": 7, "TONODENO": 8, "TYPENO": 20, "TSYSSET": "BUS,CAR,HGV"},
+            {"FROMNODENO": 8, "TONODENO": 7, "TYPENO": 20, "TSYSSET": "BUS,CAR,HGV"},
             # Road 6 <-> 8 with CAR,WALK -> 6 and 8 are Road_Target_Node=True
             {"FROMNODENO": 6, "TONODENO": 8, "TYPENO": 30, "TSYSSET": "CAR,WALK"},
             {"FROMNODENO": 8, "TONODENO": 6, "TYPENO": 30, "TSYSSET": "CAR,WALK"},
+            # Node 1 has only a WALK-only footpath to 8 (no CAR) -> still Isolated_Ferry=True
+            {"FROMNODENO": 1, "TONODENO": 8, "TYPENO": 91, "TSYSSET": "WALK"},
+            {"FROMNODENO": 8, "TONODENO": 1, "TYPENO": 91, "TSYSSET": "WALK"},
         ])
 
         out = ferry_access.classify_ferry_nodes(nodes_df, links_df).set_index("NO")
@@ -76,8 +81,8 @@ class FerryAccessUnitTests(unittest.TestCase):
         self.assertFalse(out.loc[4, "Isolated_Ferry"])
         self.assertFalse(out.loc[4, "Road_Target_Node"])
 
-        self.assertTrue(out.loc[5, "Isolated_Ferry"])
-        self.assertFalse(out.loc[7, "Road_Target_Node"])
+        self.assertFalse(out.loc[5, "Isolated_Ferry"])
+        self.assertTrue(out.loc[7, "Road_Target_Node"])
         self.assertTrue(out.loc[6, "Road_Target_Node"])
         self.assertTrue(out.loc[8, "Road_Target_Node"])
 

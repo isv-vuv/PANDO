@@ -59,9 +59,9 @@ def _parse_tsys_tokens(tsysset: str) -> set[str]:
     return {tok.strip().upper() for tok in str(tsysset).split(",") if tok.strip()}
 
 
-def _has_car_and_walk(tsysset: str) -> bool:
+def _has_car(tsysset: str) -> bool:
     tokens = _parse_tsys_tokens(tsysset)
-    return "CAR" in tokens and "WALK" in tokens
+    return "CAR" in tokens
 
 
 def extract_osm_ferry_terminal_info(
@@ -291,7 +291,7 @@ def classify_ferry_nodes(
                 ferry_neighbors.setdefault(int(u), set()).add(int(v))
                 ferry_neighbors.setdefault(int(v), set()).add(int(u))
 
-        road_mask = (~typenos.isin(excluded_road_types)) & links_df["TSYSSET"].map(_has_car_and_walk)
+        road_mask = (~typenos.isin(excluded_road_types)) & links_df["TSYSSET"].map(_has_car)
         road_from = from_nos[road_mask]
         road_to = to_nos[road_mask]
         road_in_nodes = set(int(x) for x in road_to)
