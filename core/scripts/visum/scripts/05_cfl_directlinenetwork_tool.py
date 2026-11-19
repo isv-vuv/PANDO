@@ -625,6 +625,30 @@ class DirectLineNetworkCalculator:
     # Existing matrices are overwritten.
     # @param visum: optional visum instance. Default None
     # @param list_cfl: optional set of CFL. Default: None (all of the object)
+    def _resolve_visum_output_dir(self, path_type_id: int, subdir_name: str) -> Path:
+        """Resolve canonical Visum output directory (e.g. processed/visum/mtx or net), never ver/mtx."""
+        if self.path_output is not None:
+            return Path(self.path_output)
+        if self.visum is not None:
+            try:
+                visum_dir = Path(self.visum.GetPath(path_type_id))
+                if visum_dir.is_dir() and visum_dir.name.lower() == subdir_name.lower():
+                    return visum_dir
+            except Exception:
+                pass
+            try:
+                doc_name = str(self.visum.UserPreferences.DocumentName or "").strip()
+                if doc_name:
+                    doc_parent = Path(doc_name).resolve().parent
+                    visum_root = doc_parent.parent if doc_parent.name.lower() == "ver" else doc_parent
+                    return visum_root / subdir_name
+            except Exception:
+                pass
+        cwd = Path.cwd()
+        if cwd.name.lower() == "ver":
+            return cwd.parent / subdir_name
+        return cwd / subdir_name
+
     def export_matrix(self, list_cfl=None, overwrite_existing: bool = True):
         # If visum instance recognised:
         # create & export data directly in visum (for networks with <1500 zones via SetValues, otherwise via .mtx O-Format)
@@ -674,17 +698,8 @@ class DirectLineNetworkCalculator:
                     target_matrix_name = f"{name_matrix}_{suffix}"
                     existing_matrix_no = None
 
-            # get output directory (prefer Visum's configured mtx directory when available)
-            path_mat = self.path_output
-            if path_mat is None and self.visum is not None:
-                try:
-                    visum_mtx = Path(self.visum.GetPath(69))
-                    if visum_mtx.is_dir():
-                        path_mat = visum_mtx
-                except Exception:
-                    path_mat = None
-            if path_mat is None:
-                path_mat = Path.cwd() / 'mtx'
+            # get output directory (always processed/visum/mtx when inside a Visum project, never ver/mtx)
+            path_mat = self._resolve_visum_output_dir(69, "mtx")
             path_mat.mkdir(parents=True, exist_ok=True)
             path_mat_file = path_mat / f"{target_matrix_name}.mtx"
 
@@ -822,14 +837,8 @@ class DirectLineNetworkCalculator:
     # @param create_connectors: if True, connectors are created for each CFL. Default: False
     # @return: None
     def export_net(self, links_additive=True, list_cfl=None, create_connectors=True):
-        if self.path_output is None:
-            # if no file path is passed: Use visum file path if instance exists, otherwise use the current path
-            if self.visum is not None:
-                path_net = Path(self.visum.GetPath(1))
-            else:
-                path_net = Path.cwd()
-        else:
-            path_net = self.path_output
+        path_net = self._resolve_visum_output_dir(1, "net")
+        path_net.mkdir(parents=True, exist_ok=True)
 
         if list_cfl is None:
             list_cfl = self.cfl.keys()
