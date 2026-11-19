@@ -507,10 +507,13 @@ class DirectLineNetworkToolFrame(wx.Frame):
     ## Event handler for the Info button.
     #  @param event The event object.
     def event_info(self, event):
-        path_scripts = Path(__file__).parent # Path(self.visum.GetPath(37))
-        logging.info(path_scripts)
-        # Update this line to instantiate HelpPopUp directly and pass the translator.
-        HelpPopUp(self, self.translator, path_scripts)
+        doc_base = (
+            _PANDO_HELPER_DIR
+            if (_PANDO_HELPER_DIR is not None and (_PANDO_HELPER_DIR / "documentation").is_dir())
+            else Path(__file__).parent
+        )
+        logging.info(doc_base)
+        HelpPopUp(self, self.translator, doc_base)
 
     ## Event handler for resetting calculations.
     #  Initializes the results in the calculator, effectively clearing any previous calculations,
@@ -1204,8 +1207,10 @@ class HelpPopUp(wx.Frame):
         dict_docu = {
             translator.translate('application'): doc_dir / "application.html",
             translator.translate('foundations'): doc_dir / "foundations.html",
-            translator.translate('documentation_code'): doc_dir.parent / "code" / "html" /"index.html"
         }
+        code_doc_index = doc_dir.parent / "code" / "html" / "index.html"
+        if code_doc_index.is_file():
+            dict_docu[translator.translate('documentation_code')] = code_doc_index
 
         # Create tabs with embedded WebView for each documentation page
         for page_name, file_path in dict_docu.items():
