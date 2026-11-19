@@ -1003,6 +1003,6 @@ $VERSION:VERSNR;FILETYPE;LANGUAGE;UNIT
         for key in self.cfl:
             if '_' in key:
                 parts = key.split('_')
-                self.cfl_labels[key] = f"{self.translator.translate(parts[0])} {'_'.join(parts[1:])}"
+                self.cfl_labels[key] = f"{self.translator.translate(parts[0])}_{'_'.join(parts[1:])}"
             else:
                 self.cfl_labels[key] = key
