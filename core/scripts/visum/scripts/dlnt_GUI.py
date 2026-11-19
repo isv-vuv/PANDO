@@ -218,24 +218,26 @@ class _PandoButton(wx.Panel):
 
     def _on_paint(self, _evt):
         dc = wx.AutoBufferedPaintDC(self)
-        w, h = self.GetClientSize()
-        dc.SetBackground(wx.Brush(self.GetParent().GetBackgroundColour()))
-        dc.Clear()
+        try:
+            w, h = self.GetClientSize()
+            dc.SetBackground(wx.Brush(self.GetParent().GetBackgroundColour()))
+            dc.Clear()
 
-        bg, border, fg, is_bold = self._palette()
-        gc = wx.GraphicsContext.Create(dc)
-        if gc:
-            gc.SetBrush(gc.CreateBrush(wx.Brush(bg)))
-            gc.SetPen(gc.CreatePen(wx.Pen(border, 1)))
-            gc.DrawRoundedRectangle(0.5, 0.5, max(1, w - 1), max(1, h - 1), 6)
+            bg, border, fg, is_bold = self._palette()
+            dc.SetBrush(wx.Brush(bg))
+            dc.SetPen(wx.Pen(border, 1))
+            dc.DrawRoundedRectangle(0, 0, max(1, w), max(1, h), 6)
 
             font = self.GetFont()
             font.SetPointSize(9)
             if is_bold:
                 font.SetWeight(wx.FONTWEIGHT_BOLD)
-            gc.SetFont(font, fg)
-            tw, th = gc.GetTextExtent(self._label)
-            gc.DrawText(self._label, (w - tw) / 2.0, (h - th) / 2.0)
+            dc.SetFont(font)
+            dc.SetTextForeground(fg)
+            tw, th = dc.GetTextExtent(self._label)
+            dc.DrawText(self._label, int((w - tw) / 2), int((h - th) / 2))
+        except Exception:
+            pass
 
 
 class _PandoProgressBar(wx.Panel):
