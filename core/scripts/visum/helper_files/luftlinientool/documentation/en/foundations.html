@@ -1,0 +1,159 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+    <meta charset="utf-8">
+    <title>Anwendung - Luftlinientool2022</title>
+    <script type="text/javascript" async
+      src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/3.2.0/es5/tex-mml-chtml.js">
+    </script>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 20px;
+            padding: 20px;
+            line-height: 1.6;
+        }
+        h1, h2, h3 {
+            color: #333;
+        }
+        pre {
+            background: #f4f4f4;
+            padding: 10px;
+            border-radius: 5px;
+            overflow-x: auto;
+        }
+        img {
+            max-width: 100%;
+            height: auto;
+            display: block;
+            margin: 10px 0;
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 10px 0;
+        }
+        th, td {
+            border: 1px solid #ddd;
+            padding: 8px;
+            text-align: left;
+        }
+        th {
+            background-color: #f4f4f4;
+        }
+    </style>
+</head>
+<body>
+    <h1>General Procedure and Methodology</h1>
+
+    <h2>Calculation of Direct-Line Network for a Connectivity Function Level CFL</h2>
+
+    <ol>
+        <li>Initialization and filtering of relevant traffic cells</li>
+        <li>Calculation of triangle connections between traffic cells via Delaunay triangulation.</li>
+        <li>Consideration of the <em>n</em>-nearest neighbors.</li>
+        <li>Ensuring connection to supply centers.</li>
+        <li>Filtering of traffic cells and connections.</li>
+        <li>Creation of a symmetric adjacency matrix that correctly represents all connections.</li>
+    </ol>
+
+    <p>This procedure is implemented in the function <span class="code-ref"><a href="#" class="hyperlink">calculate_cfl</a></span> (self, <span class="code-ref"><a href="#" class="hyperlink">cfl</a></span>) of the class <span class="code-ref"><a href="#" class="hyperlink">directdistanceCalculator</a></span>.</p>
+
+    <h3>Initialization and Filtering of traffic cells</h3>
+    <ul>
+        <li>First, traffic cells with a centrality level ≥ CFL are filtered to include only those relevant for the current connectivity function level CFL. Traffic cells that are inactive or do not meet connection requirements are excluded.</li>
+        <li>A check is carried out to ensure that no traffic cells have identical coordinates.</li>
+    </ul>
+
+    <h3>Delaunay Triangulation</h3>
+    <ul>
+        <li>If there are enough active traffic cells, a Delaunay triangulation is performed to connect traffic cells into triangles. These triangles represent neighborhood relationships between traffic cells.</li>
+        <li>Delaunay triangulation connects two-dimensional points in such a way that no other points are contained within the perimeter of the resulting triangles.
+            Note: The edge lengths are not minimised, but the Delaunay triangulation corresponds to a maximisation of the interior angle over all triangles.</li>
+        <li>The resulting neighborhood connections are stored in a (symmetric) adjacency matrix.</li>
+        <li>Connections of higher functionality level could be included as well, due to the consideration of traffic cells with centrality > CFL.</li>
+    </ul>
+
+<h3>Consideration of n-Nearest Neighbors</h3>
+<ul>
+    <li>Compute the reachability matrix of the adjacency matrix <em>A</em> for <em>n</em> steps:
+        <br>
+        <em>
+            \(E_n = \sum_{k=1}^{n} A^k\)
+        </em>
+    </li>
+    <li>Binarize the matrix:
+        <br>
+        <em>
+            \(E_n^\text{bin} = \text{bin}(E_n)\)<br>
+            \((E_n^\text{bin})_{ij} = \begin{cases}
+            1, & \text{if}~(E_n)_{ij} > 0~\text{and}~i \neq j \\
+            0, & \text{otherwise}
+            \end{cases}\)
+        </em>
+    </li>
+    <li>Set the main diagonal to zero.</li>
+    <li>Update adjacency matrix = binarized reachability matrix.</li>
+</ul>
+
+    <h3>Connections to Supply Centers</h3>
+    <ul>
+        <li>Check whether each traffic cell is connected to a sufficient number of supply centers.</li>
+        <li>If not, determine the nearest supply centers and add connections.</li>
+    </ul>
+
+    <h3>Active and Inactive Connections</h3>
+    <ul>
+        <li>Only active traffic cells are considered as origin and destination of connections.</li>
+        <li>The "isOrigin" filter defines which traffic cell is used as an origin; "isDestination" defines the destination traffic cells.
+            For symmetry reasons, the condition <em>od = do</em> applies.
+            Nevertheless, "isDestination" traffic cells are not part of the triangles but are reached by the "isOrigin" traffic cells.</li>
+        <li>Implementation: A filter mask is applied to the adjacency matrices.
+            This mask is the result of the dyadic product of "isOrigin" and "isDestination" followed by symmetrization.</li>
+    </ul>
+
+    <p>Example: Let <span class="quote">"isOrigin"</span> <em>o</em> = <span class="vector">[1 1 0 0 1]<sup>T</sup></span> and <span class="quote">"isDestination"</span> <em>d</em> = <span class="vector">[1 1 1 1 0]<sup>T</sup></span>. Then:</p>
+
+    <div class="align-block">
+        <p><em>M<sub>o ∨ d</sub></em> = <em>o · d<sup>T</sup></em> = </p>
+        <table>
+            <tr><td>1</td><td>1</td><td>1</td><td>1</td><td>0</td></tr>
+            <tr><td>1</td><td>1</td><td>1</td><td>1</td><td>0</td></tr>
+            <tr><td>0</td><td>0</td><td>0</td><td>0</td><td>0</td></tr>
+            <tr><td>0</td><td>0</td><td>0</td><td>0</td><td>0</td></tr>
+            <tr><td>1</td><td>1</td><td>1</td><td>1</td><td>0</td></tr>
+        </table>
+
+        <p><em>M<sub>symmetrisch</sub></em> = <em>M<sub>o ∨ d</sub></em> + <em>M<sub>o ∨ d</sub><sup>T</sup></em> = </p>
+        <table>
+            <tr><td>1</td><td>1</td><td>1</td><td>1</td><td>1</td></tr>
+            <tr><td>1</td><td>1</td><td>1</td><td>1</td><td>1</td></tr>
+            <tr><td>1</td><td>1</td><td>0</td><td>0</td><td>1</td></tr>
+            <tr><td>1</td><td>1</td><td>0</td><td>0</td><td>1</td></tr>
+            <tr><td>1</td><td>1</td><td>1</td><td>1</td><td>0</td></tr>
+        </table>
+    </div>
+
+    <h2>Export of the Direct-Line Network for a CFL</h2>
+    The resulting direct-line connections can be exported as matrices or standalone infrastructure (nodes, link types, links, connectors) to PTV Visum.
+
+    <p>Exporting the links of the resulting direct-line connections for the specified connectivity function levels as a
+        standalone infrastructure (nodes, link types, links, connectors) allows visualization of the results or use of the resulting triangulation network.</p>
+
+    <p>When converting the adjacency matrices to infrastructure, two challenges must be addressed:</p>
+    <ul>
+        <li>Compatibility with the existing infrastructure of the Visum model.</li>
+        <li>Avoidance of overlaps when combining multiple connectivity function levels and the correct assignment of CFL to links considered by multiple levels.</li>
+    </ul>
+
+    <p>Therefore, the export of the direct-line network infrastructure is performed in two steps:</p>
+    <ol>
+        <li>If needed, update the required infrastructure objects (nodes, link types, links, connectors),
+            taking into account all calculated adjacency matrices, and store them as attributes of the direct-line network calculator instance.<br>
+        This is implemented in the function <span class="code-ref"><a href="#" class="hyperlink">extract_net</a></span> of the class <span class="code-ref"><a href="#" class="hyperlink">DirectLineNetworkCalculator</a></span>.<br>
+        The numbering of objects relevant for Visum considers existing objects in the active Visum instance.</li>
+        <li>The function <span class="code-ref"><a href="#" class="hyperlink">export_net</a></span> creates a .net file containing the infrastructure of the chosen connectivity function levels and imports it into the current Visum instance.</li>
+    </ol>
+</body>
+
+</html>
