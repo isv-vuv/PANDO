@@ -912,7 +912,7 @@ $VERSION:VERSNR;FILETYPE;LANGUAGE;UNIT
             if links_additive is not True:
                 self.visum.Net.Links.RemoveAll(OnlyActive=True)
 
-            self.visum.IO.LoadNet(path_net, ReadAdditive=True)
+            self.visum.IO.LoadNet(str(path_net), ReadAdditive=True)
 
             if self.visum.Net.Links.Count < len(df_edges):
                 logging.warning("Error importing the network file.")

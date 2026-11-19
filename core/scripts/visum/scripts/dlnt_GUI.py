@@ -61,6 +61,7 @@ import wx.html2
 import logging
 import json
 import os
+import warnings
 
 try:
     dlnt = importlib.import_module("05_cfl_directlinenetwork_tool")
@@ -106,6 +107,14 @@ def _configure_file_logging(visum=None) -> Path:
     file_handler = logging.FileHandler(path_logfile, mode="w", encoding="utf-8")
     file_handler.setFormatter(logger_format)
     root_logger.addHandler(file_handler)
+
+    # Redirect Python warnings (e.g. pandas FutureWarning during export_net) away from
+    # Visum's sys.stderr modal Warning popup interceptor directly into dlnt_GUI.log.
+    def _log_warning(message, category, filename, lineno, file=None, line=None):
+        logging.warning("%s:%s: %s: %s", filename, lineno, category.__name__, message)
+
+    warnings.showwarning = _log_warning
+    warnings.filterwarnings("ignore", category=FutureWarning)
     return path_logfile
 
 
@@ -134,7 +143,7 @@ def _load_rin_config(visum=None):
     -------
     list of dict  – five entries, each {"n": int, "v": int}.
     """
-    _defaults = [{"n": 2, "v": 1}] * 5
+    _defaults = [{"n": 2, "v": 0}] * 5
     try:
         if visum is not None:
             ver_path = visum.GetPath(1)
@@ -239,14 +248,13 @@ class DirectLineNetworkToolFrame(wx.Frame):
         # the user sees the values they entered in the earlier workflow step.
         # cfl_5 has no matching RIN tier – it keeps the previous default (0).
         # The user can still override any value in the GUI at any time.
-        _rin_cfl_params = _load_rin_config(self.visum)
         self._default_no_supplier_per_cfl = {
-            "cfl_0": _rin_cfl_params[0]["v"],
-            "cfl_1": _rin_cfl_params[1]["v"],
-            "cfl_2": _rin_cfl_params[2]["v"],
-            "cfl_3": _rin_cfl_params[3]["v"],
-            "cfl_4": _rin_cfl_params[4]["v"],
-            "cfl_5": self.default_no_supplier,   # no RIN tier – keep existing default
+            "cfl_0": 0,
+            "cfl_1": 0,
+            "cfl_2": 0,
+            "cfl_3": 0,
+            "cfl_4": 0,
+            "cfl_5": 0,
         }
         logging.info("dlnt_GUI: per-CFL default suppliers: {}".format(
             self._default_no_supplier_per_cfl))
@@ -456,7 +464,7 @@ class DirectLineNetworkToolFrame(wx.Frame):
         if self.visum is not None:
             # Initialize Calculator instance
             self.dln_calculator = dlnt.DirectLineNetworkCalculator(self.visum, attr_cfl=self.attr_cfl, max_distance=1,
-                                                                   no_suppliers=1, attr_orig=self.attr_origin,
+                                                                   no_suppliers=0, attr_orig=self.attr_origin,
                                                                    attr_dest=self.attr_destination,
                                                                    translator=self.translator)
             # Pass current parameters
@@ -520,7 +528,7 @@ class DirectLineNetworkToolFrame(wx.Frame):
                     self.visum,
                     attr_cfl=self.attr_cfl,
                     max_distance=1,
-                    no_suppliers=1,
+                    no_suppliers=0,
                     attr_orig=self.attr_origin,
                     attr_dest=self.attr_destination,
                     translator=self.translator,
@@ -649,12 +657,25 @@ class DirectLineNetworkToolFrame(wx.Frame):
         if not selected:
             wx.MessageBox(self.translator.translate('error_no_calculator_instance'), 'Info', wx.OK | wx.ICON_INFORMATION)
             return
-        self.dln_calculator.export_net(links_additive=True, list_cfl=selected)
-        self.dln_calculator.delete_unused_nodes()
-        names = ", ".join(self.button_cfl_active[c].Label for c in selected)
-        self.SetStatusText(f"{names}: {self.translator.translate('status_net_exported_imported')}")
-        # Update status labels
-        self.tabMain.mark_exported(selected)
+        wx.BeginBusyCursor()
+        try:
+            self.dln_calculator.export_net(links_additive=True, list_cfl=selected)
+            self.dln_calculator.delete_unused_nodes()
+            names = ", ".join(self.button_cfl_active[c].Label for c in selected)
+            self.SetStatusText(f"{names}: {self.translator.translate('status_net_exported_imported')}")
+            self.tabMain.mark_exported(selected)
+        except Exception as exc:
+            logging.exception("Failed to export link network: %s", exc)
+            self.SetStatusText(f"Export failed: {exc}")
+            wx.MessageBox(f"Link network export failed:\n{exc}", "Error", wx.OK | wx.ICON_ERROR)
+        finally:
+            if wx.IsBusy():
+                wx.EndBusyCursor()
+            for handler in logging.getLogger().handlers:
+                try:
+                    handler.flush()
+                except Exception:
+                    pass
 
     ## Event handler for filtering links.
     #  Applies a filter to show only the links created by the calculator.
