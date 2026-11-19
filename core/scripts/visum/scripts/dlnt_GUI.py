@@ -123,6 +123,53 @@ def _configure_file_logging(visum=None) -> Path:
 
 
 # ---------------------------------------------------------------------------
+# PANDO Design System Palette (matches core/app/app_qt/main_window.py)
+# ---------------------------------------------------------------------------
+_PANDO_BG          = wx.Colour(248, 250, 252)  # #f8fafc
+_PANDO_CARD        = wx.Colour(255, 255, 255)  # #ffffff
+_PANDO_BORDER      = wx.Colour(226, 232, 240)  # #e2e8f0
+_PANDO_TEXT        = wx.Colour(15, 23, 42)     # #0f172a
+_PANDO_BODY        = wx.Colour(51, 65, 85)     # #334155
+_PANDO_MUTED       = wx.Colour(100, 116, 139)  # #64748b
+_PANDO_BLUE        = wx.Colour(37, 99, 235)    # #2563eb
+_PANDO_GREEN       = wx.Colour(16, 185, 129)   # #10b981
+_PANDO_DANGER      = wx.Colour(185, 28, 28)    # #b91c1c
+_PANDO_DISABLED_BG = wx.Colour(241, 245, 249)  # #f1f5f9
+_PANDO_DISABLED_FG = wx.Colour(148, 163, 184)  # #94a3b8
+
+
+def _make_pando_card(parent, title: str):
+    """Create a PANDO-styled white card with a crisp 1px border and bold header."""
+    border_wrap = wx.Panel(parent)
+    border_wrap.SetBackgroundColour(_PANDO_BORDER)
+    wrap_sizer = wx.BoxSizer(wx.VERTICAL)
+
+    card = wx.Panel(border_wrap)
+    card.SetBackgroundColour(_PANDO_CARD)
+    card_sizer = wx.BoxSizer(wx.VERTICAL)
+
+    title_lbl = wx.StaticText(card, -1, title)
+    t_font = title_lbl.GetFont()
+    t_font.SetPointSize(10)
+    t_font.SetWeight(wx.FONTWEIGHT_BOLD)
+    title_lbl.SetFont(t_font)
+    title_lbl.SetForegroundColour(_PANDO_TEXT)
+    card_sizer.Add(title_lbl, 0, wx.LEFT | wx.RIGHT | wx.TOP, 12)
+
+    divider = wx.Panel(card, size=(-1, 1))
+    divider.SetBackgroundColour(_PANDO_BORDER)
+    card_sizer.Add(divider, 0, wx.EXPAND | wx.LEFT | wx.RIGHT | wx.TOP, 8)
+
+    content_sizer = wx.BoxSizer(wx.VERTICAL)
+    card_sizer.Add(content_sizer, 1, wx.EXPAND | wx.ALL, 12)
+    card.SetSizer(card_sizer)
+
+    wrap_sizer.Add(card, 1, wx.EXPAND | wx.ALL, 1)
+    border_wrap.SetSizer(wrap_sizer)
+    return border_wrap, card, title_lbl, content_sizer
+
+
+# ---------------------------------------------------------------------------
 # Shared config reader  (rin_config.json written by RIN_Matrizen.py)
 # ---------------------------------------------------------------------------
 
@@ -274,15 +321,14 @@ class DirectLineNetworkToolFrame(wx.Frame):
 
         self.Show()
 
-        # Re-apply size and force a full layout pass AFTER Show().
-        # When the script is launched from inside Visum, the process already
-        # has a DPI-awareness context set by Visum before wx starts.  That
-        # causes the SetSize call in __set_properties__ (which runs before
-        # Show) to be silently overridden when the sizer first lays out the
-        # window.  Reapplying size + Layout + SendSizeEvent here, after Show,
-        # ensures the sizer recalculates at the correct pixel dimensions in
-        # every launch context.
-        self.SetSize((1250, 550))
+        # Fit to best size so no controls are ever clipped or scrolled away, with sensible minimum
+        self.Layout()
+        best = self.GetBestSize()
+        min_w = max(1140, best.width + 24)
+        min_h = max(600, best.height + 24)
+        self.SetMinSize((min_w, min_h))
+        self.SetSize((min_w, min_h))
+        self.CentreOnScreen()
         self.Layout()
         self.SendSizeEvent()
 
@@ -295,38 +341,52 @@ class DirectLineNetworkToolFrame(wx.Frame):
     ## Sets the properties of the main window.
     #  Configures window title, size, and initializes default values.
     def __set_properties__(self):
-        self.SetTitle(self.translator.translate('app_title')) # Use self.translator
-        # Use FromDIP so that pixel values are interpreted correctly regardless
-        # of the DPI context inherited from Visum (or any other host process).
-        self.SetMinSize(self.FromDIP(wx.Size(1200, 550)))
-        self.SetSize(self.FromDIP(wx.Size(1250, 550)))
-
+        self.SetTitle(self.translator.translate('app_title'))
         self.__set_values_cfl_buttons__()
-
         self.event_set_default()
 
     ## Sets up the layout of the main window.
-    #  Creates and arranges all UI components including panels, notebook, menu bar, and status bar.
+    #  Creates and arranges all UI components in PANDO style without an outer Notebook tab frame.
     def __set_layout__(self):
-        # Layout
-        # Menu bar/Toolbar at the top
-        # then
-
-        # create a panel (between menubar and statusbar) ...
+        self.SetBackgroundColour(_PANDO_BG)
         self.panel = wx.Panel(self)
-        self.notebook = wx.Notebook(self.panel)
+        self.panel.SetBackgroundColour(_PANDO_BG)
 
-        # create tab (logs go strictly to processed/visum/log/dlnt_GUI.log)
-        self.tabMain = MainTab(self.notebook, self.translator)
-        self.notebook.AddPage(self.tabMain, self.translator.translate('tab_main'))
+        root_sizer = wx.BoxSizer(wx.VERTICAL)
 
-        # create a status bar at the bottom of the frame
-        self.CreateStatusBar()
+        # ---- Top PANDO Header Bar ----
+        header = wx.Panel(self.panel)
+        header.SetBackgroundColour(_PANDO_CARD)
+        header_sizer = wx.BoxSizer(wx.VERTICAL)
+        self.lbl_header_title = wx.StaticText(header, -1, self.translator.translate('app_title'))
+        h_font = self.lbl_header_title.GetFont()
+        h_font.SetPointSize(12)
+        h_font.SetWeight(wx.FONTWEIGHT_BOLD)
+        self.lbl_header_title.SetFont(h_font)
+        self.lbl_header_title.SetForegroundColour(_PANDO_TEXT)
+        header_sizer.Add(self.lbl_header_title, 0, wx.LEFT | wx.RIGHT | wx.TOP, 14)
 
-        # ---- Side panel with action buttons ----
-        self.side_panel = wx.Panel(self.panel)
-        side_sizer = wx.BoxSizer(wx.VERTICAL)
+        lbl_sub = wx.StaticText(header, -1, "PANDO · Direct Line Network Tool")
+        s_font = lbl_sub.GetFont()
+        s_font.SetPointSize(8)
+        lbl_sub.SetFont(s_font)
+        lbl_sub.SetForegroundColour(_PANDO_MUTED)
+        header_sizer.Add(lbl_sub, 0, wx.LEFT | wx.RIGHT | wx.BOTTOM, 10)
+        header.SetSizer(header_sizer)
+        root_sizer.Add(header, 0, wx.EXPAND)
 
+        header_border = wx.Panel(self.panel, size=(-1, 1))
+        header_border.SetBackgroundColour(_PANDO_BORDER)
+        root_sizer.Add(header_border, 0, wx.EXPAND)
+
+        # ---- Main content (directly inside panel, NO outer wx.Notebook frame) ----
+        self.notebook = None
+        self.tabMain = MainTab(self.panel, self.translator)
+
+        # ---- Right PANDO action card ----
+        side_wrap, self.side_panel, self._lbl_side_title, side_sizer = _make_pando_card(
+            self.panel, "Tools"
+        )
         self.btn_side_language = wx.Button(self.side_panel, label=self.translator.translate('language_choice_title'))
         self.btn_side_reset = wx.Button(self.side_panel, label=self.translator.translate('menu_reset_calculations'))
         self.btn_side_defaults = wx.Button(self.side_panel, label=self.translator.translate('menu_set_defaults'))
@@ -336,17 +396,20 @@ class DirectLineNetworkToolFrame(wx.Frame):
 
         for btn in (self.btn_side_language, self.btn_side_reset,
                     self.btn_side_defaults, self.btn_side_info, self.btn_side_filter, self.btn_side_delete):
-            btn.SetMinSize((180, 40))
-            side_sizer.Add(btn, 0, wx.EXPAND | wx.ALL, 5)
+            btn.SetMinSize((185, 36))
+            btn.SetBackgroundColour(_PANDO_CARD)
+            btn.SetForegroundColour(_PANDO_DANGER if btn is self.btn_side_delete else _PANDO_BODY)
+            side_sizer.Add(btn, 0, wx.EXPAND | wx.BOTTOM, 8)
 
         side_sizer.AddStretchSpacer()
-        self.side_panel.SetSizer(side_sizer)
 
-        # Set notebook + side panel in a horizontal sizer
-        sizer = wx.BoxSizer(wx.HORIZONTAL)
-        sizer.Add(self.notebook, 1, wx.EXPAND)
-        sizer.Add(self.side_panel, 0, wx.EXPAND | wx.ALL, 5)
-        self.panel.SetSizer(sizer)
+        body_sizer = wx.BoxSizer(wx.HORIZONTAL)
+        body_sizer.Add(self.tabMain, 1, wx.EXPAND | wx.ALL, 12)
+        body_sizer.Add(side_wrap, 0, wx.EXPAND | wx.TOP | wx.RIGHT | wx.BOTTOM, 12)
+        root_sizer.Add(body_sizer, 1, wx.EXPAND)
+
+        self.panel.SetSizer(root_sizer)
+        self.CreateStatusBar()
 
 
     ## Binds event handlers to UI elements.
@@ -793,13 +856,13 @@ class DirectLineNetworkToolFrame(wx.Frame):
     ## Updates all text elements in the GUI to the current language.
     #  Also triggers refresh_gui_text on child components.
     def refresh_gui_text(self):
-        #1 Update main window title
-        self.SetTitle(self.translator.translate('app_title'))
+        # 1. Update main window title & header
+        title = self.translator.translate('app_title')
+        self.SetTitle(title)
+        if hasattr(self, "lbl_header_title"):
+            self.lbl_header_title.SetLabel(title)
 
-        # 2. update notebook tab title
-        self.notebook.SetPageText(0, self.translator.translate('tab_main'))
-
-        # 3. Update side panel buttons
+        # 2. Update side panel buttons
         self.btn_side_language.SetLabel(self.translator.translate('language_choice_title'))
         self.btn_side_reset.SetLabel(self.translator.translate('menu_reset_calculations'))
         self.btn_side_defaults.SetLabel(self.translator.translate('menu_set_defaults'))
@@ -807,7 +870,7 @@ class DirectLineNetworkToolFrame(wx.Frame):
         self.btn_side_filter.SetLabel(self.translator.translate('toolbar_filter_inserted_links'))
         self.btn_side_delete.SetLabel(self.translator.translate('toolbar_delete_inserted_links'))
 
-        # 5. Unterkomponenten (Tabs) aktualisieren
+        # 3. Update MainTab
         self.tabMain.refresh_gui_text()
 
         # Update the status text
@@ -861,97 +924,100 @@ class MainTab(wx.Panel):
     #  connectivity function level parameters, status column, calculate button,
     #  and a separate export section.
     def __set_layout__(self):
-        # Rows with individual elements (vbox_outer)
-        # Row 1: zone attribute selection
-        # Row 2: horizontal sizer with [cfl_vfs_settings box] + [Export_to_Visum box]
+        self.SetBackgroundColour(_PANDO_BG)
         vbox_outer = wx.BoxSizer(wx.VERTICAL)
 
-        # ---- Box 1: Zone Attribute Selection ----
-        self._box_zone_attrs = wx.StaticBox(self, label=self.translator.translate('zone_attributes'))
-        self.hbox1 = wx.StaticBoxSizer(self._box_zone_attrs, wx.HORIZONTAL)
+        # ---- Card 1: Zone Attribute Selection (3 strictly equal-width columns) ----
+        zone_wrap, zone_card, self._box_zone_attrs, zone_body = _make_pando_card(
+            self, self.translator.translate('zone_attributes')
+        )
+        zone_grid = wx.GridSizer(rows=1, cols=3, vgap=0, hgap=16)
 
-        # Selection of zone attributes
-        self.cb_cfl = wx.ComboBox(self, size=(200, -1), choices=self.TopLevelParent.list_attr,
+        self.cb_cfl = wx.ComboBox(zone_card, choices=self.TopLevelParent.list_attr,
                                   style=wx.CB_DROPDOWN | wx.CB_READONLY | wx.CB_SORT)
         self.cb_cfl.Label = 'attr_cfl'
         self.TopLevelParent.cb_cfl = self.cb_cfl
 
-        self.cb_origin = wx.ComboBox(self, size=(200, -1), choices=self.TopLevelParent.list_attr,
+        self.cb_origin = wx.ComboBox(zone_card, choices=self.TopLevelParent.list_attr,
                                      style=wx.CB_DROPDOWN | wx.CB_READONLY | wx.CB_SORT)
         self.cb_origin.Label = 'attr_origin'
         self.TopLevelParent.cb_origin = self.cb_origin
 
-        self.cb_destination = wx.ComboBox(self, size=(200, -1), choices=self.TopLevelParent.list_attr,
+        self.cb_destination = wx.ComboBox(zone_card, choices=self.TopLevelParent.list_attr,
                                           style=wx.CB_DROPDOWN | wx.CB_READONLY | wx.CB_SORT)
         self.cb_destination.Label = 'attr_destination'
         self.TopLevelParent.cb_destination = self.cb_destination
 
-        self.static_text_centrality = wx.StaticText(self, -1, self.translator.translate('setting_zone_attribute_centrality'))
-        self.hbox1.Add(self.static_text_centrality, 0, wx.ALL | wx.ALIGN_CENTER_VERTICAL, 5)
-        self.hbox1.Add(self.cb_cfl, 0, wx.ALL | wx.EXPAND, 15)
+        self.static_text_centrality = wx.StaticText(zone_card, -1, self.translator.translate('setting_zone_attribute_centrality'))
+        self.static_text_origin = wx.StaticText(zone_card, -1, self.translator.translate('setting_zone_attribute_origin'))
+        self.static_text_destination = wx.StaticText(zone_card, -1, self.translator.translate('setting_zone_attribute_destination'))
 
-        self.static_text_origin = wx.StaticText(self, -1, self.translator.translate('setting_zone_attribute_origin'))
-        self.hbox1.Add(self.static_text_origin, 0, wx.ALL | wx.ALIGN_CENTER_VERTICAL, 5)
-        self.hbox1.Add(self.cb_origin, 0, wx.ALL | wx.EXPAND, 15)
+        for lbl, cb in (
+            (self.static_text_centrality, self.cb_cfl),
+            (self.static_text_origin, self.cb_origin),
+            (self.static_text_destination, self.cb_destination),
+        ):
+            lbl.SetForegroundColour(_PANDO_BODY)
+            col_box = wx.BoxSizer(wx.VERTICAL)
+            col_box.Add(lbl, 0, wx.BOTTOM, 4)
+            col_box.Add(cb, 0, wx.EXPAND)
+            zone_grid.Add(col_box, 1, wx.EXPAND)
 
-        self.static_text_destination = wx.StaticText(self, -1, self.translator.translate('setting_zone_attribute_destination'))
-        self.hbox1.Add(self.static_text_destination, 0, wx.ALL | wx.ALIGN_CENTER_VERTICAL, 5)
-        self.hbox1.Add(self.cb_destination, 0, wx.ALL | wx.EXPAND, 15)
+        zone_body.Add(zone_grid, 0, wx.EXPAND)
+        self.hbox1 = zone_wrap
 
-        # ---- Box 2: CFL/VFS Settings (FlexGridSizer for equal-width columns) ----
-        self._box_cfl = wx.StaticBox(self, label=self.translator.translate('cfl_vfs_settings'))
-        self._gridbox_sizer = wx.StaticBoxSizer(self._box_cfl, wx.VERTICAL)
+        # ---- Card 2: CFL/VFS Settings (GridSizer for strictly equal-width columns) ----
+        cfl_wrap, cfl_card, self._box_cfl, self._gridbox_sizer = _make_pando_card(
+            self, self.translator.translate('cfl_vfs_settings')
+        )
 
-        # Use FlexGridSizer: rows = header(0) + 6 CFL rows = 7 rows
-        # Distance row and Calculate button live BELOW the grid in a shared bottom strip
-        # Columns: 0=CFL, 1=AttrVal, 2=Exchange, 3=Supply, 4=Status
+        # Strictly equal-width 5-column GridSizer: 0=CFL, 1=AttrVal, 2=Exchange, 3=Supply, 4=Status
         NUM_COLS = 5
-        self.gridbagsizer1 = wx.FlexGridSizer(rows=7, cols=NUM_COLS, vgap=6, hgap=8)
-        for col in range(NUM_COLS):
-            self.gridbagsizer1.AddGrowableCol(col, 1)  # all columns grow equally
+        self.gridbagsizer1 = wx.GridSizer(rows=7, cols=NUM_COLS, vgap=8, hgap=14)
 
         str_cfl = self.translator.translate('cfl')
 
         # --- Header row ---
-        self.static_text_cfl_label = wx.StaticText(self, -1, self.translator.translate('setting_cfl'))
-        self.static_text_attr_cfl = wx.StaticText(self, -1, self.translator.translate('setting_attribute_value_CFL'))
-        self.static_text_exchange_fcn = wx.StaticText(self, -1, self.translator.translate('setting_exchange_function'))
-        self.static_text_supply_fcn = wx.StaticText(self, -1, self.translator.translate('setting_supply_function'))
-        self.static_text_status_header = wx.StaticText(self, -1, self.translator.translate('setting_status'))
+        self.static_text_cfl_label = wx.StaticText(cfl_card, -1, self.translator.translate('setting_cfl'))
+        self.static_text_attr_cfl = wx.StaticText(cfl_card, -1, self.translator.translate('setting_attribute_value_CFL'))
+        self.static_text_exchange_fcn = wx.StaticText(cfl_card, -1, self.translator.translate('setting_exchange_function'))
+        self.static_text_supply_fcn = wx.StaticText(cfl_card, -1, self.translator.translate('setting_supply_function'))
+        self.static_text_status_header = wx.StaticText(cfl_card, -1, self.translator.translate('setting_status'))
 
         for hdr in (self.static_text_cfl_label, self.static_text_attr_cfl,
                     self.static_text_exchange_fcn, self.static_text_supply_fcn,
                     self.static_text_status_header):
             hdr.SetFont(hdr.GetFont().Bold())
-            self.gridbagsizer1.Add(hdr, 0, wx.EXPAND | wx.ALL, 4)
+            hdr.SetForegroundColour(_PANDO_TEXT)
+            self.gridbagsizer1.Add(hdr, 0, wx.EXPAND | wx.ALIGN_CENTER_VERTICAL)
 
         # --- CFL rows (rows 1-6) ---
         self.button_cfl_active = {
-            "cfl_0": wx.CheckBox(self, -1, f"{str_cfl} 0"),
-            "cfl_1": wx.CheckBox(self, -1, f"{str_cfl} 1"),
-            "cfl_2": wx.CheckBox(self, -1, f"{str_cfl} 2"),
-            "cfl_3": wx.CheckBox(self, -1, f"{str_cfl} 3"),
-            "cfl_4": wx.CheckBox(self, -1, f"{str_cfl} 4"),
-            "cfl_5": wx.CheckBox(self, -1, f"{str_cfl} 5"),
+            "cfl_0": wx.CheckBox(cfl_card, -1, f"{str_cfl} 0"),
+            "cfl_1": wx.CheckBox(cfl_card, -1, f"{str_cfl} 1"),
+            "cfl_2": wx.CheckBox(cfl_card, -1, f"{str_cfl} 2"),
+            "cfl_3": wx.CheckBox(cfl_card, -1, f"{str_cfl} 3"),
+            "cfl_4": wx.CheckBox(cfl_card, -1, f"{str_cfl} 4"),
+            "cfl_5": wx.CheckBox(cfl_card, -1, f"{str_cfl} 5"),
         }
-        self.buttons_cfl_value = {k: wx.SpinCtrl(self, -1, "") for k in self.button_cfl_active}
-        self.buttons_value_k_neighbor_cfl = {k: wx.SpinCtrl(self, -1, "") for k in self.button_cfl_active}
-        self.buttons_value_n_supplier = {k: wx.SpinCtrl(self, -1, "") for k in self.button_cfl_active}
+        self.buttons_cfl_value = {k: wx.SpinCtrl(cfl_card, -1, "") for k in self.button_cfl_active}
+        self.buttons_value_k_neighbor_cfl = {k: wx.SpinCtrl(cfl_card, -1, "") for k in self.button_cfl_active}
+        self.buttons_value_n_supplier = {k: wx.SpinCtrl(cfl_card, -1, "") for k in self.button_cfl_active}
 
         # Status labels + internal state
-        _INACTIVE_COLOR = wx.Colour(150, 150, 150)
         for cfl_key in self.button_cfl_active:
             self._cfl_status[cfl_key] = 'inactive'
-            lbl = wx.StaticText(self, -1, self.translator.translate('status_inactive'))
-            lbl.SetForegroundColour(_INACTIVE_COLOR)
+            lbl = wx.StaticText(cfl_card, -1, self.translator.translate('status_inactive'))
+            lbl.SetForegroundColour(_PANDO_MUTED)
             self.status_labels[cfl_key] = lbl
 
         for cfl_key in self.button_cfl_active:
-            self.gridbagsizer1.Add(self.button_cfl_active[cfl_key],    0, wx.EXPAND | wx.ALL, 3)
-            self.gridbagsizer1.Add(self.buttons_cfl_value[cfl_key],    0, wx.EXPAND | wx.ALL, 3)
-            self.gridbagsizer1.Add(self.buttons_value_k_neighbor_cfl[cfl_key], 0, wx.EXPAND | wx.ALL, 3)
-            self.gridbagsizer1.Add(self.buttons_value_n_supplier[cfl_key],     0, wx.EXPAND | wx.ALL, 3)
-            self.gridbagsizer1.Add(self.status_labels[cfl_key],        0, wx.EXPAND | wx.ALL, 3)
+            self.button_cfl_active[cfl_key].SetForegroundColour(_PANDO_TEXT)
+            self.gridbagsizer1.Add(self.button_cfl_active[cfl_key], 0, wx.EXPAND | wx.ALIGN_CENTER_VERTICAL)
+            self.gridbagsizer1.Add(self.buttons_cfl_value[cfl_key], 0, wx.EXPAND | wx.ALIGN_CENTER_VERTICAL)
+            self.gridbagsizer1.Add(self.buttons_value_k_neighbor_cfl[cfl_key], 0, wx.EXPAND | wx.ALIGN_CENTER_VERTICAL)
+            self.gridbagsizer1.Add(self.buttons_value_n_supplier[cfl_key], 0, wx.EXPAND | wx.ALIGN_CENTER_VERTICAL)
+            self.gridbagsizer1.Add(self.status_labels[cfl_key], 0, wx.EXPAND | wx.ALIGN_CENTER_VERTICAL)
 
         # Share references with TopLevelParent
         self.TopLevelParent.button_cfl_active = self.button_cfl_active
@@ -965,73 +1031,80 @@ class MainTab(wx.Panel):
             self.buttons_value_k_neighbor_cfl[cfl_key].Enable(False)
             self.buttons_value_n_supplier[cfl_key].Enable(False)
 
-        self._gridbox_sizer.Add(self.gridbagsizer1, 1, wx.ALL | wx.EXPAND, 6)
+        self._gridbox_sizer.Add(self.gridbagsizer1, 1, wx.EXPAND | wx.BOTTOM, 10)
 
-        # --- Bottom strip: distance function (cols 0-2) + calculate button (cols 3-4) ---
-        # Both live outside the FlexGrid so the grid rows are never squished,
-        # and the dist label/combo are vertically aligned with the calculate button.
-        self.cb_dist_fcn = wx.ComboBox(self, size=(150, -1),
+        # Divider above bottom strip
+        calc_div = wx.Panel(cfl_card, size=(-1, 1))
+        calc_div.SetBackgroundColour(_PANDO_BORDER)
+        self._gridbox_sizer.Add(calc_div, 0, wx.EXPAND | wx.BOTTOM, 10)
+
+        # --- Bottom strip: distance function + PANDO green Calculate button ---
+        self.cb_dist_fcn = wx.ComboBox(cfl_card, size=(150, -1),
                                        choices=["euclidean"],
                                        style=wx.CB_DROPDOWN | wx.CB_READONLY | wx.CB_SORT)
         self.cb_dist_fcn.Label = 'attr_dist_fcn'
         self.TopLevelParent.cb_dist_fcn = self.cb_dist_fcn
 
-        self.static_text_dist_fcn_label = wx.StaticText(self, -1, self.translator.translate('label_distance_calculation_function'))
+        self.static_text_dist_fcn_label = wx.StaticText(cfl_card, -1, self.translator.translate('label_distance_calculation_function'))
+        self.static_text_dist_fcn_label.SetForegroundColour(_PANDO_BODY)
 
-        self.btn_calculate = wx.Button(self, -1, self.translator.translate('btn_calculate'))
-        self.btn_calculate.SetMinSize((-1, 50))  # double height
+        self.btn_calculate = wx.Button(cfl_card, -1, self.translator.translate('btn_calculate'))
+        self.btn_calculate.SetMinSize((200, 42))
+        self.btn_calculate.SetBackgroundColour(_PANDO_GREEN)
+        self.btn_calculate.SetForegroundColour(_PANDO_CARD)
+        self.btn_calculate.SetFont(self.btn_calculate.GetFont().Bold())
 
-        # Left part: dist label + combo (fixed width, not expanding), then spacer fills the rest
         _dist_sizer = wx.BoxSizer(wx.HORIZONTAL)
-        _dist_sizer.Add(self.static_text_dist_fcn_label, 0, wx.ALIGN_CENTER_VERTICAL | wx.RIGHT, 6)
+        _dist_sizer.Add(self.static_text_dist_fcn_label, 0, wx.ALIGN_CENTER_VERTICAL | wx.RIGHT, 8)
         _dist_sizer.Add(self.cb_dist_fcn, 0, wx.ALIGN_CENTER_VERTICAL)
         _dist_sizer.AddStretchSpacer(1)
 
-        # Bottom strip: dist (3 parts) + calculate button (2 parts)
         _bottom_strip = wx.BoxSizer(wx.HORIZONTAL)
-        _bottom_strip.Add(_dist_sizer, 3, wx.EXPAND | wx.ALL, 4)
-        _bottom_strip.Add(self.btn_calculate, 2, wx.EXPAND | wx.ALL, 4)
+        _bottom_strip.Add(_dist_sizer, 1, wx.EXPAND)
+        _bottom_strip.Add(self.btn_calculate, 0, wx.ALIGN_CENTER_VERTICAL)
+        self._gridbox_sizer.Add(_bottom_strip, 0, wx.EXPAND)
 
-        self._gridbox_sizer.Add(_bottom_strip, 0, wx.EXPAND | wx.LEFT | wx.RIGHT | wx.BOTTOM, 6)
+        # ---- Card 3: Export to Visum ----
+        export_wrap, export_card, self._box_export, self._export_sizer = _make_pando_card(
+            self, self.translator.translate('export_to_visum_section')
+        )
+        self.static_text_visum_as = None
 
-        # ---- Box 3: Export to Visum ----
-        self._box_export = wx.StaticBox(self, label=self.translator.translate('export_to_visum_section'))
-        self._export_sizer = wx.StaticBoxSizer(self._box_export, wx.VERTICAL)
-
-        self.static_text_visum_as = None  # removed duplicate label (box title already shows this)
-
-        _btn_size = (-1, 50)
-        self.btn_export_mtx = wx.Button(self, -1, self.translator.translate('btn_export_mtx'))
+        _btn_size = (180, 42)
+        self.btn_export_mtx = wx.Button(export_card, -1, self.translator.translate('btn_export_mtx'))
         self.btn_export_mtx.SetMinSize(_btn_size)
-        self._export_sizer.Add(self.btn_export_mtx, 0, wx.EXPAND | wx.ALL, 4)
+        self._export_sizer.Add(self.btn_export_mtx, 0, wx.EXPAND | wx.BOTTOM, 8)
 
-        self.btn_export_net = wx.Button(self, -1, self.translator.translate('btn_export_net'))
+        self.btn_export_net = wx.Button(export_card, -1, self.translator.translate('btn_export_net'))
         self.btn_export_net.SetMinSize(_btn_size)
-        self._export_sizer.Add(self.btn_export_net, 0, wx.EXPAND | wx.ALL, 4)
+        self._export_sizer.Add(self.btn_export_net, 0, wx.EXPAND | wx.BOTTOM, 8)
 
-        self.btn_export_master = wx.Button(self, -1, self.translator.translate('setting_import_to_visum'))
+        self.btn_export_master = wx.Button(export_card, -1, self.translator.translate('setting_import_to_visum'))
         self.btn_export_master.cfl_level = 'all'
         self.btn_export_master.SetMinSize(_btn_size)
-        self._export_sizer.Add(self.btn_export_master, 0, wx.EXPAND | wx.ALL, 4)
+        self.btn_export_master.SetFont(self.btn_export_master.GetFont().Bold())
+        self._export_sizer.Add(self.btn_export_master, 0, wx.EXPAND | wx.BOTTOM, 10)
 
-        self.cb_overwrite_matrix = wx.CheckBox(self, -1, self.translator.translate('setting_overwrite_matrix'))
+        self.cb_overwrite_matrix = wx.CheckBox(export_card, -1, self.translator.translate('setting_overwrite_matrix'))
         self.cb_overwrite_matrix.SetValue(True)
-        self._export_sizer.Add(self.cb_overwrite_matrix, 0, wx.EXPAND | wx.ALL, 6)
+        self.cb_overwrite_matrix.SetForegroundColour(_PANDO_BODY)
+        self._export_sizer.Add(self.cb_overwrite_matrix, 0, wx.EXPAND | wx.TOP, 2)
+        self._export_sizer.AddStretchSpacer()
 
-        # Start with export buttons greyed out
+        # Start with export buttons disabled in PANDO muted style
         self._set_export_buttons_state(enabled=False)
 
-        # ---- Horizontal container: settings + export ----
+        # ---- Horizontal container: calculation card + export card ----
         hbox_main = wx.BoxSizer(wx.HORIZONTAL)
-        hbox_main.Add(self._gridbox_sizer, 3, wx.ALL | wx.EXPAND, 5)
-        hbox_main.Add(self._export_sizer,  1, wx.ALL | wx.EXPAND, 5)
+        hbox_main.Add(cfl_wrap, 3, wx.EXPAND | wx.RIGHT, 12)
+        hbox_main.Add(export_wrap, 1, wx.EXPAND)
 
-        vbox_outer.Add(self.hbox1, 0, wx.ALL | wx.EXPAND, 5)
-        vbox_outer.Add(hbox_main,  1, wx.ALL | wx.EXPAND, 5)
+        vbox_outer.Add(zone_wrap, 0, wx.EXPAND | wx.BOTTOM, 12)
+        vbox_outer.Add(hbox_main, 1, wx.EXPAND | wx.BOTTOM, 10)
 
-        self.progress_bar = wx.Gauge(self, range=100, size=(-1, 14), style=wx.GA_HORIZONTAL | wx.GA_SMOOTH)
+        self.progress_bar = wx.Gauge(self, range=100, size=(-1, 10), style=wx.GA_HORIZONTAL | wx.GA_SMOOTH)
         self.progress_bar.SetValue(0)
-        vbox_outer.Add(self.progress_bar, 0, wx.EXPAND | wx.LEFT | wx.RIGHT | wx.BOTTOM, 8)
+        vbox_outer.Add(self.progress_bar, 0, wx.EXPAND)
 
         self.SetSizer(vbox_outer)
 
@@ -1144,14 +1217,17 @@ class MainTab(wx.Panel):
         all_ready = active_statuses and all(s in ('calculated', 'exported') for s in active_statuses)
         self._set_export_buttons_state(all_ready)
 
-    ## Enables or disables (greys out) the export buttons.
+    ## Enables or disables (greys out) the export buttons in PANDO style.
     def _set_export_buttons_state(self, enabled: bool):
-        _grey = wx.Colour(180, 180, 180)
-        _normal = wx.NullColour
-        for btn in (self.btn_export_mtx, self.btn_export_net, self.btn_export_master):
+        for btn in (self.btn_export_mtx, self.btn_export_net):
             btn.Enable(enabled)
-            btn.SetBackgroundColour(_normal if enabled else _grey)
+            btn.SetBackgroundColour(_PANDO_CARD if enabled else _PANDO_DISABLED_BG)
+            btn.SetForegroundColour(_PANDO_BODY if enabled else _PANDO_DISABLED_FG)
             btn.Refresh()
+        self.btn_export_master.Enable(enabled)
+        self.btn_export_master.SetBackgroundColour(_PANDO_BLUE if enabled else _PANDO_DISABLED_BG)
+        self.btn_export_master.SetForegroundColour(_PANDO_CARD if enabled else _PANDO_DISABLED_FG)
+        self.btn_export_master.Refresh()
 
     ## Marks all active rows as 'exported'; called after a successful export.
     def mark_exported(self, cfl_keys=None):
