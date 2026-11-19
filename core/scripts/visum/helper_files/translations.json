@@ -100,8 +100,8 @@
     "de": "die kombinierten Ergebnisse wurden in Visum importiert"
   },
   "setting_zone_attribute_centrality": {
-    "en": "Zone attribute\nfor centrality",
-    "de": "Attribut Verkehrszellen\nfür Zentralität"
+    "en": "Centrality",
+    "de": "Zentralität"
   },
   "distance_calculation_setting": {
     "en": "Distance calculation",
@@ -116,32 +116,52 @@
     "de": "Anzahl Versorger je VFS"
   },
   "setting_zone_attribute_origin": {
-    "en": "Zone attribute\n'is origin'\n(Optional)",
-    "de": "Attribut Verkehrszellen\n\"ist Quelle\"\n(Optional)"
+    "en": "Origin filter (optional)",
+    "de": "Quellbezirk-Filter (optional)"
   },
   "centrality": {
     "en": "Centrality",
     "de": "Zentralität"
   },
   "setting_zone_attribute_destination": {
-    "en": "Zone attribute\n'is destination'\n(Optional)",
-    "de": "Attribut Verkehrszellen\n\"ist Ziel\"\n(Optional)"
+    "en": "Destination filter (optional)",
+    "de": "Zielbezirk-Filter (optional)"
   },
   "setting_cfl": {
     "en": "Connectivity Function Level",
     "de": "Verbindungsfunktionsstufe"
   },
+  "setting_cfl_sub": {
+    "en": "Active tiers",
+    "de": "Aktive Stufen"
+  },
   "setting_attribute_value_cfl": {
-    "en": "Attribute value CFL",
-    "de": "Attributwert VFS"
+    "en": "Attribute Value",
+    "de": "Attributwert"
+  },
+  "setting_attribute_value_CFL_sub": {
+    "en": "Centrality class",
+    "de": "Zentralitätsstufe"
   },
   "setting_exchange_function": {
-    "en": "Exchange function\nn-Nearest Neighbour",
-    "de": "Austauschfunktion\nn-naechste Nachbarn"
+    "en": "Exchange Function",
+    "de": "Austauschfunktion"
+  },
+  "setting_exchange_function_sub": {
+    "en": "n-nearest neighbours",
+    "de": "n-nächste Nachbarn"
   },
   "setting_supply_function": {
-    "en": "Supply function:\nn supply centers",
-    "de": "Versorgungsfunktion:\nn Versorgungszentren"
+    "en": "Supply Function",
+    "de": "Versorgungsfunktion"
+  },
+  "setting_supply_function_sub": {
+    "en": "n supply centers",
+    "de": "n Versorgungszentren"
+  },
+  "setting_status_sub": {
+    "en": "Calculation state",
+    "de": "Berechnungsstatus"
   },
   "setting_create_in_visum": {
     "en": "Export to Visum:",
@@ -212,12 +232,12 @@
     "de": "Verbindungen"
   },
   "setting_attribute_value_CFL": {
-    "en": "Attribute value centrality",
-    "de": "Attributwert zentralität"
+    "en": "Attribute Value",
+    "de": "Attributwert"
   },
   "zone_attributes": {
     "en": "Zone Attributes",
-    "de": "Attribut Verkehrszellen"
+    "de": "Bezirksattribute"
   },
   "cfl_vfs_settings": {
     "en": "Calculation",

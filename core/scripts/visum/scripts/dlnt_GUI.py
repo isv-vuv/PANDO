@@ -599,8 +599,8 @@ class DirectLineNetworkToolFrame(wx.Frame):
             self.buttons_value_n_supplier[key].SetValue(v)
 
         self.cb_cfl.SetValue("TypeNo")
-        self.cb_origin.SetValue("None")
-        self.cb_destination.SetValue("None")
+        self.cb_origin.SetSelection(0)
+        self.cb_destination.SetSelection(0)
         self.cb_dist_fcn.SetValue("euclidean")
 
         self.SetStatusText(self.translator.translate('status_set_defaults'))
@@ -1037,18 +1037,21 @@ class MainTab(wx.Panel):
         )
         zone_grid = wx.GridSizer(rows=1, cols=3, vgap=0, hgap=16)
 
-        self.cb_cfl = wx.ComboBox(zone_card, choices=self.TopLevelParent.list_attr,
-                                  style=wx.CB_DROPDOWN | wx.CB_READONLY | wx.CB_SORT)
+        sorted_attrs = sorted(self.TopLevelParent.list_attr)
+        optional_attrs = ["None"] + sorted_attrs
+
+        self.cb_cfl = wx.ComboBox(zone_card, choices=sorted_attrs,
+                                  style=wx.CB_DROPDOWN | wx.CB_READONLY)
         self.cb_cfl.Label = 'attr_cfl'
         self.TopLevelParent.cb_cfl = self.cb_cfl
 
-        self.cb_origin = wx.ComboBox(zone_card, choices=self.TopLevelParent.list_attr,
-                                     style=wx.CB_DROPDOWN | wx.CB_READONLY | wx.CB_SORT)
+        self.cb_origin = wx.ComboBox(zone_card, choices=optional_attrs,
+                                     style=wx.CB_DROPDOWN | wx.CB_READONLY)
         self.cb_origin.Label = 'attr_origin'
         self.TopLevelParent.cb_origin = self.cb_origin
 
-        self.cb_destination = wx.ComboBox(zone_card, choices=self.TopLevelParent.list_attr,
-                                          style=wx.CB_DROPDOWN | wx.CB_READONLY | wx.CB_SORT)
+        self.cb_destination = wx.ComboBox(zone_card, choices=optional_attrs,
+                                          style=wx.CB_DROPDOWN | wx.CB_READONLY)
         self.cb_destination.Label = 'attr_destination'
         self.TopLevelParent.cb_destination = self.cb_destination
 
@@ -1083,19 +1086,32 @@ class MainTab(wx.Panel):
 
         str_cfl = self.translator.translate('cfl')
 
-        # --- Header row ---
-        self.static_text_cfl_label = wx.StaticText(cfl_card, -1, self.translator.translate('setting_cfl'))
-        self.static_text_attr_cfl = wx.StaticText(cfl_card, -1, self.translator.translate('setting_attribute_value_CFL'))
-        self.static_text_exchange_fcn = wx.StaticText(cfl_card, -1, self.translator.translate('setting_exchange_function'))
-        self.static_text_supply_fcn = wx.StaticText(cfl_card, -1, self.translator.translate('setting_supply_function'))
-        self.static_text_status_header = wx.StaticText(cfl_card, -1, self.translator.translate('setting_status'))
+        # --- Two-tier header row (bold main title + smaller muted explanation underneath) ---
+        def _make_col_header(title_key: str, sub_key: str):
+            box = wx.BoxSizer(wx.VERTICAL)
+            t_lbl = wx.StaticText(cfl_card, -1, self.translator.translate(title_key))
+            t_font = t_lbl.GetFont()
+            t_font.SetPointSize(9)
+            t_font.SetWeight(wx.FONTWEIGHT_BOLD)
+            t_lbl.SetFont(t_font)
+            t_lbl.SetForegroundColour(_PANDO_TEXT)
 
-        for hdr in (self.static_text_cfl_label, self.static_text_attr_cfl,
-                    self.static_text_exchange_fcn, self.static_text_supply_fcn,
-                    self.static_text_status_header):
-            hdr.SetFont(hdr.GetFont().Bold())
-            hdr.SetForegroundColour(_PANDO_TEXT)
-            self.gridbagsizer1.Add(hdr, 0, wx.EXPAND | wx.ALIGN_CENTER_VERTICAL)
+            s_lbl = wx.StaticText(cfl_card, -1, self.translator.translate(sub_key))
+            s_font = s_lbl.GetFont()
+            s_font.SetPointSize(8)
+            s_lbl.SetFont(s_font)
+            s_lbl.SetForegroundColour(_PANDO_MUTED)
+
+            box.Add(t_lbl, 0, wx.BOTTOM, 2)
+            box.Add(s_lbl, 0)
+            self.gridbagsizer1.Add(box, 0, wx.EXPAND | wx.ALIGN_CENTER_VERTICAL)
+            return t_lbl, s_lbl
+
+        self.static_text_cfl_label, self.static_text_cfl_sub = _make_col_header('setting_cfl', 'setting_cfl_sub')
+        self.static_text_attr_cfl, self.static_text_attr_cfl_sub = _make_col_header('setting_attribute_value_CFL', 'setting_attribute_value_CFL_sub')
+        self.static_text_exchange_fcn, self.static_text_exchange_sub = _make_col_header('setting_exchange_function', 'setting_exchange_function_sub')
+        self.static_text_supply_fcn, self.static_text_supply_sub = _make_col_header('setting_supply_function', 'setting_supply_function_sub')
+        self.static_text_status_header, self.static_text_status_sub = _make_col_header('setting_status', 'setting_status_sub')
 
         # --- CFL rows (rows 1-6) ---
         self.button_cfl_active = {
@@ -1341,10 +1357,15 @@ class MainTab(wx.Panel):
         self.static_text_origin.SetLabel(self.translator.translate('setting_zone_attribute_origin'))
         self.static_text_destination.SetLabel(self.translator.translate('setting_zone_attribute_destination'))
         self.static_text_cfl_label.SetLabel(self.translator.translate('setting_cfl'))
+        self.static_text_cfl_sub.SetLabel(self.translator.translate('setting_cfl_sub'))
         self.static_text_attr_cfl.SetLabel(self.translator.translate('setting_attribute_value_CFL'))
+        self.static_text_attr_cfl_sub.SetLabel(self.translator.translate('setting_attribute_value_CFL_sub'))
         self.static_text_exchange_fcn.SetLabel(self.translator.translate('setting_exchange_function'))
+        self.static_text_exchange_sub.SetLabel(self.translator.translate('setting_exchange_function_sub'))
         self.static_text_supply_fcn.SetLabel(self.translator.translate('setting_supply_function'))
+        self.static_text_supply_sub.SetLabel(self.translator.translate('setting_supply_function_sub'))
         self.static_text_status_header.SetLabel(self.translator.translate('setting_status'))
+        self.static_text_status_sub.SetLabel(self.translator.translate('setting_status_sub'))
         self.static_text_dist_fcn_label.SetLabel(self.translator.translate('label_distance_calculation_function'))
 
         # Update Calculate button
