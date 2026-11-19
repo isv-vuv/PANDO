@@ -189,7 +189,7 @@ def _set_visum_project_directories(visum, language: str = "de") -> None:
                 8:  "\\gpa",
                 47: "\\gpa",
                 20: "\\lla",
-                57: "\\log-file",
+                57: "\\log",
                 69: "\\mtx",
                 5:  "\\dmd",
                 1:  "\\net",

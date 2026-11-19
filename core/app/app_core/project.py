@@ -67,7 +67,7 @@ PROJECT_VISUM_SUBDIRS = (
     "icon",
     "lay",
     "lla",
-    "log-file",
+    "log",
     "mtx",
     "net",
     "par",

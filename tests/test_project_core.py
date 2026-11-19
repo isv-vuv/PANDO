@@ -49,6 +49,7 @@ class ProjectCoreTests(unittest.TestCase):
             self.assertTrue(os.path.isdir(os.path.join(project_path, PROJECT_INPUT_DIR)))
             self.assertTrue(os.path.isdir(os.path.join(project_path, PROJECT_PROCESSED_DIR)))
             self.assertTrue(os.path.isdir(os.path.join(project_path, PROJECT_VISUM_DIR, "shapefile")))
+            self.assertTrue(os.path.isdir(os.path.join(project_path, PROJECT_VISUM_DIR, "log")))
             self.assertEqual(
                 os.listdir(os.path.join(project_path, PROJECT_VISUM_DIR, "script")),
                 ["dlnt_GUI.py"],

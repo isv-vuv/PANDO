@@ -669,7 +669,7 @@ Visum.SetPath(92, folder_path_project + "\\lay")               # Timetable layou
 Visum.SetPath(8,  folder_path_project + "\\gpa")               # Graphic parameters
 Visum.SetPath(47, folder_path_project + "\\gpa")               # Legend parameters
 Visum.SetPath(20, folder_path_project + "\\lla")               # List layout
-Visum.SetPath(57, folder_path_project + "\\log-file")          # Log file
+Visum.SetPath(57, folder_path_project + "\\log")               # Log file
 Visum.SetPath(69, folder_path_project + "\\mtx")               # Matrices
 Visum.SetPath(5,  folder_path_project + "\\dmd")               # Demand data
 Visum.SetPath(1,  folder_path_project + "\\net")               # Network

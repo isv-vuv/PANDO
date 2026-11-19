@@ -1069,8 +1069,19 @@ class LogTab(wx.Panel):
         #
 
         # ==== Logging =====
-        path_logfile = Path(__file__)
-        path_logfile = path_logfile.name.replace(".py", ".log")
+        log_name = Path(__file__).name.replace(".py", ".log")
+        log_dir = Path(__file__).resolve().parent.parent / "log"
+        try:
+            visum_log_dir = Path(self.visum.GetPath(57)) if self.visum is not None else None
+            if visum_log_dir and visum_log_dir.is_dir():
+                log_dir = visum_log_dir
+        except Exception:
+            pass
+        try:
+            log_dir.mkdir(parents=True, exist_ok=True)
+            path_logfile = log_dir / log_name
+        except OSError:
+            path_logfile = Path(log_name)
         self.logger = logging.getLogger()
         self.logger.setLevel(logging.INFO)
         logger_format = logging.Formatter("%(asctime)s %(levelname)s: %(message)s", datefmt="%d.%m.%Y %I:%M:%S %p")

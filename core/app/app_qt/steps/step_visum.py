@@ -599,7 +599,7 @@ class VisumStepWidget(_Q_WIDGET_BASE):
     def _visum_log_file(self) -> Optional[Path]:
         if not self.project_path:
             return None
-        return Path(self.project_path) / "processed" / "visum" / "visum_processing.log"
+        return Path(self.project_path) / "processed" / "visum" / "log" / "visum_processing.log"
 
     def _clear_persisted_log(self) -> None:
         log_file = self._visum_log_file()
@@ -615,8 +615,14 @@ class VisumStepWidget(_Q_WIDGET_BASE):
         if self.selective_update:
             return
         log_file = self._visum_log_file()
-        if log_file is None or not log_file.is_file():
+        if log_file is None:
             return
+        if not log_file.is_file():
+            legacy_log = Path(self.project_path) / "processed" / "visum" / "visum_processing.log"
+            if legacy_log.is_file():
+                log_file = legacy_log
+            else:
+                return
         try:
             content = log_file.read_text(encoding="utf-8")
         except OSError:
