@@ -393,18 +393,21 @@ class DirectLineNetworkCalculator:
     # @param cfl: cfl to be analysed
     # @return matrix: Adjacency matrix for the reachable neighbours within the max-steps
     def calculate_reachability_max_steps(self, max_steps, cfl):
+        from scipy.sparse import csr_matrix
 
-        # Summiere alle Potenzen von 1 bis max_steps
-        matrix = sum(np.linalg.matrix_power(self.matrices_cfl[cfl], k)
-                     for k in range(1, max_steps + 1))
-
-        np.fill_diagonal(matrix, 0)
-
-        # Boolean casting for values greater than zero (binarisation).
-        # For an adjacency/reachability matrix, it is only relevant whether there is a connection, not how many.
-        matrix = (matrix > 0).astype(int)
-
-        return matrix
+        adj = csr_matrix(self.matrices_cfl[cfl], dtype=np.int8)
+        adj.data[:] = 1
+        acc = adj.copy()
+        cur = adj
+        for _ in range(2, int(max_steps) + 1):
+            cur = cur @ adj
+            if cur.nnz == 0:
+                break
+            cur.data[:] = 1
+            acc = acc + cur
+        acc.setdiag(0)
+        acc.eliminate_zeros()
+        return (acc > 0).toarray().astype(int)
 
     ## Calculates the adjacency matrix for each stored cfl of the instance.
     # This is the main calculation method that:
@@ -412,16 +415,25 @@ class DirectLineNetworkCalculator:
     # 2. Iterates through all cConnectivity function levels (cfl)
     # 3. Calculates the connections for each cfl
     # @return None - Results are stored in internal matrices
-    def calculate_main(self):
+    def calculate_main(self, on_progress=None):
         # initialize result matrices
         logging.info("Starting calculation for all CFLs.")
         self.init_results()
         logging.info("Adjacency matrices have been initialized.")
 
+        cfl_keys = list(self.cfl)
+        total = max(1, len(cfl_keys))
+        if on_progress:
+            on_progress(0, total, "")
+
         # loop over all cfl
-        for cfl in self.cfl:
+        for idx, cfl in enumerate(cfl_keys, start=1):
+            if on_progress:
+                on_progress(idx - 1, total, str(self.cfl_labels.get(cfl, cfl)))
             # calculate adjacency matrix for cfl
             self.calculate_cfl(cfl)
+            if on_progress:
+                on_progress(idx, total, str(self.cfl_labels.get(cfl, cfl)))
 
         logging.info("The calculation for all CFLs is complete.")
 
@@ -590,10 +602,6 @@ class DirectLineNetworkCalculator:
                 logging.info(f'{cfl}: : The result can be viewed in Visum.')
 
             logging.info(f'The calculation for {cfl} is completed.')
-
-            df_zones_info = self.adj_matrix_to_set_of_connected_zones(cfl)
-            df_zones_info["set zones"] = df_zones_info["set zones"].str.join(",")
-            # logging.info('\t' + df_zones_info.to_string().replace('\n', '\n\t'))
 
     ## Deletes nodes in Visum that do not connect any links.
     # All nodes without links are filtered & the active nodes are deleted.

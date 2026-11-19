@@ -81,13 +81,17 @@ def _configure_file_logging(visum=None) -> Path:
     sys.stderr writes as modal Warning popups or deadlocking the wx UI loop.
     """
     log_name = Path(__file__).name.replace(".py", ".log")
-    log_dir = Path(__file__).resolve().parent.parent / "log"
-    try:
-        visum_log_dir = Path(visum.GetPath(57)) if visum is not None else None
-        if visum_log_dir and visum_log_dir.is_dir():
-            log_dir = visum_log_dir
-    except Exception:
-        pass
+    script_parent = Path(__file__).resolve().parent
+    log_dir = script_parent.parent / "log"
+    if script_parent.name.lower() != "script" and visum is not None:
+        try:
+            doc_name = str(visum.UserPreferences.DocumentName or "").strip()
+            if doc_name:
+                doc_parent = Path(doc_name).resolve().parent
+                visum_root = doc_parent.parent if doc_parent.name.lower() == "ver" else doc_parent
+                log_dir = visum_root / "log"
+        except Exception:
+            pass
     try:
         log_dir.mkdir(parents=True, exist_ok=True)
         path_logfile = log_dir / log_name
@@ -477,6 +481,22 @@ class DirectLineNetworkToolFrame(wx.Frame):
     #  Updates the parameters from the UI, performs the main calculation,
     #  and updates the status bar to indicate completion.
     #  @param event The event object.
+    def set_progress(self, current: int, total: int, message: str = ""):
+        """Update the MainTab progress bar and status bar without re-entering Visum's UI loop."""
+        gauge = getattr(self.tabMain, "progress_bar", None)
+        if gauge is not None:
+            total = max(1, int(total))
+            pct = max(0, min(100, int(round(100.0 * current / total))))
+            gauge.SetValue(pct)
+            gauge.Refresh()
+            gauge.Update()
+        if message:
+            self.SetStatusText(message)
+        sb = self.GetStatusBar()
+        if sb is not None:
+            sb.Refresh()
+            sb.Update()
+
     def event_calculate(self, event):
 
         if self.dln_calculator is None:
@@ -484,15 +504,28 @@ class DirectLineNetworkToolFrame(wx.Frame):
             wx.MessageBox(self.translator.translate('error_no_calculator_instance'), 'Info', wx.OK | wx.ICON_INFORMATION)
             return
 
-        # Procedure
-        # 1. Update the specified parameters if something has been changed
-        # 2. Calculate
-        self.update_param_cfl()
-        # self.dln_calculator.init_results() # already implemented in calculate function
-        self.dln_calculator.calculate_main()
-
-        # Status bar
-        self.SetStatusText(self.translator.translate('status_calculation_performed'))
+        wx.BeginBusyCursor()
+        try:
+            self.update_param_cfl()
+            self.set_progress(0, 1, "Calculating...")
+            self.dln_calculator.calculate_main(
+                on_progress=lambda cur, tot, label: self.set_progress(
+                    cur, tot, f"Calculating {label} ({cur}/{tot})..." if label else "Calculating..."
+                )
+            )
+            self.set_progress(1, 1, self.translator.translate('status_calculation_performed'))
+        except Exception as exc:
+            logging.exception("Calculation failed: %s", exc)
+            self.set_progress(0, 1, f"Calculation failed: {exc}")
+            wx.MessageBox(f"Calculation failed:\n{exc}", "Error", wx.OK | wx.ICON_ERROR)
+        finally:
+            if wx.IsBusy():
+                wx.EndBusyCursor()
+            for handler in logging.getLogger().handlers:
+                try:
+                    handler.flush()
+                except Exception:
+                    pass
 
     ## Event handler for the quit button or window close event.
     #  Destroys the panel and frame, and exits the application's main loop.
@@ -618,15 +651,31 @@ class DirectLineNetworkToolFrame(wx.Frame):
     #  and updates the status bar.
     #  @param event The event object.
     def event_export_master(self, event):
-        if self.dln_calculator is not None:
+        if self.dln_calculator is None:
+            return
+        wx.BeginBusyCursor()
+        try:
             self.update_param_cfl()
             overwrite = bool(self.tabMain.cb_overwrite_matrix.GetValue())
+            self.set_progress(1, 3, "Exporting matrices...")
             self.dln_calculator.export_matrix(overwrite_existing=overwrite)
+            self.set_progress(2, 3, "Exporting link network...")
             self.dln_calculator.export_net(links_additive=True)
             self.dln_calculator.delete_unused_nodes()
             self.tabMain.mark_exported()
-
-        self.SetStatusText(self.translator.translate('status_combined_results_imported'))
+            self.set_progress(3, 3, self.translator.translate('status_combined_results_imported'))
+        except Exception as exc:
+            logging.exception("Combined export failed: %s", exc)
+            self.set_progress(0, 1, f"Export failed: {exc}")
+            wx.MessageBox(f"Export failed:\n{exc}", "Error", wx.OK | wx.ICON_ERROR)
+        finally:
+            if wx.IsBusy():
+                wx.EndBusyCursor()
+            for handler in logging.getLogger().handlers:
+                try:
+                    handler.flush()
+                except Exception:
+                    pass
 
     ## Event handler for exporting MTX results for all currently checked CFL levels.
     #  Iterates over checked CFL checkboxes and exports the matrix for each selected level.
@@ -639,12 +688,30 @@ class DirectLineNetworkToolFrame(wx.Frame):
         if not selected:
             wx.MessageBox(self.translator.translate('error_no_calculator_instance'), 'Info', wx.OK | wx.ICON_INFORMATION)
             return
-        overwrite = bool(self.tabMain.cb_overwrite_matrix.GetValue())
-        self.dln_calculator.export_matrix(list_cfl=selected, overwrite_existing=overwrite)
-        names = ", ".join(self.button_cfl_active[c].Label for c in selected)
-        self.SetStatusText(f"{names}: {self.translator.translate('status_matrix_loaded_into_visum')}")
-        # Update status labels
-        self.tabMain.mark_exported(selected)
+        wx.BeginBusyCursor()
+        try:
+            overwrite = bool(self.tabMain.cb_overwrite_matrix.GetValue())
+            total = len(selected)
+            for idx, cfl_level in enumerate(selected, start=1):
+                lbl = self.button_cfl_active[cfl_level].Label
+                self.set_progress(idx - 1, total, f"Exporting matrix {lbl} ({idx}/{total})...")
+                self.dln_calculator.export_matrix(list_cfl=[cfl_level], overwrite_existing=overwrite)
+                self.set_progress(idx, total, f"Exported matrix {lbl} ({idx}/{total})")
+            names = ", ".join(self.button_cfl_active[c].Label for c in selected)
+            self.set_progress(total, total, f"{names}: {self.translator.translate('status_matrix_loaded_into_visum')}")
+            self.tabMain.mark_exported(selected)
+        except Exception as exc:
+            logging.exception("Matrix export failed: %s", exc)
+            self.set_progress(0, 1, f"Export failed: {exc}")
+            wx.MessageBox(f"Matrix export failed:\n{exc}", "Error", wx.OK | wx.ICON_ERROR)
+        finally:
+            if wx.IsBusy():
+                wx.EndBusyCursor()
+            for handler in logging.getLogger().handlers:
+                try:
+                    handler.flush()
+                except Exception:
+                    pass
 
     ## Event handler for exporting Net results for all currently checked CFL levels.
     #  Iterates over checked CFL checkboxes and exports the network for each selected level.
@@ -659,14 +726,16 @@ class DirectLineNetworkToolFrame(wx.Frame):
             return
         wx.BeginBusyCursor()
         try:
+            self.set_progress(1, 3, "Exporting link network...")
             self.dln_calculator.export_net(links_additive=True, list_cfl=selected)
+            self.set_progress(2, 3, "Cleaning unused nodes...")
             self.dln_calculator.delete_unused_nodes()
             names = ", ".join(self.button_cfl_active[c].Label for c in selected)
-            self.SetStatusText(f"{names}: {self.translator.translate('status_net_exported_imported')}")
             self.tabMain.mark_exported(selected)
+            self.set_progress(3, 3, f"{names}: {self.translator.translate('status_net_exported_imported')}")
         except Exception as exc:
             logging.exception("Failed to export link network: %s", exc)
-            self.SetStatusText(f"Export failed: {exc}")
+            self.set_progress(0, 1, f"Export failed: {exc}")
             wx.MessageBox(f"Link network export failed:\n{exc}", "Error", wx.OK | wx.ICON_ERROR)
         finally:
             if wx.IsBusy():
@@ -959,6 +1028,11 @@ class MainTab(wx.Panel):
 
         vbox_outer.Add(self.hbox1, 0, wx.ALL | wx.EXPAND, 5)
         vbox_outer.Add(hbox_main,  1, wx.ALL | wx.EXPAND, 5)
+
+        self.progress_bar = wx.Gauge(self, range=100, size=(-1, 14), style=wx.GA_HORIZONTAL | wx.GA_SMOOTH)
+        self.progress_bar.SetValue(0)
+        vbox_outer.Add(self.progress_bar, 0, wx.EXPAND | wx.LEFT | wx.RIGHT | wx.BOTTOM, 8)
+
         self.SetSizer(vbox_outer)
 
         # ==== Event binding
