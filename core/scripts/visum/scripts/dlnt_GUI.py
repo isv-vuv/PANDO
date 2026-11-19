@@ -267,6 +267,99 @@ class _PandoProgressBar(wx.Panel):
             dc.DrawRectangle(0, 0, fill_w, h)
 
 
+class _PandoSegmentedToggle(wx.Panel):
+    """Modern PANDO segmented pill toggle (e.g. EN | DE) for instant language switching."""
+
+    def __init__(self, parent, options: list[tuple[str, str]], selected_key: str, on_change, height: int = 34):
+        super().__init__(parent, style=wx.NO_BORDER)
+        self._options = list(options)
+        self._selected = selected_key
+        self._hover_idx = -1
+        self._on_change = on_change
+        self.SetBackgroundStyle(wx.BG_STYLE_PAINT)
+        self.SetMinSize((190, height))
+        self.SetCursor(wx.Cursor(wx.CURSOR_HAND))
+
+        self.Bind(wx.EVT_PAINT, self._on_paint)
+        self.Bind(wx.EVT_LEFT_DOWN, self._on_click)
+        self.Bind(wx.EVT_MOTION, self._on_motion)
+        self.Bind(wx.EVT_LEAVE_WINDOW, self._on_leave)
+
+    def set_selected(self, key: str):
+        if key != self._selected:
+            self._selected = key
+            self.Refresh()
+
+    def _hit_index(self, x: int) -> int:
+        w = max(1, self.GetClientSize().width)
+        n = max(1, len(self._options))
+        idx = int(x * n // w)
+        return max(0, min(n - 1, idx))
+
+    def _on_motion(self, evt):
+        idx = self._hit_index(evt.GetX())
+        if idx != self._hover_idx:
+            self._hover_idx = idx
+            self.Refresh()
+
+    def _on_leave(self, _evt):
+        if self._hover_idx != -1:
+            self._hover_idx = -1
+            self.Refresh()
+
+    def _on_click(self, evt):
+        try:
+            idx = self._hit_index(evt.GetX())
+            key = self._options[idx][0]
+            if key != self._selected:
+                self._selected = key
+                self.Refresh()
+                if self._on_change is not None:
+                    self._on_change(key)
+        except Exception:
+            logging.exception("Error handling segmented toggle click")
+
+    def _on_paint(self, _evt):
+        try:
+            dc = wx.AutoBufferedPaintDC(self)
+            w, h = self.GetClientSize()
+            dc.SetBackground(wx.Brush(_PANDO_CARD))
+            dc.Clear()
+
+            # Outer pill track
+            dc.SetPen(wx.Pen(_PANDO_BORDER, 1))
+            dc.SetBrush(wx.Brush(_PANDO_BG))
+            dc.DrawRoundedRectangle(0, 0, w, h, 8)
+
+            n = max(1, len(self._options))
+            pad = 3
+            seg_w = (w - 2 * pad) / float(n)
+            font_active = wx.Font(9, wx.FONTFAMILY_DEFAULT, wx.FONTSTYLE_NORMAL, wx.FONTWEIGHT_BOLD)
+            font_normal = wx.Font(9, wx.FONTFAMILY_DEFAULT, wx.FONTSTYLE_NORMAL, wx.FONTWEIGHT_NORMAL)
+
+            for i, (key, label) in enumerate(self._options):
+                sx = int(round(pad + i * seg_w))
+                sw = int(round(pad + (i + 1) * seg_w)) - sx
+                is_sel = (key == self._selected)
+                if is_sel:
+                    dc.SetPen(wx.TRANSPARENT_PEN)
+                    dc.SetBrush(wx.Brush(_PANDO_BLUE))
+                    dc.DrawRoundedRectangle(sx, pad, sw, h - 2 * pad, 6)
+                    dc.SetFont(font_active)
+                    dc.SetTextForeground(wx.Colour(255, 255, 255))
+                else:
+                    if i == self._hover_idx:
+                        dc.SetPen(wx.TRANSPARENT_PEN)
+                        dc.SetBrush(wx.Brush(wx.Colour(226, 232, 240)))
+                        dc.DrawRoundedRectangle(sx, pad, sw, h - 2 * pad, 6)
+                    dc.SetFont(font_normal)
+                    dc.SetTextForeground(_PANDO_BODY)
+                tw, th = dc.GetTextExtent(label)
+                dc.DrawText(label, sx + (sw - tw) // 2, (h - th) // 2)
+        except Exception:
+            logging.exception("Error painting segmented toggle")
+
+
 def _make_pando_card(parent, title: str):
     """Create a PANDO-styled white card with a crisp 1px border and bold header."""
     border_wrap = wx.Panel(parent)
@@ -553,14 +646,23 @@ class DirectLineNetworkToolFrame(wx.Frame):
         side_wrap, self.side_panel, self._lbl_side_title, side_sizer = _make_pando_card(
             self.panel, "Tools"
         )
-        self.btn_side_language = _PandoButton(self.side_panel, self.translator.translate('language_choice_title'), height=36)
+        _lang_opts = [("en", "English"), ("de", "Deutsch")]
+        self.lang_toggle = _PandoSegmentedToggle(
+            self.side_panel,
+            _lang_opts,
+            selected_key=self.translator.get_selected_language(),
+            on_change=self.set_language,
+            height=34,
+        )
+        side_sizer.Add(self.lang_toggle, 0, wx.EXPAND | wx.BOTTOM, 12)
+
         self.btn_side_reset = _PandoButton(self.side_panel, self.translator.translate('menu_reset_calculations'), height=36)
         self.btn_side_defaults = _PandoButton(self.side_panel, self.translator.translate('menu_set_defaults'), height=36)
         self.btn_side_info = _PandoButton(self.side_panel, self.translator.translate('menu_info'), height=36)
         self.btn_side_filter = _PandoButton(self.side_panel, self.translator.translate('toolbar_filter_inserted_links'), height=36)
         self.btn_side_delete = _PandoButton(self.side_panel, self.translator.translate('toolbar_delete_inserted_links'), variant="danger", height=36)
 
-        for btn in (self.btn_side_language, self.btn_side_reset,
+        for btn in (self.btn_side_reset,
                     self.btn_side_defaults, self.btn_side_info, self.btn_side_filter, self.btn_side_delete):
             btn.SetMinSize((190, 36))
             side_sizer.Add(btn, 0, wx.EXPAND | wx.BOTTOM, 8)
@@ -588,7 +690,6 @@ class DirectLineNetworkToolFrame(wx.Frame):
         self.Bind(wx.EVT_CLOSE, self.event_quit_button)
 
         # Side panel buttons
-        self.btn_side_language.Bind(wx.EVT_BUTTON, self.on_choose_language)
         self.btn_side_reset.Bind(wx.EVT_BUTTON, self.event_reset)
         self.btn_side_defaults.Bind(wx.EVT_BUTTON, self.event_set_default)
         self.btn_side_info.Bind(wx.EVT_BUTTON, self.event_info)
@@ -606,39 +707,13 @@ class DirectLineNetworkToolFrame(wx.Frame):
             btn.SetValue(idx)
             idx += 1
 
-    ## Event handler for language selection.
-    #  Opens a dialog for the user to select a language, updates the translator with the selected language,
-    #  and refreshes the GUI text to reflect the new language.
-    #  @param event The event object.
-    def on_choose_language(self, event):
-
-        languages = sorted(list(self.translator.translations.keys()))
-
-        current_language = self.translator.get_selected_language()
-        current_selection_index = languages.index(current_language) if current_language in languages else 0
-
-        # Create the wx.SingleChoiceDialogue
-        dlg = wx.SingleChoiceDialog(
-            self,
-            self.translator.translate('language_choice_title'),
-            self.translator.translate('language_choice'),
-            choices=languages,
-        )
-        dlg.SetSelection(current_selection_index)
-
-        if dlg.ShowModal() == wx.ID_OK:
-            selected_language = languages[dlg.GetSelection()]
-
-            if selected_language != self.translator.get_selected_language():
-                # Change the language in the translator
-                self.translator.update_selected_language(selected_language)
-                # Update the GUI texts (Step 3)
-                self.refresh_gui_text()
-
-                if self.dln_calculator is not None:
-                    self.dln_calculator.update_label_cfl()
-
-        dlg.Destroy()  # Important: Destroy the dialog after it has been closed.
+    ## Switches the UI language immediately without a popup dialog.
+    def set_language(self, selected_language: str):
+        if selected_language != self.translator.get_selected_language():
+            self.translator.update_selected_language(selected_language)
+            self.refresh_gui_text()
+            if self.dln_calculator is not None:
+                self.dln_calculator.update_label_cfl()
 
     ## Event handler for setting default values.
     #  Resets all input fields to their default values, including neighbor counts,
@@ -1028,8 +1103,8 @@ class DirectLineNetworkToolFrame(wx.Frame):
         if hasattr(self, "lbl_header_title"):
             self.lbl_header_title.SetLabel(title)
 
-        # 2. Update side panel buttons
-        self.btn_side_language.SetLabel(self.translator.translate('language_choice_title'))
+        # 2. Update side panel controls
+        self.lang_toggle.set_selected(self.translator.get_selected_language())
         self.btn_side_reset.SetLabel(self.translator.translate('menu_reset_calculations'))
         self.btn_side_defaults.SetLabel(self.translator.translate('menu_set_defaults'))
         self.btn_side_info.SetLabel(self.translator.translate('menu_info'))
@@ -1189,9 +1264,11 @@ class MainTab(wx.Panel):
 
         self._apply_grid_headers()
 
-        # Column widths: Active(48) + 5 balanced data columns
-        for col_idx, width in enumerate((48, 90, 150, 170, 170, 130)):
-            self.cfl_grid.SetColSize(col_idx, width)
+        # Compute text-based equal minimum width across all 5 data columns (cols 1..5)
+        self._min_data_col_w = self._compute_min_data_col_width()
+        self.cfl_grid.SetColSize(0, 44)
+        for col_idx in range(1, 6):
+            self.cfl_grid.SetColSize(col_idx, self._min_data_col_w)
 
         self.button_cfl_active = {}
         self.buttons_cfl_value = {}
@@ -1228,9 +1305,10 @@ class MainTab(wx.Panel):
             self.buttons_cfl_value[cfl_key].Enable(False)
             self.buttons_value_k_neighbor_cfl[cfl_key].Enable(False)
             self.buttons_value_n_supplier[cfl_key].Enable(False)
+            self._apply_row_visual_state(row_idx, False)
 
         grid_h = 46 + len(self._cfl_keys) * 32
-        self.cfl_grid.SetMinSize((758, grid_h))
+        self.cfl_grid.SetMinSize((44 + 5 * self._min_data_col_w, grid_h))
         grid_border_sizer.Add(self.cfl_grid, 1, wx.EXPAND | wx.ALL, 1)
         grid_border.SetSizer(grid_border_sizer)
 
@@ -1326,6 +1404,41 @@ class MainTab(wx.Panel):
             self.cfl_grid.SetColLabelValue(idx, f"{t}\n{s}" if s else t)
         self.cfl_grid.GetGridColLabelWindow().Refresh()
 
+    def _compute_min_data_col_width(self) -> int:
+        """Measure header titles & subtitles across all languages to find a uniform column width."""
+        dc = wx.ClientDC(self.cfl_grid)
+        title_font = wx.Font(9, wx.FONTFAMILY_DEFAULT, wx.FONTSTYLE_NORMAL, wx.FONTWEIGHT_BOLD)
+        sub_font = wx.Font(8, wx.FONTFAMILY_DEFAULT, wx.FONTSTYLE_NORMAL, wx.FONTWEIGHT_NORMAL)
+        keys = [
+            ('setting_cfl', 'setting_cfl_sub'),
+            ('setting_attribute_value_CFL', 'setting_attribute_value_CFL_sub'),
+            ('setting_exchange_function', 'setting_exchange_function_sub'),
+            ('setting_supply_function', 'setting_supply_function_sub'),
+            ('setting_status', 'setting_status_sub'),
+        ]
+        max_w = 130
+        all_langs = getattr(self.translator, 'translations', {}) or {}
+        if all_langs:
+            for lang_dict in all_langs.values():
+                for tk, sk in keys:
+                    t = str(lang_dict.get(tk, '') or '')
+                    s = str(lang_dict.get(sk, '') or '')
+                    if t:
+                        dc.SetFont(title_font)
+                        max_w = max(max_w, dc.GetTextExtent(t)[0] + 22)
+                    if s:
+                        dc.SetFont(sub_font)
+                        max_w = max(max_w, dc.GetTextExtent(s)[0] + 22)
+        else:
+            for t, s in self._grid_header_specs[1:]:
+                if t:
+                    dc.SetFont(title_font)
+                    max_w = max(max_w, dc.GetTextExtent(t)[0] + 22)
+                if s:
+                    dc.SetFont(sub_font)
+                    max_w = max(max_w, dc.GetTextExtent(s)[0] + 22)
+        return max_w
+
     def _on_col_label_paint(self, event):
         try:
             win = self.cfl_grid.GetGridColLabelWindow()
@@ -1348,6 +1461,8 @@ class MainTab(wx.Panel):
                 cw = self.cfl_grid.GetColSize(col)
                 title, sub = self._grid_header_specs[col] if col < len(self._grid_header_specs) else ("", "")
 
+                # Clip text strictly inside this column so nothing can ever bleed into the next cell
+                dc.SetClippingRegion(x, 0, max(1, cw - 1), h)
                 if title and sub:
                     dc.SetFont(title_font)
                     tw, th = dc.GetTextExtent(title)
@@ -1368,6 +1483,7 @@ class MainTab(wx.Panel):
                     tw, th = dc.GetTextExtent(title)
                     dc.SetTextForeground(_PANDO_TEXT)
                     dc.DrawText(title, x + max(4, (cw - tw) // 2), max(2, (h - th) // 2))
+                dc.DestroyClippingRegion()
 
                 # Crisp 1px vertical column divider
                 if col < num_cols - 1:
@@ -1404,18 +1520,14 @@ class MainTab(wx.Panel):
             if total_w > 260 and total_w != self._last_grid_width:
                 self._resizing_grid = True
                 self._last_grid_width = total_w
-                # Fixed compact columns for Active (44) & CFL number (68), proportional share for the rest
                 w_active = 44
-                w_cfl = 68
-                rem = total_w - w_active - w_cfl
-                # Weights: Centrality(22%), Exchange(28%), Supply(28%), Status(22%)
-                w_cent = int(rem * 0.22)
-                w_exch = int(rem * 0.28)
-                w_supp = int(rem * 0.28)
-                w_stat = max(80, rem - w_cent - w_exch - w_supp)
-                widths = (w_active, w_cfl, w_cent, w_exch, w_supp, w_stat)
-                for c, cw in enumerate(widths):
-                    self.cfl_grid.SetColSize(c, cw)
+                rem = max(5 * self._min_data_col_w, total_w - w_active)
+                col_w = rem // 5
+                last_w = rem - 4 * col_w
+                self.cfl_grid.SetColSize(0, w_active)
+                for c in range(1, 5):
+                    self.cfl_grid.SetColSize(c, col_w)
+                self.cfl_grid.SetColSize(5, last_w)
                 self.cfl_grid.GetGridColLabelWindow().Refresh()
                 self._resizing_grid = False
         except Exception:
@@ -1439,12 +1551,20 @@ class MainTab(wx.Panel):
                 cells.add((r, c))
         return sorted(cells)
 
+    def _apply_row_visual_state(self, row: int, enabled: bool):
+        """Apply uniform white (active) or soft gray (inactive) background across ALL 6 columns."""
+        bg = _PANDO_CARD if enabled else _PANDO_DISABLED_BG
+        for col in range(6):
+            self.cfl_grid.SetCellBackgroundColour(row, col, bg)
+        self.cfl_grid.SetCellTextColour(row, 1, _PANDO_TEXT if enabled else _PANDO_DISABLED_FG)
+
     def _toggle_row_active(self, row: int, enabled: bool):
         cfl_key = self._cfl_keys[row]
         self.cfl_grid.SetCellValue(row, 0, "1" if enabled else "")
         self.buttons_cfl_value[cfl_key].Enable(enabled)
         self.buttons_value_k_neighbor_cfl[cfl_key].Enable(enabled)
         self.buttons_value_n_supplier[cfl_key].Enable(enabled)
+        self._apply_row_visual_state(row, enabled)
         if enabled:
             if self._cfl_status[cfl_key] == 'inactive':
                 self._set_row_status(cfl_key, 'not_calculated')
