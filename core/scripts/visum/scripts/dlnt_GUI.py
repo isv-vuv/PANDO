@@ -1144,33 +1144,53 @@ class MainTab(wx.Panel):
 
         self._cfl_keys = ["cfl_0", "cfl_1", "cfl_2", "cfl_3", "cfl_4", "cfl_5"]
         str_cfl = self.translator.translate('cfl')
+        self._grid_header_specs = [
+            ("", ""),
+            ("", ""),
+            ("", ""),
+            ("", ""),
+            ("", ""),
+            ("", ""),
+        ]
+        self._last_grid_width = -1
+        self._resizing_grid = False
 
-        self.cfl_grid = wx.grid.Grid(cfl_card)
+        # Crisp 1px flat border around the entire grid (ensures all 4 sides incl. left border are visible, no 3D shadow)
+        grid_border = wx.Panel(cfl_card, style=wx.NO_BORDER)
+        grid_border.SetBackgroundColour(_PANDO_BORDER)
+        grid_border_sizer = wx.BoxSizer(wx.VERTICAL)
+
+        self.cfl_grid = wx.grid.Grid(grid_border, style=wx.BORDER_NONE)
         self.cfl_grid.CreateGrid(len(self._cfl_keys), 6)
         self.cfl_grid.EnableEditing(True)
         self.cfl_grid.EnableDragRowSize(False)
         self.cfl_grid.EnableDragColMove(False)
+        self.cfl_grid.EnableDragColSize(False)
+        self.cfl_grid.SetMargins(0, 0)
+        self.cfl_grid.ShowScrollbars(wx.SHOW_SB_NEVER, wx.SHOW_SB_NEVER)
         self.cfl_grid.SetRowLabelSize(0)
-        self.cfl_grid.SetColLabelSize(44)
+        self.cfl_grid.SetColLabelSize(46)
         self.cfl_grid.SetDefaultRowSize(32, True)
         self.cfl_grid.SetGridLineColour(_PANDO_BORDER_SOFT)
-        self.cfl_grid.SetLabelBackgroundColour(_PANDO_BG)
+        self.cfl_grid.SetLabelBackgroundColour(wx.Colour(226, 232, 240))
         self.cfl_grid.SetLabelTextColour(_PANDO_TEXT)
         self.cfl_grid.SetSelectionBackground(wx.Colour(219, 234, 254))
         self.cfl_grid.SetSelectionForeground(_PANDO_TEXT)
         self.cfl_grid.SetDefaultCellBackgroundColour(_PANDO_CARD)
         self.cfl_grid.SetDefaultCellTextColour(_PANDO_TEXT)
         self.cfl_grid.SetDefaultCellAlignment(wx.ALIGN_CENTER, wx.ALIGN_CENTER)
+        self.cfl_grid.SetCellHighlightColour(_PANDO_BLUE)
+        self.cfl_grid.SetCellHighlightPenWidth(1)
 
-        lbl_font = self.cfl_grid.GetLabelFont()
-        lbl_font.SetPointSize(8)
-        lbl_font.SetWeight(wx.FONTWEIGHT_BOLD)
-        self.cfl_grid.SetLabelFont(lbl_font)
+        # Custom flat, shadow-free two-line header painter (bold title + thin subtitle)
+        col_lbl_win = self.cfl_grid.GetGridColLabelWindow()
+        col_lbl_win.Bind(wx.EVT_PAINT, self._on_col_label_paint)
+        col_lbl_win.Bind(wx.EVT_ERASE_BACKGROUND, lambda e: None)
 
         self._apply_grid_headers()
 
-        # Column widths: Active(54) + 5 balanced data columns
-        for col_idx, width in enumerate((56, 130, 145, 165, 165, 130)):
+        # Column widths: Active(48) + 5 balanced data columns
+        for col_idx, width in enumerate((48, 90, 150, 170, 170, 130)):
             self.cfl_grid.SetColSize(col_idx, width)
 
         self.button_cfl_active = {}
@@ -1179,18 +1199,22 @@ class MainTab(wx.Panel):
         self.buttons_value_n_supplier = {}
         self.status_labels = {}
 
+        cfl_num_font = self.cfl_grid.GetDefaultCellFont()
+        cfl_num_font.SetWeight(wx.FONTWEIGHT_BOLD)
+
         for row_idx, cfl_key in enumerate(self._cfl_keys):
             # Col 0: Active checkbox
             self.cfl_grid.SetCellRenderer(row_idx, 0, wx.grid.GridCellBoolRenderer())
             self.cfl_grid.SetCellEditor(row_idx, 0, wx.grid.GridCellBoolEditor())
             self.cfl_grid.SetCellValue(row_idx, 0, "")
-            # Col 1: Tier label (read-only)
-            self.cfl_grid.SetCellValue(row_idx, 1, f"{str_cfl} {row_idx}")
+            # Col 1: CFL number only (read-only, centered)
+            self.cfl_grid.SetCellValue(row_idx, 1, str(row_idx))
             self.cfl_grid.SetReadOnly(row_idx, 1, True)
-            self.cfl_grid.SetCellAlignment(row_idx, 1, wx.ALIGN_LEFT, wx.ALIGN_CENTER)
-            # Cols 2, 3, 4: Numeric inputs (Centrality, Exchange, Supply)
+            self.cfl_grid.SetCellAlignment(row_idx, 1, wx.ALIGN_CENTER, wx.ALIGN_CENTER)
+            self.cfl_grid.SetCellFont(row_idx, 1, cfl_num_font)
+            # Cols 2, 3, 4: Direct plain-text numeric editing (no SpinCtrl arrows)
             for col_idx in (2, 3, 4):
-                self.cfl_grid.SetCellEditor(row_idx, col_idx, wx.grid.GridCellNumberEditor(0, 999999))
+                self.cfl_grid.SetCellEditor(row_idx, col_idx, wx.grid.GridCellTextEditor())
             # Col 5: Status (read-only)
             self.cfl_grid.SetReadOnly(row_idx, 5, True)
 
@@ -1205,7 +1229,10 @@ class MainTab(wx.Panel):
             self.buttons_value_k_neighbor_cfl[cfl_key].Enable(False)
             self.buttons_value_n_supplier[cfl_key].Enable(False)
 
-        self.cfl_grid.SetMinSize((795, 44 + 6 * 32 + 6))
+        grid_h = 46 + len(self._cfl_keys) * 32
+        self.cfl_grid.SetMinSize((758, grid_h))
+        grid_border_sizer.Add(self.cfl_grid, 1, wx.EXPAND | wx.ALL, 1)
+        grid_border.SetSizer(grid_border_sizer)
 
         # Share references with TopLevelParent
         self.TopLevelParent.button_cfl_active = self.button_cfl_active
@@ -1213,7 +1240,7 @@ class MainTab(wx.Panel):
         self.TopLevelParent.buttons_value_k_neighbor_cfl = self.buttons_value_k_neighbor_cfl
         self.TopLevelParent.buttons_value_n_supplier = self.buttons_value_n_supplier
 
-        self._gridbox_sizer.Add(self.cfl_grid, 1, wx.EXPAND | wx.BOTTOM, 10)
+        self._gridbox_sizer.Add(grid_border, 1, wx.EXPAND | wx.BOTTOM, 10)
 
         # Clean 1px hairline divider above bottom strip
         calc_div = wx.Panel(cfl_card, size=(-1, 1), style=wx.NO_BORDER)
@@ -1246,7 +1273,12 @@ class MainTab(wx.Panel):
         _btn_size = (185, 40)
         self.btn_export_mtx = _PandoButton(export_card, self.translator.translate('btn_export_mtx'), variant="secondary", height=40)
         self.btn_export_mtx.SetMinSize(_btn_size)
-        self._export_sizer.Add(self.btn_export_mtx, 0, wx.EXPAND | wx.BOTTOM, 8)
+        self._export_sizer.Add(self.btn_export_mtx, 0, wx.EXPAND | wx.BOTTOM, 6)
+
+        self.cb_overwrite_matrix = wx.CheckBox(export_card, -1, self.translator.translate('setting_overwrite_matrix'))
+        self.cb_overwrite_matrix.SetValue(True)
+        self.cb_overwrite_matrix.SetForegroundColour(_PANDO_BODY)
+        self._export_sizer.Add(self.cb_overwrite_matrix, 0, wx.EXPAND | wx.LEFT | wx.BOTTOM, 12)
 
         self.btn_export_net = _PandoButton(export_card, self.translator.translate('btn_export_net'), variant="secondary", height=40)
         self.btn_export_net.SetMinSize(_btn_size)
@@ -1255,12 +1287,7 @@ class MainTab(wx.Panel):
         self.btn_export_master = _PandoButton(export_card, self.translator.translate('setting_import_to_visum'), variant="blue", height=40)
         self.btn_export_master.cfl_level = 'all'
         self.btn_export_master.SetMinSize(_btn_size)
-        self._export_sizer.Add(self.btn_export_master, 0, wx.EXPAND | wx.BOTTOM, 10)
-
-        self.cb_overwrite_matrix = wx.CheckBox(export_card, -1, self.translator.translate('setting_overwrite_matrix'))
-        self.cb_overwrite_matrix.SetValue(True)
-        self.cb_overwrite_matrix.SetForegroundColour(_PANDO_BODY)
-        self._export_sizer.Add(self.cb_overwrite_matrix, 0, wx.EXPAND | wx.TOP, 2)
+        self._export_sizer.Add(self.btn_export_master, 0, wx.EXPAND)
         self._export_sizer.AddStretchSpacer()
 
         # Start with export buttons disabled in PANDO muted style
@@ -1282,17 +1309,77 @@ class MainTab(wx.Panel):
     #  Sets up all event bindings for buttons and combo boxes in the main tab,
     #  connecting them to the appropriate event handlers in the parent frame.
     def _apply_grid_headers(self):
-        def _fmt(title_key, sub_key):
+        def _pair(title_key, sub_key):
             t = self.translator.translate(title_key)
             s = self.translator.translate(sub_key) if sub_key else ""
-            return f"{t}\n{s}" if s else t
+            return (t, s)
 
-        self.cfl_grid.SetColLabelValue(0, "")
-        self.cfl_grid.SetColLabelValue(1, _fmt('setting_cfl', 'setting_cfl_sub'))
-        self.cfl_grid.SetColLabelValue(2, _fmt('setting_attribute_value_CFL', 'setting_attribute_value_CFL_sub'))
-        self.cfl_grid.SetColLabelValue(3, _fmt('setting_exchange_function', 'setting_exchange_function_sub'))
-        self.cfl_grid.SetColLabelValue(4, _fmt('setting_supply_function', 'setting_supply_function_sub'))
-        self.cfl_grid.SetColLabelValue(5, _fmt('setting_status', 'setting_status_sub'))
+        self._grid_header_specs = [
+            ("", ""),
+            _pair('setting_cfl', 'setting_cfl_sub'),
+            _pair('setting_attribute_value_CFL', 'setting_attribute_value_CFL_sub'),
+            _pair('setting_exchange_function', 'setting_exchange_function_sub'),
+            _pair('setting_supply_function', 'setting_supply_function_sub'),
+            _pair('setting_status', 'setting_status_sub'),
+        ]
+        for idx, (t, s) in enumerate(self._grid_header_specs):
+            self.cfl_grid.SetColLabelValue(idx, f"{t}\n{s}" if s else t)
+        self.cfl_grid.GetGridColLabelWindow().Refresh()
+
+    def _on_col_label_paint(self, event):
+        try:
+            win = self.cfl_grid.GetGridColLabelWindow()
+            dc = wx.PaintDC(win)
+            w, h = win.GetClientSize()
+
+            # Flat slightly darker-gray header background (no 3D bevel/shadow)
+            header_bg = wx.Colour(226, 232, 240)
+            dc.SetPen(wx.TRANSPARENT_PEN)
+            dc.SetBrush(wx.Brush(header_bg))
+            dc.DrawRectangle(0, 0, w, h)
+
+            title_font = wx.Font(9, wx.FONTFAMILY_DEFAULT, wx.FONTSTYLE_NORMAL, wx.FONTWEIGHT_BOLD)
+            sub_font = wx.Font(8, wx.FONTFAMILY_DEFAULT, wx.FONTSTYLE_NORMAL, wx.FONTWEIGHT_NORMAL)
+            border_pen = wx.Pen(_PANDO_BORDER, 1)
+
+            x = 0
+            num_cols = self.cfl_grid.GetNumberCols()
+            for col in range(num_cols):
+                cw = self.cfl_grid.GetColSize(col)
+                title, sub = self._grid_header_specs[col] if col < len(self._grid_header_specs) else ("", "")
+
+                if title and sub:
+                    dc.SetFont(title_font)
+                    tw, th = dc.GetTextExtent(title)
+                    dc.SetFont(sub_font)
+                    sw, sh = dc.GetTextExtent(sub)
+                    total_h = th + 2 + sh
+                    top_y = max(2, (h - total_h) // 2)
+
+                    dc.SetFont(title_font)
+                    dc.SetTextForeground(_PANDO_TEXT)
+                    dc.DrawText(title, x + max(4, (cw - tw) // 2), top_y)
+
+                    dc.SetFont(sub_font)
+                    dc.SetTextForeground(_PANDO_BODY)
+                    dc.DrawText(sub, x + max(4, (cw - sw) // 2), top_y + th + 2)
+                elif title:
+                    dc.SetFont(title_font)
+                    tw, th = dc.GetTextExtent(title)
+                    dc.SetTextForeground(_PANDO_TEXT)
+                    dc.DrawText(title, x + max(4, (cw - tw) // 2), max(2, (h - th) // 2))
+
+                # Crisp 1px vertical column divider
+                if col < num_cols - 1:
+                    dc.SetPen(border_pen)
+                    dc.DrawLine(x + cw - 1, 0, x + cw - 1, h)
+                x += cw
+
+            # Crisp 1px bottom line separating header from lighter rows below
+            dc.SetPen(border_pen)
+            dc.DrawLine(0, h - 1, w, h - 1)
+        except Exception:
+            logging.exception("Error painting grid column headers")
 
     def __bind_events__(self):
         self.btn_export_mtx.Bind(wx.EVT_BUTTON, self.TopLevelParent.event_export_mtx_selected)
@@ -1309,19 +1396,47 @@ class MainTab(wx.Panel):
         self.cfl_grid.Bind(wx.EVT_SIZE, self._on_grid_resize)
 
     def _on_grid_resize(self, event):
-        avail = self.cfl_grid.GetClientSize().width - 56 - 2
-        if avail > 200:
-            col_w = avail // 5
-            for c in range(1, 6):
-                self.cfl_grid.SetColSize(c, col_w)
+        try:
+            if self._resizing_grid:
+                event.Skip()
+                return
+            total_w = self.cfl_grid.GetClientSize().width
+            if total_w > 260 and total_w != self._last_grid_width:
+                self._resizing_grid = True
+                self._last_grid_width = total_w
+                # Fixed compact columns for Active (44) & CFL number (68), proportional share for the rest
+                w_active = 44
+                w_cfl = 68
+                rem = total_w - w_active - w_cfl
+                # Weights: Centrality(22%), Exchange(28%), Supply(28%), Status(22%)
+                w_cent = int(rem * 0.22)
+                w_exch = int(rem * 0.28)
+                w_supp = int(rem * 0.28)
+                w_stat = max(80, rem - w_cent - w_exch - w_supp)
+                widths = (w_active, w_cfl, w_cent, w_exch, w_supp, w_stat)
+                for c, cw in enumerate(widths):
+                    self.cfl_grid.SetColSize(c, cw)
+                self.cfl_grid.GetGridColLabelWindow().Refresh()
+                self._resizing_grid = False
+        except Exception:
+            self._resizing_grid = False
+            logging.exception("Error resizing CFL grid")
         event.Skip()
 
     def _selected_cells(self) -> list[tuple[int, int]]:
-        cells: set[tuple[int, int]] = set(self.cfl_grid.GetSelectedCells())
-        for tl, br in zip(self.cfl_grid.GetSelectionBlockTopLeft(), self.cfl_grid.GetSelectionBlockBottomRight()):
-            for r in range(tl[0], br[0] + 1):
-                for c in range(tl[1], br[1] + 1):
+        cells: set[tuple[int, int]] = set()
+        for coord in self.cfl_grid.GetSelectedCells():
+            cells.add((coord.GetRow(), coord.GetCol()))
+        for tl, br in zip(
+            self.cfl_grid.GetSelectionBlockTopLeft(),
+            self.cfl_grid.GetSelectionBlockBottomRight(),
+        ):
+            for r in range(tl.GetRow(), br.GetRow() + 1):
+                for c in range(tl.GetCol(), br.GetCol() + 1):
                     cells.add((r, c))
+        for r in self.cfl_grid.GetSelectedRows():
+            for c in range(self.cfl_grid.GetNumberCols()):
+                cells.add((r, c))
         return sorted(cells)
 
     def _toggle_row_active(self, row: int, enabled: bool):
@@ -1337,43 +1452,49 @@ class MainTab(wx.Panel):
             self._set_row_status(cfl_key, 'inactive')
 
     def _on_grid_cell_click(self, event):
-        row, col = event.GetRow(), event.GetCol()
-        if col == 0 and 0 <= row < len(self._cfl_keys):
-            new_state = not (self.cfl_grid.GetCellValue(row, 0) == "1")
-            sel = self._selected_cells()
-            target_rows = sorted({r for r, c in sel if c == 0}) if (row, 0) in sel and len(sel) > 1 else [row]
-            for r in target_rows:
-                self._toggle_row_active(r, new_state)
-            self._refresh_export_button_state()
-            self.cfl_grid.ForceRefresh()
-            return
+        try:
+            row, col = event.GetRow(), event.GetCol()
+            if col == 0 and 0 <= row < len(self._cfl_keys):
+                new_state = not (self.cfl_grid.GetCellValue(row, 0) == "1")
+                sel = self._selected_cells()
+                target_rows = sorted({r for r, c in sel if c == 0}) if (row, 0) in sel and len(sel) > 1 else [row]
+                for r in target_rows:
+                    self._toggle_row_active(r, new_state)
+                self._refresh_export_button_state()
+                self.cfl_grid.ForceRefresh()
+                return
+        except Exception:
+            logging.exception("Error handling CFL grid cell click")
         event.Skip()
 
     def _on_grid_cell_changed(self, event):
-        row, col = event.GetRow(), event.GetCol()
-        if col == 0:
-            self._toggle_row_active(row, self.cfl_grid.GetCellValue(row, 0) == "1")
-            self._refresh_export_button_state()
-            self.cfl_grid.ForceRefresh()
-            return
-        if col in (2, 3, 4):
-            val_str = self.cfl_grid.GetCellValue(row, col).strip()
-            try:
-                val_int = max(0, int(float(val_str)))
-            except (ValueError, TypeError):
-                val_int = 0
-            # Visum-style multi-cell fill: if multiple editable numeric cells are selected, apply value to all of them
-            sel = self._selected_cells()
-            targets = [(r, c) for r, c in sel if c in (2, 3, 4) and not self.cfl_grid.IsReadOnly(r, c)]
-            if (row, col) not in targets:
-                targets.append((row, col))
-            for r, c in targets:
-                self.cfl_grid.SetCellValue(r, c, str(val_int))
-                cfl_key = self._cfl_keys[r]
-                if self._cfl_status.get(cfl_key) in ('calculated', 'exported'):
-                    self._set_row_status(cfl_key, 'outdated')
-            self._refresh_export_button_state()
-            self.cfl_grid.ForceRefresh()
+        try:
+            row, col = event.GetRow(), event.GetCol()
+            if col == 0:
+                self._toggle_row_active(row, self.cfl_grid.GetCellValue(row, 0) == "1")
+                self._refresh_export_button_state()
+                self.cfl_grid.ForceRefresh()
+                return
+            if col in (2, 3, 4):
+                val_str = self.cfl_grid.GetCellValue(row, col).strip()
+                try:
+                    val_int = max(0, int(float(val_str)))
+                except (ValueError, TypeError):
+                    val_int = 0
+                # Visum-style multi-cell fill: if multiple editable numeric cells are selected, apply value to all of them
+                sel = self._selected_cells()
+                targets = [(r, c) for r, c in sel if c in (2, 3, 4) and not self.cfl_grid.IsReadOnly(r, c)]
+                if (row, col) not in targets:
+                    targets.append((row, col))
+                for r, c in targets:
+                    self.cfl_grid.SetCellValue(r, c, str(val_int))
+                    cfl_key = self._cfl_keys[r]
+                    if self._cfl_status.get(cfl_key) in ('calculated', 'exported'):
+                        self._set_row_status(cfl_key, 'outdated')
+                self._refresh_export_button_state()
+                self.cfl_grid.ForceRefresh()
+        except Exception:
+            logging.exception("Error handling CFL grid cell change")
         event.Skip()
 
     ## Performs the calculation and updates status labels.
@@ -1442,9 +1563,8 @@ class MainTab(wx.Panel):
         self._apply_grid_headers()
         str_cfl = self.translator.translate('cfl')
         for row_idx, key in enumerate(self._cfl_keys):
-            lbl = f"{str_cfl} {row_idx}"
-            self.cfl_grid.SetCellValue(row_idx, 1, lbl)
-            self.button_cfl_active[key].SetLabel(lbl)
+            self.cfl_grid.SetCellValue(row_idx, 1, str(row_idx))
+            self.button_cfl_active[key].SetLabel(f"{str_cfl} {row_idx}")
 
         for cfl_key, status in self._cfl_status.items():
             self._set_row_status(cfl_key, status)
