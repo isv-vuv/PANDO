@@ -73,6 +73,42 @@ except ImportError:
     from language_management import Translator
 
 
+def _configure_file_logging(visum=None) -> Path:
+    """Route all logging strictly to processed/visum/log/dlnt_GUI.log.
+
+    Removing StreamHandlers prevents Visum's embedded Python from intercepting
+    sys.stderr writes as modal Warning popups or deadlocking the wx UI loop.
+    """
+    log_name = Path(__file__).name.replace(".py", ".log")
+    log_dir = Path(__file__).resolve().parent.parent / "log"
+    try:
+        visum_log_dir = Path(visum.GetPath(57)) if visum is not None else None
+        if visum_log_dir and visum_log_dir.is_dir():
+            log_dir = visum_log_dir
+    except Exception:
+        pass
+    try:
+        log_dir.mkdir(parents=True, exist_ok=True)
+        path_logfile = log_dir / log_name
+    except OSError:
+        path_logfile = Path(log_name)
+
+    root_logger = logging.getLogger()
+    root_logger.setLevel(logging.INFO)
+    for existing_h in root_logger.handlers[:]:
+        root_logger.removeHandler(existing_h)
+        try:
+            existing_h.close()
+        except Exception:
+            pass
+
+    logger_format = logging.Formatter("%(asctime)s %(levelname)s: %(message)s", datefmt="%d.%m.%Y %I:%M:%S %p")
+    file_handler = logging.FileHandler(path_logfile, mode="w", encoding="utf-8")
+    file_handler.setFormatter(logger_format)
+    root_logger.addHandler(file_handler)
+    return path_logfile
+
+
 # ---------------------------------------------------------------------------
 # Shared config reader  (rin_config.json written by RIN_Matrizen.py)
 # ---------------------------------------------------------------------------
@@ -194,6 +230,7 @@ class DirectLineNetworkToolFrame(wx.Frame):
                 Visum.LoadVersion(source)
 
         self.visum = Visum
+        _configure_file_logging(self.visum)
         self.list_attr = get_attr_zones(self.visum)
 
         # ── Read shared config (written by RIN_Matrizen.py) ──────────────
@@ -267,12 +304,9 @@ class DirectLineNetworkToolFrame(wx.Frame):
         self.panel = wx.Panel(self)
         self.notebook = wx.Notebook(self.panel)
 
-        # create tabs
+        # create tab (logs go strictly to processed/visum/log/dlnt_GUI.log)
         self.tabMain = MainTab(self.notebook, self.translator)
-        self.tabLog = LogTab(self.notebook)
-
         self.notebook.AddPage(self.tabMain, self.translator.translate('tab_main'))
-        self.notebook.AddPage(self.tabLog, self.translator.translate('tab_log'))
 
         # create a status bar at the bottom of the frame
         self.CreateStatusBar()
@@ -456,8 +490,13 @@ class DirectLineNetworkToolFrame(wx.Frame):
     #  Destroys the panel and frame, and exits the application's main loop.
     #  @param event The event object.
     def event_quit_button(self, event):
-        # del self.visum
-        # self.stop = True
+        root_logger = logging.getLogger()
+        for handler in root_logger.handlers[:]:
+            root_logger.removeHandler(handler)
+            try:
+                handler.close()
+            except Exception:
+                pass
         self.panel.Destroy()
         self.Destroy()
         wx.GetApp().ExitMainLoop()
@@ -666,7 +705,6 @@ class DirectLineNetworkToolFrame(wx.Frame):
 
         # 2. update notebook tab title
         self.notebook.SetPageText(0, self.translator.translate('tab_main'))
-        self.notebook.SetPageText(1, self.translator.translate('tab_log'))
 
         # 3. Update side panel buttons
         self.btn_side_language.SetLabel(self.translator.translate('language_choice_title'))
@@ -678,7 +716,6 @@ class DirectLineNetworkToolFrame(wx.Frame):
 
         # 5. Unterkomponenten (Tabs) aktualisieren
         self.tabMain.refresh_gui_text()
-        self.tabLog.refresh_gui_text()
 
         # Update the status text
         self.SetStatusText(self.translator.translate('status_set_defaults'))
@@ -1207,10 +1244,8 @@ class HelpPopUp(wx.Frame):
         dict_docu = {
             translator.translate('application'): doc_dir / "application.html",
             translator.translate('foundations'): doc_dir / "foundations.html",
+            translator.translate('documentation_code'): doc_dir.parent / "code" / "html" / "index.html",
         }
-        code_doc_index = doc_dir.parent / "code" / "html" / "index.html"
-        if code_doc_index.is_file():
-            dict_docu[translator.translate('documentation_code')] = code_doc_index
 
         # Create tabs with embedded WebView for each documentation page
         for page_name, file_path in dict_docu.items():
