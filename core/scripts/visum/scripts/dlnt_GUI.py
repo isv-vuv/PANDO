@@ -1097,14 +1097,19 @@ class LogTab(wx.Panel):
         self.logger.setLevel(logging.INFO)
         logger_format = logging.Formatter("%(asctime)s %(levelname)s: %(message)s", datefmt="%d.%m.%Y %I:%M:%S %p")
 
-        # Output in Konsole & Logfile
-        stream_handler = logging.StreamHandler()
-        stream_handler.setFormatter(logger_format)
-        file_handler = logging.FileHandler(path_logfile, mode="w")
+        # Clear any stale handlers (e.g. from prior runs in the same Visum Python session or
+        # StreamHandlers targeting Visum's redirected sys.stderr, which deadlocks wx.MainLoop).
+        for existing_h in self.logger.handlers[:]:
+            self.logger.removeHandler(existing_h)
+            try:
+                existing_h.close()
+            except Exception:
+                pass
+
+        # Output to Logfile & GUI Log-Tab (avoid sys.stderr StreamHandler inside Visum UI)
+        file_handler = logging.FileHandler(path_logfile, mode="w", encoding="utf-8")
         file_handler.setFormatter(logger_format)
-        # add handles to logger
         self.logger.addHandler(file_handler)
-        self.logger.addHandler(stream_handler)
 
         self.log = wx.TextCtrl(self, wx.ID_ANY, size=(700, 200),
                                style=wx.TE_MULTILINE | wx.TE_READONLY | wx.HSCROLL | wx.EXPAND)
