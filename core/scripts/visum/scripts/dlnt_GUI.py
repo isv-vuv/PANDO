@@ -469,29 +469,36 @@ class DirectLineNetworkToolFrame(wx.Frame):
     #  updates parameters, and updates the status bar.
     #  @param event The event object.
     def event_import_data(self, event):
-        # works so far,
-
         # Show loading feedback in status bar and busy cursor while data is being imported
         self.SetStatusText(self.translator.translate('status_loading_data') if
                            self.translator.translate('status_loading_data') != 'status_loading_data'
                            else "Loading data, please wait...")
         wx.BeginBusyCursor()
-        wx.GetApp().Yield()  # Force the status bar update to paint immediately
-
-        # Creating a Calculator instance
-        if self.visum is not None:
-            # Init Calculator instance
-            self.dln_calculator = dlnt.DirectLineNetworkCalculator(self.visum, attr_cfl=self.attr_cfl, max_distance=1,
-                                                                   no_suppliers=1, attr_orig=self.attr_origin,
-                                                                   attr_dest=self.attr_destination,
-                                                                   translator=translator)
-            wx.SafeYield()  # let the splash timer fire after the heavy calculator init
-            # Pass current parameters
-            self.update_param_cfl()
-        else:
-            logging.warning("Handling of file type is not implemented")
-        wx.EndBusyCursor()
-        self.SetStatusText(self.translator.translate('status_data_imported'))
+        try:
+            wx.SafeYield()  # Reentrant-safe paint update
+            if self.visum is not None:
+                self.dln_calculator = dlnt.DirectLineNetworkCalculator(
+                    self.visum,
+                    attr_cfl=self.attr_cfl,
+                    max_distance=1,
+                    no_suppliers=1,
+                    attr_orig=self.attr_origin,
+                    attr_dest=self.attr_destination,
+                    translator=self.translator,
+                )
+                wx.SafeYield()
+                self.update_param_cfl()
+                self.SetStatusText(self.translator.translate('status_data_imported'))
+            else:
+                logging.warning("Handling of file type is not implemented")
+                self.SetStatusText("No Visum connection available.")
+        except Exception as exc:
+            logging.exception("Failed to import data from Visum: %s", exc)
+            self.SetStatusText(f"Import failed: {exc}")
+            wx.MessageBox(f"Data import failed:\n{exc}", "Error", wx.OK | wx.ICON_ERROR)
+        finally:
+            if wx.IsBusy():
+                wx.EndBusyCursor()
 
     ## Event handler for the Info button.
     #  @param event The event object.
@@ -1352,10 +1359,15 @@ if __name__ == '__main__':
     # Defer the actual initialization via CallLater so that MainLoop() is already running when the heavy work starts.  This means the splash timer fires freely for the first 100 ms and then continues to fire at every wx.SafeYield() call that is placed inside the heavy init steps.
     def _do_init():
         global frame
-        splash.set_hint("Loading Visum connection\u2026")
-        frame = DirectLineNetworkToolFrame(translator)
-        splash.set_hint("Ready.")
-        wx.CallAfter(splash.close)
+        try:
+            splash.set_hint("Loading Visum connection\u2026")
+            frame = DirectLineNetworkToolFrame(translator)
+            splash.set_hint("Ready.")
+        except Exception as exc:
+            logging.exception("Failed to initialize DirectLineNetworkToolFrame: %s", exc)
+            wx.MessageBox(f"Initialization failed:\n{exc}", "Error", wx.OK | wx.ICON_ERROR)
+        finally:
+            wx.CallAfter(splash.close)
 
     wx.CallLater(100, _do_init)
     app.MainLoop()
