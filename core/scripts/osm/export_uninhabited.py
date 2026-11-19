@@ -132,7 +132,7 @@ def export_uninhabited(
             utm_crs = gdf.estimate_utm_crs()
             gdf = gdf.to_crs(utm_crs)
             is_line = gdf.geometry.type.isin(['LineString', 'MultiLineString'])
-            gdf.loc[is_line, 'geometry'] = gdf[is_line].geometry.buffer(0.5, resolution=1, cap_style='square')
+            gdf.loc[is_line, 'geometry'] = gdf[is_line].geometry.buffer(0.5, quad_segs=1, cap_style='square')
             gdf = gdf.to_crs("EPSG:4326")
 
             if None not in (west, south, east, north):

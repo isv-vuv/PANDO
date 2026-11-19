@@ -595,9 +595,10 @@ def _ensure_gdal_environment() -> None:
             if os.path.isdir(gdal_data) and "GDAL_DATA" not in os.environ:
                 os.environ["GDAL_DATA"] = gdal_data
             proj_data = os.path.join(os.path.dirname(candidate), "share", "proj")
-            if os.path.isdir(proj_data) and "PROJ_LIB" not in os.environ:
-                os.environ["PROJ_LIB"] = proj_data
+            if os.path.isdir(proj_data) and not os.environ.get("PROJ_DATA"):
                 os.environ["PROJ_DATA"] = proj_data
+            if os.path.isdir(proj_data) and not os.environ.get("PROJ_LIB"):
+                os.environ["PROJ_LIB"] = os.environ.get("PROJ_DATA", proj_data)
             break
 
 
@@ -940,6 +941,19 @@ def run_qgis_model_processing(
     except Exception as exc:
         if on_log:
             on_log(f"Hinweis beim Erzeugen des räumlichen Index: {exc}")
+
+    # Pre-flight CRS validation: fail fast with a clear error instead of silently writing CRS=None
+    crs_param = config.parameters.get("local_crs")
+    if isinstance(crs_param, str) and crs_param.strip():
+        try:
+            from qgis.core import QgsCoordinateReferenceSystem
+            if not QgsCoordinateReferenceSystem(crs_param.strip()).isValid():
+                raise RuntimeError(
+                    f"QGIS PROJ-Datenbank konnte das Ziel-CRS '{crs_param}' nicht auflösen "
+                    f"(PROJ_DATA={os.environ.get('PROJ_DATA')!r}). Bitte PANDO neu starten."
+                )
+        except ImportError:
+            pass
 
     try:
         for attempt in range(max_retries):
