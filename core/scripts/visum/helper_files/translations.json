@@ -128,20 +128,20 @@
     "de": "Zielbezirk-Filter (optional)"
   },
   "setting_cfl": {
+    "en": "CFL",
+    "de": "VFS"
+  },
+  "setting_cfl_sub": {
     "en": "Connectivity Function Level",
     "de": "Verbindungsfunktionsstufe"
   },
-  "setting_cfl_sub": {
-    "en": "Active tiers",
-    "de": "Aktive Stufen"
-  },
   "setting_attribute_value_cfl": {
-    "en": "Attribute Value",
-    "de": "Attributwert"
+    "en": "Centrality",
+    "de": "Zentralität"
   },
   "setting_attribute_value_CFL_sub": {
-    "en": "Centrality class",
-    "de": "Zentralitätsstufe"
+    "en": "Attribute value",
+    "de": "Attributwert"
   },
   "setting_exchange_function": {
     "en": "Exchange Function",
@@ -160,8 +160,8 @@
     "de": "n Versorgungszentren"
   },
   "setting_status_sub": {
-    "en": "Calculation state",
-    "de": "Berechnungsstatus"
+    "en": "",
+    "de": ""
   },
   "setting_create_in_visum": {
     "en": "Export to Visum:",
@@ -232,8 +232,8 @@
     "de": "Verbindungen"
   },
   "setting_attribute_value_CFL": {
-    "en": "Attribute Value",
-    "de": "Attributwert"
+    "en": "Centrality",
+    "de": "Zentralität"
   },
   "zone_attributes": {
     "en": "Zone Attributes",
