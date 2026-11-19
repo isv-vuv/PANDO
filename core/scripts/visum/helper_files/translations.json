@@ -3,10 +3,6 @@
     "en": "DLNT",
     "de": "LLT"
   },
-  "title_help": {
-    "en": "Documentation",
-    "de": "Dokumentation"
-  },
   "file_selection": {
     "en": "Choose a VISUM model",
     "de": "Wähle ein Visumnetz"
@@ -19,22 +15,6 @@
     "en": "Calculation of direct-line networks based on connectivity function levels",
     "de": "Ermittlung von Luftliniennetzen basierend auf Verbindungsfunktionsstufen"
   },
-  "language_choice_title": {
-    "en": "Language Choice",
-    "de": "Sprachauswahl"
-  },
-  "language_choice": {
-    "en": "Select your preferred language",
-    "de": "Wähle die gewünschte Sprache"
-  },
-  "menu_import_data": {
-    "en": "Import Data\n(initiates a calculator instance)",
-    "de": "Daten einlesen\n(initiiert eine Berechnungsinstanz)"
-  },
-  "menu_calculate": {
-    "en": "Perform Calculation",
-    "de": "Berechnung durchführen"
-  },
   "menu_reset_calculations": {
     "en": "Reset Calculation",
     "de": "Berechnungen zurücksetzen"
@@ -46,18 +26,6 @@
   "menu_info": {
     "en": "Info",
     "de": "Info"
-  },
-  "options_tab": {
-    "en": "Options",
-    "de": "Auswahl"
-  },
-  "parameter_input_section": {
-    "en": "Input Parameter",
-    "de": "Parameter Eingaben"
-  },
-  "menu_default_values": {
-    "en": "Default Values",
-    "de": "Defaultwerte"
   },
   "toolbar_filter_inserted_links": {
     "en": "Filter inserted links",
@@ -103,25 +71,9 @@
     "en": "Centrality",
     "de": "Zentralität"
   },
-  "distance_calculation_setting": {
-    "en": "Distance calculation",
-    "de": "Distanzberechnung"
-  },
-  "setting_neighbourhood_degree_cfl": {
-    "en": "Neighbourhood level per CFL",
-    "de": "Nachbarschaftsgrad je VFS"
-  },
-  "settings_number_of_suppliers_cfl": {
-    "en": "Number of Suppliers per CFL",
-    "de": "Anzahl Versorger je VFS"
-  },
   "setting_zone_attribute_origin": {
     "en": "Origin filter (optional)",
     "de": "Quellbezirk-Filter (optional)"
-  },
-  "centrality": {
-    "en": "Centrality",
-    "de": "Zentralität"
   },
   "setting_zone_attribute_destination": {
     "en": "Destination filter (optional)",
@@ -134,10 +86,6 @@
   "setting_cfl_sub": {
     "en": "Connectivity Function Level",
     "de": "Verbindungsfunktionsstufe"
-  },
-  "setting_attribute_value_cfl": {
-    "en": "Centrality",
-    "de": "Zentralität"
   },
   "setting_attribute_value_CFL_sub": {
     "en": "Attribute value",
@@ -163,10 +111,6 @@
     "en": "",
     "de": ""
   },
-  "setting_create_in_visum": {
-    "en": "Export to Visum:",
-    "de": "Export nach Visum:"
-  },
   "setting_import_to_visum": {
     "en": "Both",
     "de": "Beide"
@@ -175,41 +119,9 @@
     "en": "Distance calculation: Euclidean",
     "de": "Distanzberechnung: Euklidisch"
   },
-  "tab_main": {
-    "en": "Application",
-    "de": "Anwendung"
-  },
-  "tab_log": {
-    "en": "Log Messages",
-    "de": "Log-Meldungen"
-  },
-  "dialog_language_select_message": {
-    "en": "Please select your preferred language",
-    "de": "Bitte wählen Sie Ihre bevorzugte Sprache"
-  },
-  "label_attr_cfl": {
-    "en": "Attribute CFL",
-    "de": "Attribut VFS"
-  },
-  "dialog_language_select_title": {
-    "en": "Select Language",
-    "de": "Sprache auswählen"
-  },
   "error_no_calculator_instance": {
     "en": "There is no calculator instance defined. Use Import Data first.",
     "de": "Es existiert keine Berechnungsinstanz. Verwende Zuerst."
-  },
-  "warn_net_file_import_error": {
-    "en": "Error importing the network file.",
-    "de": "Fehler beim Import der Netzdatei."
-  },
-  "file_exported_to_visum": {
-    "en": " Export completed for chosen CFL",
-    "de": " Export abgeschlossen für gewählte VFS."
-  },
-  "label_attr_zones_centrality": {
-    "en": "Zone attribute centrality",
-    "de": "Bezirke: Attr. Zentralität"
   },
   "cfl": {
     "en": "CFL",

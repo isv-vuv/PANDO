@@ -675,7 +675,6 @@ class DirectLineNetworkToolFrame(wx.Frame):
         root_sizer = wx.BoxSizer(wx.VERTICAL)
 
         # ---- Main content (directly inside panel, no redundant header or Notebook tab) ----
-        self.notebook = None
         self.tabMain = MainTab(self.panel, self.translator)
 
         # ---- Right PANDO action card ----
@@ -940,9 +939,7 @@ class DirectLineNetworkToolFrame(wx.Frame):
     #  and updates the status bar.
     #  @param event The event object.
     def event_reset(self, event):
-        if self.dln_calculator is None:
-            a = 1  # todo
-        else:
+        if self.dln_calculator is not None:
             self.dln_calculator.init_results()
 
         self.SetStatusText(self.translator.translate('status_results_deleted_may_reimport'))
@@ -1173,7 +1170,6 @@ class MainTab(wx.Panel):
 
         self.translator = translator
         # Initialize instance attributes for widgets and sizers that need to be updated
-        self.hbox1 = None
         self.gridbagsizer1 = None
         self.static_text_centrality = None
         self.static_text_origin = None
@@ -1182,14 +1178,12 @@ class MainTab(wx.Panel):
         self.static_text_attr_cfl = None
         self.static_text_exchange_fcn = None
         self.static_text_supply_fcn = None
-        self.static_text_visum_as = None
         self.static_text_dist_fcn_label = None
         self.btn_export_master = None # Ensure it's initialized
         self._box_zone_attrs = None
         self._box_cfl = None
         self._box_export = None
         self.static_text_status_header = None
-        self.status_labels = {}          # {cfl_key: wx.StaticText}
         self._cfl_status = {}            # {cfl_key: str}  internal state
         self.btn_calculate = None        # new Calculate button
 
@@ -1246,7 +1240,6 @@ class MainTab(wx.Panel):
             zone_grid.Add(col_box, 1, wx.EXPAND)
 
         zone_body.Add(zone_grid, 0, wx.EXPAND)
-        self.hbox1 = zone_wrap
 
         # ---- Card 2: CFL/VFS Settings (Visum-style table with multi-cell editing) ----
         cfl_wrap, cfl_card, self._box_cfl, self._gridbox_sizer = _make_pando_card(
@@ -1310,7 +1303,6 @@ class MainTab(wx.Panel):
         self.buttons_cfl_value = {}
         self.buttons_value_k_neighbor_cfl = {}
         self.buttons_value_n_supplier = {}
-        self.status_labels = {}
 
         cfl_num_font = self.cfl_grid.GetDefaultCellFont()
         cfl_num_font.SetWeight(wx.FONTWEIGHT_BOLD)
@@ -1383,7 +1375,6 @@ class MainTab(wx.Panel):
         export_wrap, export_card, self._box_export, self._export_sizer = _make_pando_card(
             self, self.translator.translate('export_to_visum_section')
         )
-        self.static_text_visum_as = None
 
         _btn_size = (185, 40)
         self.btn_export_mtx = _PandoButton(export_card, self.translator.translate('btn_export_mtx'), variant="secondary", height=40)
@@ -1734,121 +1725,6 @@ class MainTab(wx.Panel):
 
         self.Layout()
         self.Refresh()
-
-
-## @class LogTab
-#  @brief Specifies the tab that displays log messages.
-#
-#  The `LogTab` class creates and manages the log tab of the application, which displays
-#  log messages from the application. It sets up logging handlers to capture and display
-#  messages in a text control.
-class LogTab(wx.Panel):
-    ## Initializes the log tab panel.
-    #  @param parent The parent window that contains this panel.
-    def __init__(self, parent):
-        wx.Panel.__init__(self, parent)
-        vbox = wx.BoxSizer(wx.VERTICAL)
-        vbox.Add(wx.StaticText(self, -1, "Message-Log"), 0, wx.ALL | wx.CENTER, 5)
-        # self.multiText = wx.TextCtrl(panel, -1, "", style=wx.TE_MULTILINE)
-        # self.multiText.SetInsertionPoint(0)
-        #
-        # vbox2.Add(self.multiText, 2, wx.ALIGN_CENTER | wx.ALL, 20)
-        #
-
-        # ==== Logging =====
-        log_name = Path(__file__).name.replace(".py", ".log")
-        log_dir = Path(__file__).resolve().parent.parent / "log"
-        try:
-            visum_log_dir = Path(self.visum.GetPath(57)) if self.visum is not None else None
-            if visum_log_dir and visum_log_dir.is_dir():
-                log_dir = visum_log_dir
-        except Exception:
-            pass
-        try:
-            log_dir.mkdir(parents=True, exist_ok=True)
-            path_logfile = log_dir / log_name
-        except OSError:
-            path_logfile = Path(log_name)
-        self.logger = logging.getLogger()
-        self.logger.setLevel(logging.INFO)
-        logger_format = logging.Formatter("%(asctime)s %(levelname)s: %(message)s", datefmt="%d.%m.%Y %I:%M:%S %p")
-
-        # Clear any stale handlers (e.g. from prior runs in the same Visum Python session or
-        # StreamHandlers targeting Visum's redirected sys.stderr, which deadlocks wx.MainLoop).
-        for existing_h in self.logger.handlers[:]:
-            self.logger.removeHandler(existing_h)
-            try:
-                existing_h.close()
-            except Exception:
-                pass
-
-        # Output to Logfile & GUI Log-Tab (avoid sys.stderr StreamHandler inside Visum UI)
-        file_handler = logging.FileHandler(path_logfile, mode="w", encoding="utf-8")
-        file_handler.setFormatter(logger_format)
-        self.logger.addHandler(file_handler)
-
-        self.log = wx.TextCtrl(self, wx.ID_ANY, size=(700, 200),
-                               style=wx.TE_MULTILINE | wx.TE_READONLY | wx.HSCROLL | wx.EXPAND)
-        self.handler = WxTextCtrlHandler(self.log)
-        self.handler.setFormatter(logger_format)
-        self.logger.addHandler(self.handler)
-
-        vbox.Add(self.log, 1, wx.ALL | wx.EXPAND, 5)
-        self.SetSizer(vbox)
-
-        # Bind the panel destruction event to ensure cleanup
-        self.Bind(wx.EVT_WINDOW_DESTROY, self.on_close)
-
-    ## Handles the window destruction event.
-    #  Performs cleanup actions when the panel is destroyed, removing and closing log handlers.
-    #  @param event The window destruction event.
-    def on_close(self, event):
-        """ Perform any cleanup actions here """
-
-        # Remove and close the custom handler
-        self.logger.removeHandler(self.handler)
-        self.handler.close()
-
-        # Remove the file and stream handlers (optional if they need cleanup)
-        for handler in self.logger.handlers[:]:
-            if isinstance(handler, (logging.FileHandler, logging.StreamHandler)):
-                self.logger.removeHandler(handler)
-                handler.close()
-
-        event.Skip()  # Ensure the event propagates to the parent if needed
-
-    ## Destructor for the LogTab class.
-    #  Ensures the logger handler is removed when the object is destroyed.
-    def __del__(self):
-        self.logger.removeHandler(self.handler)
-
-
-    ## Updates the layout of the log tab.
-    #  @details This tab only needs to layout and refresh as it doesn't have dynamic text.
-    def refresh_gui_text(self):
-        # This tab only needs to layout and refresh as it doesn't have dynamic text.
-        self.Layout()
-        self.Refresh()
-
-
-## @class WxTextCtrlHandler
-#  @brief Handler for log commands that redirects log messages to a wxPython text control.
-#
-#  The `WxTextCtrlHandler` class is a custom logging handler that redirects log messages
-#  to a wxPython text control, allowing log messages to be displayed in the GUI.
-class WxTextCtrlHandler(logging.Handler):
-    ## Initializes the log handler.
-    #  @param ctrl The wxPython text control to which log messages will be redirected.
-    def __init__(self, ctrl):
-        logging.Handler.__init__(self)
-        self.ctrl = ctrl
-
-    ## Emits a log record to the text control.
-    #  @param record The log record to be emitted.
-    #  @details Formats the log record and writes it to the text control using CallAfter to ensure thread safety.
-    def emit(self, record):
-        s = self.format(record) + '\n'
-        wx.CallAfter(self.ctrl.WriteText, s)
 
 
 ## @class HelpPopUp

@@ -19,6 +19,7 @@
 
 import pandas as pd
 import logging
+import webbrowser
 import numpy as np
 from scipy.spatial import Delaunay
 from pathlib import Path
