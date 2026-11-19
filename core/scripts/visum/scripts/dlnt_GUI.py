@@ -240,8 +240,8 @@ class DirectLineNetworkToolFrame(wx.Frame):
         self.Raise()
         self.SetFocus()
 
-        # Auto-import data on startup
-        self.event_import_data(None)
+        # Auto-import data once the wx MainLoop is active
+        wx.CallAfter(self.event_import_data, None)
 
     ## Sets the properties of the main window.
     #  Configures window title, size, and initializes default values.
@@ -1354,23 +1354,5 @@ if __name__ == '__main__':
     )
     translator = Translator(_translations_path, language="en")
     app = wx.App()
-
-    # Show the splash *before* any heavy work.  The timer starts inside __init__
-    # but will only fire while the event loop is running (MainLoop or SafeYield).
-    splash = LoadingSplash()
-
-    # Defer the actual initialization via CallLater so that MainLoop() is already running when the heavy work starts.  This means the splash timer fires freely for the first 100 ms and then continues to fire at every wx.SafeYield() call that is placed inside the heavy init steps.
-    def _do_init():
-        global frame
-        try:
-            splash.set_hint("Loading Visum connection\u2026")
-            frame = DirectLineNetworkToolFrame(translator)
-            splash.set_hint("Ready.")
-        except Exception as exc:
-            logging.exception("Failed to initialize DirectLineNetworkToolFrame: %s", exc)
-            wx.MessageBox(f"Initialization failed:\n{exc}", "Error", wx.OK | wx.ICON_ERROR)
-        finally:
-            wx.CallAfter(splash.close)
-
-    wx.CallLater(100, _do_init)
+    frame = DirectLineNetworkToolFrame(translator)
     app.MainLoop()
