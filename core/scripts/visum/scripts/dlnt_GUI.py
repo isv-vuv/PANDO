@@ -57,6 +57,7 @@ for _p in (_SCRIPT_DIR, _PANDO_SCRIPTS_DIR, _PANDO_HELPER_DIR):
         sys.path.insert(0, str(_p))
 
 import wx
+import wx.grid
 import wx.html2
 import logging
 import json
@@ -284,7 +285,9 @@ def _make_pando_card(parent, title: str):
     title_lbl.SetForegroundColour(_PANDO_TEXT)
     card_sizer.Add(title_lbl, 0, wx.LEFT | wx.RIGHT | wx.TOP, 14)
 
-    divider = wx.Panel(card, size=(-1, 1))
+    divider = wx.Panel(card, size=(-1, 1), style=wx.NO_BORDER)
+    divider.SetMinSize((-1, 1))
+    divider.SetMaxSize((-1, 1))
     divider.SetBackgroundColour(_PANDO_BORDER_SOFT)
     card_sizer.Add(divider, 0, wx.EXPAND | wx.LEFT | wx.RIGHT | wx.TOP, 10)
 
@@ -295,6 +298,66 @@ def _make_pando_card(parent, title: str):
     wrap_sizer.Add(card, 1, wx.EXPAND | wx.ALL, 1)
     border_wrap.SetSizer(wrap_sizer)
     return border_wrap, card, title_lbl, content_sizer
+
+
+class _GridBoolProxy:
+    """Thin adapter exposing a CheckBox-like API backed by column 0 of a wx.grid.Grid."""
+
+    def __init__(self, grid: wx.grid.Grid, row: int, label: str):
+        self._grid = grid
+        self._row = row
+        self.Label = label
+
+    def IsChecked(self) -> bool:
+        return self._grid.GetCellValue(self._row, 0) == "1"
+
+    @property
+    def Value(self) -> int:
+        return 1 if self.IsChecked() else 0
+
+    def SetValue(self, val: bool):
+        self._grid.SetCellValue(self._row, 0, "1" if val else "")
+
+    def SetLabel(self, label: str):
+        self.Label = label
+
+
+class _GridIntProxy:
+    """Thin adapter exposing a SpinCtrl-like API backed by a numeric column of a wx.grid.Grid."""
+
+    def __init__(self, grid: wx.grid.Grid, row: int, col: int):
+        self._grid = grid
+        self._row = row
+        self._col = col
+        self._min = 0
+        self._max = 999999
+
+    @property
+    def Value(self) -> int:
+        try:
+            return int(float(self._grid.GetCellValue(self._row, self._col) or 0))
+        except (ValueError, TypeError):
+            return 0
+
+    def GetValue(self) -> int:
+        return self.Value
+
+    def SetValue(self, val: int):
+        clamped = max(self._min, min(self._max, int(val)))
+        self._grid.SetCellValue(self._row, self._col, str(clamped))
+
+    def SetRange(self, min_val: int, max_val: int):
+        self._min = int(min_val)
+        self._max = max(int(min_val), int(max_val))
+
+    def Enable(self, enable: bool = True):
+        self._grid.SetReadOnly(self._row, self._col, not bool(enable))
+        self._grid.SetCellBackgroundColour(
+            self._row, self._col, _PANDO_CARD if enable else _PANDO_DISABLED_BG
+        )
+        self._grid.SetCellTextColour(
+            self._row, self._col, _PANDO_TEXT if enable else _PANDO_DISABLED_FG
+        )
 
 
 # ---------------------------------------------------------------------------
@@ -601,7 +664,6 @@ class DirectLineNetworkToolFrame(wx.Frame):
         self.cb_cfl.SetValue("TypeNo")
         self.cb_origin.SetSelection(0)
         self.cb_destination.SetSelection(0)
-        self.cb_dist_fcn.SetValue("euclidean")
 
         self.SetStatusText(self.translator.translate('status_set_defaults'))
 
@@ -1075,71 +1137,75 @@ class MainTab(wx.Panel):
         zone_body.Add(zone_grid, 0, wx.EXPAND)
         self.hbox1 = zone_wrap
 
-        # ---- Card 2: CFL/VFS Settings (GridSizer for strictly equal-width columns) ----
+        # ---- Card 2: CFL/VFS Settings (Visum-style table with multi-cell editing) ----
         cfl_wrap, cfl_card, self._box_cfl, self._gridbox_sizer = _make_pando_card(
             self, self.translator.translate('cfl_vfs_settings')
         )
 
-        # Strictly equal-width 5-column GridSizer: 0=CFL, 1=AttrVal, 2=Exchange, 3=Supply, 4=Status
-        NUM_COLS = 5
-        self.gridbagsizer1 = wx.GridSizer(rows=7, cols=NUM_COLS, vgap=8, hgap=14)
-
+        self._cfl_keys = ["cfl_0", "cfl_1", "cfl_2", "cfl_3", "cfl_4", "cfl_5"]
         str_cfl = self.translator.translate('cfl')
 
-        # --- Two-tier header row (bold main title + smaller muted explanation underneath) ---
-        def _make_col_header(title_key: str, sub_key: str):
-            box = wx.BoxSizer(wx.VERTICAL)
-            t_lbl = wx.StaticText(cfl_card, -1, self.translator.translate(title_key))
-            t_font = t_lbl.GetFont()
-            t_font.SetPointSize(9)
-            t_font.SetWeight(wx.FONTWEIGHT_BOLD)
-            t_lbl.SetFont(t_font)
-            t_lbl.SetForegroundColour(_PANDO_TEXT)
+        self.cfl_grid = wx.grid.Grid(cfl_card)
+        self.cfl_grid.CreateGrid(len(self._cfl_keys), 6)
+        self.cfl_grid.EnableEditing(True)
+        self.cfl_grid.EnableDragRowSize(False)
+        self.cfl_grid.EnableDragColMove(False)
+        self.cfl_grid.SetRowLabelSize(0)
+        self.cfl_grid.SetColLabelSize(44)
+        self.cfl_grid.SetDefaultRowSize(32, True)
+        self.cfl_grid.SetGridLineColour(_PANDO_BORDER_SOFT)
+        self.cfl_grid.SetLabelBackgroundColour(_PANDO_BG)
+        self.cfl_grid.SetLabelTextColour(_PANDO_TEXT)
+        self.cfl_grid.SetSelectionBackground(wx.Colour(219, 234, 254))
+        self.cfl_grid.SetSelectionForeground(_PANDO_TEXT)
+        self.cfl_grid.SetDefaultCellBackgroundColour(_PANDO_CARD)
+        self.cfl_grid.SetDefaultCellTextColour(_PANDO_TEXT)
+        self.cfl_grid.SetDefaultCellAlignment(wx.ALIGN_CENTER, wx.ALIGN_CENTER)
 
-            s_lbl = wx.StaticText(cfl_card, -1, self.translator.translate(sub_key))
-            s_font = s_lbl.GetFont()
-            s_font.SetPointSize(8)
-            s_lbl.SetFont(s_font)
-            s_lbl.SetForegroundColour(_PANDO_MUTED)
+        lbl_font = self.cfl_grid.GetLabelFont()
+        lbl_font.SetPointSize(8)
+        lbl_font.SetWeight(wx.FONTWEIGHT_BOLD)
+        self.cfl_grid.SetLabelFont(lbl_font)
 
-            box.Add(t_lbl, 0, wx.BOTTOM, 2)
-            box.Add(s_lbl, 0)
-            self.gridbagsizer1.Add(box, 0, wx.EXPAND | wx.ALIGN_CENTER_VERTICAL)
-            return t_lbl, s_lbl
+        self._apply_grid_headers()
 
-        self.static_text_cfl_label, self.static_text_cfl_sub = _make_col_header('setting_cfl', 'setting_cfl_sub')
-        self.static_text_attr_cfl, self.static_text_attr_cfl_sub = _make_col_header('setting_attribute_value_CFL', 'setting_attribute_value_CFL_sub')
-        self.static_text_exchange_fcn, self.static_text_exchange_sub = _make_col_header('setting_exchange_function', 'setting_exchange_function_sub')
-        self.static_text_supply_fcn, self.static_text_supply_sub = _make_col_header('setting_supply_function', 'setting_supply_function_sub')
-        self.static_text_status_header, self.static_text_status_sub = _make_col_header('setting_status', 'setting_status_sub')
+        # Column widths: Active(54) + 5 balanced data columns
+        for col_idx, width in enumerate((56, 130, 145, 165, 165, 130)):
+            self.cfl_grid.SetColSize(col_idx, width)
 
-        # --- CFL rows (rows 1-6) ---
-        self.button_cfl_active = {
-            "cfl_0": wx.CheckBox(cfl_card, -1, f"{str_cfl} 0"),
-            "cfl_1": wx.CheckBox(cfl_card, -1, f"{str_cfl} 1"),
-            "cfl_2": wx.CheckBox(cfl_card, -1, f"{str_cfl} 2"),
-            "cfl_3": wx.CheckBox(cfl_card, -1, f"{str_cfl} 3"),
-            "cfl_4": wx.CheckBox(cfl_card, -1, f"{str_cfl} 4"),
-            "cfl_5": wx.CheckBox(cfl_card, -1, f"{str_cfl} 5"),
-        }
-        self.buttons_cfl_value = {k: wx.SpinCtrl(cfl_card, -1, "") for k in self.button_cfl_active}
-        self.buttons_value_k_neighbor_cfl = {k: wx.SpinCtrl(cfl_card, -1, "") for k in self.button_cfl_active}
-        self.buttons_value_n_supplier = {k: wx.SpinCtrl(cfl_card, -1, "") for k in self.button_cfl_active}
+        self.button_cfl_active = {}
+        self.buttons_cfl_value = {}
+        self.buttons_value_k_neighbor_cfl = {}
+        self.buttons_value_n_supplier = {}
+        self.status_labels = {}
 
-        # Status labels + internal state
-        for cfl_key in self.button_cfl_active:
+        for row_idx, cfl_key in enumerate(self._cfl_keys):
+            # Col 0: Active checkbox
+            self.cfl_grid.SetCellRenderer(row_idx, 0, wx.grid.GridCellBoolRenderer())
+            self.cfl_grid.SetCellEditor(row_idx, 0, wx.grid.GridCellBoolEditor())
+            self.cfl_grid.SetCellValue(row_idx, 0, "")
+            # Col 1: Tier label (read-only)
+            self.cfl_grid.SetCellValue(row_idx, 1, f"{str_cfl} {row_idx}")
+            self.cfl_grid.SetReadOnly(row_idx, 1, True)
+            self.cfl_grid.SetCellAlignment(row_idx, 1, wx.ALIGN_LEFT, wx.ALIGN_CENTER)
+            # Cols 2, 3, 4: Numeric inputs (Centrality, Exchange, Supply)
+            for col_idx in (2, 3, 4):
+                self.cfl_grid.SetCellEditor(row_idx, col_idx, wx.grid.GridCellNumberEditor(0, 999999))
+            # Col 5: Status (read-only)
+            self.cfl_grid.SetReadOnly(row_idx, 5, True)
+
+            self.button_cfl_active[cfl_key] = _GridBoolProxy(self.cfl_grid, row_idx, f"{str_cfl} {row_idx}")
+            self.buttons_cfl_value[cfl_key] = _GridIntProxy(self.cfl_grid, row_idx, 2)
+            self.buttons_value_k_neighbor_cfl[cfl_key] = _GridIntProxy(self.cfl_grid, row_idx, 3)
+            self.buttons_value_n_supplier[cfl_key] = _GridIntProxy(self.cfl_grid, row_idx, 4)
+
             self._cfl_status[cfl_key] = 'inactive'
-            lbl = wx.StaticText(cfl_card, -1, self.translator.translate('status_inactive'))
-            lbl.SetForegroundColour(_PANDO_MUTED)
-            self.status_labels[cfl_key] = lbl
+            self._set_row_status(cfl_key, 'inactive')
+            self.buttons_cfl_value[cfl_key].Enable(False)
+            self.buttons_value_k_neighbor_cfl[cfl_key].Enable(False)
+            self.buttons_value_n_supplier[cfl_key].Enable(False)
 
-        for cfl_key in self.button_cfl_active:
-            self.button_cfl_active[cfl_key].SetForegroundColour(_PANDO_TEXT)
-            self.gridbagsizer1.Add(self.button_cfl_active[cfl_key], 0, wx.EXPAND | wx.ALIGN_CENTER_VERTICAL)
-            self.gridbagsizer1.Add(self.buttons_cfl_value[cfl_key], 0, wx.EXPAND | wx.ALIGN_CENTER_VERTICAL)
-            self.gridbagsizer1.Add(self.buttons_value_k_neighbor_cfl[cfl_key], 0, wx.EXPAND | wx.ALIGN_CENTER_VERTICAL)
-            self.gridbagsizer1.Add(self.buttons_value_n_supplier[cfl_key], 0, wx.EXPAND | wx.ALIGN_CENTER_VERTICAL)
-            self.gridbagsizer1.Add(self.status_labels[cfl_key], 0, wx.EXPAND | wx.ALIGN_CENTER_VERTICAL)
+        self.cfl_grid.SetMinSize((795, 44 + 6 * 32 + 6))
 
         # Share references with TopLevelParent
         self.TopLevelParent.button_cfl_active = self.button_cfl_active
@@ -1147,39 +1213,27 @@ class MainTab(wx.Panel):
         self.TopLevelParent.buttons_value_k_neighbor_cfl = self.buttons_value_k_neighbor_cfl
         self.TopLevelParent.buttons_value_n_supplier = self.buttons_value_n_supplier
 
-        # Initially disable all CFL SpinCtrls – enabled when checkbox is ticked
-        for cfl_key in self.button_cfl_active:
-            self.buttons_cfl_value[cfl_key].Enable(False)
-            self.buttons_value_k_neighbor_cfl[cfl_key].Enable(False)
-            self.buttons_value_n_supplier[cfl_key].Enable(False)
+        self._gridbox_sizer.Add(self.cfl_grid, 1, wx.EXPAND | wx.BOTTOM, 10)
 
-        self._gridbox_sizer.Add(self.gridbagsizer1, 1, wx.EXPAND | wx.BOTTOM, 10)
-
-        # Divider above bottom strip
-        calc_div = wx.Panel(cfl_card, size=(-1, 1))
-        calc_div.SetBackgroundColour(_PANDO_BORDER)
+        # Clean 1px hairline divider above bottom strip
+        calc_div = wx.Panel(cfl_card, size=(-1, 1), style=wx.NO_BORDER)
+        calc_div.SetMinSize((-1, 1))
+        calc_div.SetMaxSize((-1, 1))
+        calc_div.SetBackgroundColour(_PANDO_BORDER_SOFT)
         self._gridbox_sizer.Add(calc_div, 0, wx.EXPAND | wx.BOTTOM, 10)
 
-        # --- Bottom strip: distance function + PANDO green Calculate button ---
-        self.cb_dist_fcn = wx.ComboBox(cfl_card, size=(160, 30),
-                                       choices=["euclidean"],
-                                       style=wx.CB_DROPDOWN | wx.CB_READONLY | wx.CB_SORT)
-        self.cb_dist_fcn.Label = 'attr_dist_fcn'
-        self.TopLevelParent.cb_dist_fcn = self.cb_dist_fcn
-
+        # --- Bottom strip: compact muted distance info text + PANDO green Calculate button ---
         self.static_text_dist_fcn_label = wx.StaticText(cfl_card, -1, self.translator.translate('label_distance_calculation_function'))
-        self.static_text_dist_fcn_label.SetForegroundColour(_PANDO_BODY)
+        d_font = self.static_text_dist_fcn_label.GetFont()
+        d_font.SetPointSize(8)
+        self.static_text_dist_fcn_label.SetFont(d_font)
+        self.static_text_dist_fcn_label.SetForegroundColour(_PANDO_MUTED)
 
         self.btn_calculate = _PandoButton(cfl_card, self.translator.translate('btn_calculate'), variant="green", height=40)
         self.btn_calculate.SetMinSize((200, 40))
 
-        _dist_sizer = wx.BoxSizer(wx.HORIZONTAL)
-        _dist_sizer.Add(self.static_text_dist_fcn_label, 0, wx.ALIGN_CENTER_VERTICAL | wx.RIGHT, 8)
-        _dist_sizer.Add(self.cb_dist_fcn, 0, wx.ALIGN_CENTER_VERTICAL)
-        _dist_sizer.AddStretchSpacer(1)
-
         _bottom_strip = wx.BoxSizer(wx.HORIZONTAL)
-        _bottom_strip.Add(_dist_sizer, 1, wx.EXPAND)
+        _bottom_strip.Add(self.static_text_dist_fcn_label, 1, wx.ALIGN_CENTER_VERTICAL)
         _bottom_strip.Add(self.btn_calculate, 0, wx.ALIGN_CENTER_VERTICAL)
         self._gridbox_sizer.Add(_bottom_strip, 0, wx.EXPAND)
 
@@ -1227,90 +1281,119 @@ class MainTab(wx.Panel):
     ## Binds event handlers to UI elements in the main tab.
     #  Sets up all event bindings for buttons and combo boxes in the main tab,
     #  connecting them to the appropriate event handlers in the parent frame.
-    def __bind_events__(self):
+    def _apply_grid_headers(self):
+        def _fmt(title_key, sub_key):
+            t = self.translator.translate(title_key)
+            s = self.translator.translate(sub_key) if sub_key else ""
+            return f"{t}\n{s}" if s else t
 
+        self.cfl_grid.SetColLabelValue(0, "")
+        self.cfl_grid.SetColLabelValue(1, _fmt('setting_cfl', 'setting_cfl_sub'))
+        self.cfl_grid.SetColLabelValue(2, _fmt('setting_attribute_value_CFL', 'setting_attribute_value_CFL_sub'))
+        self.cfl_grid.SetColLabelValue(3, _fmt('setting_exchange_function', 'setting_exchange_function_sub'))
+        self.cfl_grid.SetColLabelValue(4, _fmt('setting_supply_function', 'setting_supply_function_sub'))
+        self.cfl_grid.SetColLabelValue(5, _fmt('setting_status', 'setting_status_sub'))
+
+    def __bind_events__(self):
         self.btn_export_mtx.Bind(wx.EVT_BUTTON, self.TopLevelParent.event_export_mtx_selected)
         self.btn_export_net.Bind(wx.EVT_BUTTON, self.TopLevelParent.event_export_net_selected)
-
         self.btn_export_master.Bind(wx.EVT_BUTTON, self.TopLevelParent.event_export_master)
-
-        # Calculate button
         self.btn_calculate.Bind(wx.EVT_BUTTON, self.on_calculate)
 
         self.cb_cfl.Bind(wx.EVT_COMBOBOX, self.TopLevelParent.event_choose_attr)
         self.cb_origin.Bind(wx.EVT_COMBOBOX, self.TopLevelParent.event_choose_attr)
         self.cb_destination.Bind(wx.EVT_COMBOBOX, self.TopLevelParent.event_choose_attr)
-        self.cb_dist_fcn.Bind(wx.EVT_COMBOBOX, self._on_settings_changed)
-        self.cb_dist_fcn.Bind(wx.EVT_COMBOBOX, self.TopLevelParent.event_choose_attr)
 
-        # Enable/disable SpinCtrls based on checkbox state; also mark status outdated on change
-        for cfl_key, checkbox in self.button_cfl_active.items():
-            checkbox.Bind(wx.EVT_CHECKBOX, self.on_cfl_checkbox_toggle)
-        for cfl_key in self.button_cfl_active:
-            for spin in (self.buttons_cfl_value[cfl_key],
-                         self.buttons_value_k_neighbor_cfl[cfl_key],
-                         self.buttons_value_n_supplier[cfl_key]):
-                spin.cfl_key = cfl_key   # attach key as attribute
-                spin.Bind(wx.EVT_SPINCTRL, self._on_spin_changed)
+        self.cfl_grid.Bind(wx.grid.EVT_GRID_CELL_LEFT_CLICK, self._on_grid_cell_click)
+        self.cfl_grid.Bind(wx.grid.EVT_GRID_CELL_CHANGED, self._on_grid_cell_changed)
+        self.cfl_grid.Bind(wx.EVT_SIZE, self._on_grid_resize)
 
+    def _on_grid_resize(self, event):
+        avail = self.cfl_grid.GetClientSize().width - 56 - 2
+        if avail > 200:
+            col_w = avail // 5
+            for c in range(1, 6):
+                self.cfl_grid.SetColSize(c, col_w)
+        event.Skip()
 
-    ## Enables or disables the three SpinCtrl fields for a CFL row based on its checkbox state.
-    #  @param event The checkbox event. The event object's GetEventObject() identifies which checkbox fired.
-    def on_cfl_checkbox_toggle(self, event):
-        checkbox = event.GetEventObject()
-        cfl_key = next((k for k, cb in self.button_cfl_active.items() if cb is checkbox), None)
-        if cfl_key is None:
-            return
-        enabled = checkbox.IsChecked()
+    def _selected_cells(self) -> list[tuple[int, int]]:
+        cells: set[tuple[int, int]] = set(self.cfl_grid.GetSelectedCells())
+        for tl, br in zip(self.cfl_grid.GetSelectionBlockTopLeft(), self.cfl_grid.GetSelectionBlockBottomRight()):
+            for r in range(tl[0], br[0] + 1):
+                for c in range(tl[1], br[1] + 1):
+                    cells.add((r, c))
+        return sorted(cells)
+
+    def _toggle_row_active(self, row: int, enabled: bool):
+        cfl_key = self._cfl_keys[row]
+        self.cfl_grid.SetCellValue(row, 0, "1" if enabled else "")
         self.buttons_cfl_value[cfl_key].Enable(enabled)
         self.buttons_value_k_neighbor_cfl[cfl_key].Enable(enabled)
         self.buttons_value_n_supplier[cfl_key].Enable(enabled)
-        # Update status
         if enabled:
-            # Only mark as not-calculated if it was inactive before
             if self._cfl_status[cfl_key] == 'inactive':
                 self._set_row_status(cfl_key, 'not_calculated')
         else:
             self._set_row_status(cfl_key, 'inactive')
-        self._refresh_export_button_state()
-        event.Skip()
 
-    ## Marks a row as outdated when a SpinCtrl value is changed after calculation.
-    def _on_spin_changed(self, event):
-        spin = event.GetEventObject()
-        cfl_key = getattr(spin, 'cfl_key', None)
-        if cfl_key and self._cfl_status.get(cfl_key) in ('calculated', 'exported'):
-            self._set_row_status(cfl_key, 'outdated')
+    def _on_grid_cell_click(self, event):
+        row, col = event.GetRow(), event.GetCol()
+        if col == 0 and 0 <= row < len(self._cfl_keys):
+            new_state = not (self.cfl_grid.GetCellValue(row, 0) == "1")
+            sel = self._selected_cells()
+            target_rows = sorted({r for r, c in sel if c == 0}) if (row, 0) in sel and len(sel) > 1 else [row]
+            for r in target_rows:
+                self._toggle_row_active(r, new_state)
             self._refresh_export_button_state()
+            self.cfl_grid.ForceRefresh()
+            return
         event.Skip()
 
-    ## Marks all active rows as outdated when distance function changes.
-    def _on_settings_changed(self, event):
-        for cfl_key, status in self._cfl_status.items():
-            if status in ('calculated', 'exported'):
-                self._set_row_status(cfl_key, 'outdated')
-        self._refresh_export_button_state()
+    def _on_grid_cell_changed(self, event):
+        row, col = event.GetRow(), event.GetCol()
+        if col == 0:
+            self._toggle_row_active(row, self.cfl_grid.GetCellValue(row, 0) == "1")
+            self._refresh_export_button_state()
+            self.cfl_grid.ForceRefresh()
+            return
+        if col in (2, 3, 4):
+            val_str = self.cfl_grid.GetCellValue(row, col).strip()
+            try:
+                val_int = max(0, int(float(val_str)))
+            except (ValueError, TypeError):
+                val_int = 0
+            # Visum-style multi-cell fill: if multiple editable numeric cells are selected, apply value to all of them
+            sel = self._selected_cells()
+            targets = [(r, c) for r, c in sel if c in (2, 3, 4) and not self.cfl_grid.IsReadOnly(r, c)]
+            if (row, col) not in targets:
+                targets.append((row, col))
+            for r, c in targets:
+                self.cfl_grid.SetCellValue(r, c, str(val_int))
+                cfl_key = self._cfl_keys[r]
+                if self._cfl_status.get(cfl_key) in ('calculated', 'exported'):
+                    self._set_row_status(cfl_key, 'outdated')
+            self._refresh_export_button_state()
+            self.cfl_grid.ForceRefresh()
         event.Skip()
 
     ## Performs the calculation and updates status labels.
     def on_calculate(self, event):
         self.TopLevelParent.event_calculate(event)
-        # Mark all active (non-inactive) rows as calculated
         for cfl_key, cb in self.button_cfl_active.items():
             if cb.IsChecked():
                 self._set_row_status(cfl_key, 'calculated')
         self._refresh_export_button_state()
 
-    ## Sets the status of a single CFL row and updates its label colour.
+    ## Sets the status of a single CFL row and updates its cell colour.
     def _set_row_status(self, cfl_key, status):
         self._cfl_status[cfl_key] = status
-        lbl = self.status_labels[cfl_key]
+        row_idx = self._cfl_keys.index(cfl_key)
         _colors = {
             'not_calculated': wx.Colour(180, 80, 0),
-            'calculated':     wx.Colour(0, 140, 0),
+            'calculated':     wx.Colour(5, 150, 105),
             'outdated':       wx.Colour(180, 130, 0),
-            'exported':       wx.Colour(0, 100, 180),
-            'inactive':       wx.Colour(150, 150, 150),
+            'exported':       _PANDO_BLUE,
+            'inactive':       _PANDO_MUTED,
         }
         _keys = {
             'not_calculated': 'status_not_calculated',
@@ -1319,9 +1402,9 @@ class MainTab(wx.Panel):
             'exported':       'status_exported',
             'inactive':       'status_inactive',
         }
-        lbl.SetLabel(self.translator.translate(_keys[status]))
-        lbl.SetForegroundColour(_colors.get(status, wx.Colour(0, 0, 0)))
-        lbl.Refresh()
+        self.cfl_grid.SetCellValue(row_idx, 5, self.translator.translate(_keys[status]))
+        self.cfl_grid.SetCellTextColour(row_idx, 5, _colors.get(status, _PANDO_TEXT))
+        self.cfl_grid.ForceRefresh()
 
     ## Enables or greys-out the export buttons depending on whether all active rows are 'calculated' or 'exported'.
     def _refresh_export_button_state(self):
@@ -1347,41 +1430,26 @@ class MainTab(wx.Panel):
 
     ## Updates all text elements in the main tab to the current language.
     def refresh_gui_text(self):
-        # Update StaticBox labels
         self._box_zone_attrs.SetLabel(self.translator.translate('zone_attributes'))
         self._box_cfl.SetLabel(self.translator.translate('cfl_vfs_settings'))
         self._box_export.SetLabel(self.translator.translate('export_to_visum_section'))
 
-        # Update StaticText widgets
         self.static_text_centrality.SetLabel(self.translator.translate('setting_zone_attribute_centrality'))
         self.static_text_origin.SetLabel(self.translator.translate('setting_zone_attribute_origin'))
         self.static_text_destination.SetLabel(self.translator.translate('setting_zone_attribute_destination'))
-        self.static_text_cfl_label.SetLabel(self.translator.translate('setting_cfl'))
-        self.static_text_cfl_sub.SetLabel(self.translator.translate('setting_cfl_sub'))
-        self.static_text_attr_cfl.SetLabel(self.translator.translate('setting_attribute_value_CFL'))
-        self.static_text_attr_cfl_sub.SetLabel(self.translator.translate('setting_attribute_value_CFL_sub'))
-        self.static_text_exchange_fcn.SetLabel(self.translator.translate('setting_exchange_function'))
-        self.static_text_exchange_sub.SetLabel(self.translator.translate('setting_exchange_function_sub'))
-        self.static_text_supply_fcn.SetLabel(self.translator.translate('setting_supply_function'))
-        self.static_text_supply_sub.SetLabel(self.translator.translate('setting_supply_function_sub'))
-        self.static_text_status_header.SetLabel(self.translator.translate('setting_status'))
-        self.static_text_status_sub.SetLabel(self.translator.translate('setting_status_sub'))
         self.static_text_dist_fcn_label.SetLabel(self.translator.translate('label_distance_calculation_function'))
 
-        # Update Calculate button
-        self.btn_calculate.SetLabel(self.translator.translate('btn_calculate'))
+        self._apply_grid_headers()
+        str_cfl = self.translator.translate('cfl')
+        for row_idx, key in enumerate(self._cfl_keys):
+            lbl = f"{str_cfl} {row_idx}"
+            self.cfl_grid.SetCellValue(row_idx, 1, lbl)
+            self.button_cfl_active[key].SetLabel(lbl)
 
-        # Update CheckBox labels
-        for key, checkbox in self.button_cfl_active.items():
-            str_cfl = self.translator.translate('cfl')
-            no_cfl = int(key.split('_')[1])
-            checkbox.SetLabel(f"{str_cfl} {no_cfl}")
-
-        # Update status labels to current language keeping their current state
         for cfl_key, status in self._cfl_status.items():
             self._set_row_status(cfl_key, status)
 
-        # Update master export button label
+        self.btn_calculate.SetLabel(self.translator.translate('btn_calculate'))
         self.btn_export_master.SetLabel(self.translator.translate('setting_import_to_visum'))
         self.btn_export_mtx.SetLabel(self.translator.translate('btn_export_mtx'))
         self.btn_export_net.SetLabel(self.translator.translate('btn_export_net'))
@@ -1569,116 +1637,6 @@ class HelpPopUp(wx.Frame):
         self.SetSizer(main_sizer)
         self.Show()
 
-
-
-## @class LoadingSplash
-#a loading screen to show the tool is responding
-class LoadingSplash(wx.Frame):
-
-    # ---- colours & geometry ------------------------------------------------
-    _BG        = wx.Colour(28,  28,  34)
-    _BAR_BG    = wx.Colour(55,  55,  65)
-    _BAR_FG    = wx.Colour(70, 130, 220)
-    _WHITE     = wx.Colour(255, 255, 255)
-    _GREY      = wx.Colour(160, 160, 175)
-    _HINT      = wx.Colour(100, 100, 115)
-
-    W, H       = 440, 210
-    BAR_W      = 360
-    BAR_H      = 12
-    BAR_X      = (W - BAR_W) // 2
-    BAR_Y      = 138
-    BLOCK_LEN  = 90
-    STEP_PX    = 5
-
-    ## Initializes and immediately paints the loading splash screen.
-    def __init__(self):
-        super().__init__(None,
-                         style=wx.BORDER_NONE | wx.STAY_ON_TOP | wx.FRAME_NO_TASKBAR)
-        self.SetClientSize((self.W, self.H))
-        self.Centre()
-
-        self._pos  = 0
-        self._hint = "Starting up\u2026"
-
-        self.Bind(wx.EVT_PAINT,            self._on_paint)
-        self.Bind(wx.EVT_ERASE_BACKGROUND, lambda e: None)  # prevent grey flash
-
-
-        self._timer = wx.Timer(self)
-        self.Bind(wx.EVT_TIMER, self._on_timer, self._timer)
-        self._timer.Start(40)
-
-
-        self.Show()
-        self.Refresh()
-        self.Update()
-        wx.SafeYield()
-
-    # -----------------------------------------------------------------------
-    def _on_timer(self, _event):
-        """Advance the bar position and request a repaint on every tick."""
-        self._pos = (self._pos + self.STEP_PX) % (self.BAR_W + self.BLOCK_LEN)
-        self.Refresh()
-        self.Update()
-
-    # -----------------------------------------------------------------------
-    def _on_paint(self, _event):
-        """Draw the entire splash content via DC """
-        dc = wx.PaintDC(self)
-        w  = self.W
-
-        # Background
-        dc.SetBackground(wx.Brush(self._BG))
-        dc.Clear()
-
-        # Title
-        dc.SetFont(wx.Font(15, wx.FONTFAMILY_DEFAULT,
-                           wx.FONTSTYLE_NORMAL, wx.FONTWEIGHT_BOLD))
-        dc.SetTextForeground(self._WHITE)
-        title = "Direct Line Network Tool"
-        dc.DrawText(title, (w - dc.GetTextExtent(title)[0]) // 2, 28)
-
-        # Subtitle
-        dc.SetFont(wx.Font(10, wx.FONTFAMILY_DEFAULT,
-                           wx.FONTSTYLE_NORMAL, wx.FONTWEIGHT_NORMAL))
-        dc.SetTextForeground(self._GREY)
-        sub = "Initializing, please wait\u2026"
-        dc.DrawText(sub, (w - dc.GetTextExtent(sub)[0]) // 2, 66)
-
-        # Bar track
-        dc.SetPen(wx.TRANSPARENT_PEN)
-        dc.SetBrush(wx.Brush(self._BAR_BG))
-        dc.DrawRoundedRectangle(self.BAR_X, self.BAR_Y, self.BAR_W, self.BAR_H, 6)
-
-        # Animated gliding block
-        block_x = self.BAR_X + self._pos - self.BLOCK_LEN
-        clip_x  = max(block_x, self.BAR_X)
-        clip_w  = min(block_x + self.BLOCK_LEN, self.BAR_X + self.BAR_W) - clip_x
-        if clip_w > 0:
-            dc.SetBrush(wx.Brush(self._BAR_FG))
-            dc.DrawRoundedRectangle(clip_x, self.BAR_Y, clip_w, self.BAR_H, 6)
-
-        # Hint text (current loading phase)
-        dc.SetFont(wx.Font(8, wx.FONTFAMILY_DEFAULT,
-                           wx.FONTSTYLE_NORMAL, wx.FONTWEIGHT_NORMAL))
-        dc.SetTextForeground(self._HINT)
-        dc.DrawText(self._hint,
-                    (w - dc.GetTextExtent(self._hint)[0]) // 2,
-                    self.BAR_Y + self.BAR_H + 14)
-
-
-
-    #  @param text Short description of the current loading phase.
-    def set_hint(self, text: str):
-        self._hint = text
-        self.Refresh()
-        self.Update()
-
-    ## Stops the timer and destroys the splash window.
-    def close(self):
-        self._timer.Stop()
-        self.Destroy()
 
 
 if __name__ == '__main__':

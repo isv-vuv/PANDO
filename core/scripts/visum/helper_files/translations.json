@@ -172,8 +172,8 @@
     "de": "Beide"
   },
   "label_distance_calculation_function": {
-    "en": "function for distance calculation",
-    "de": "Funktion Distanzberechnung"
+    "en": "Distance calculation: Euclidean",
+    "de": "Distanzberechnung: Euklidisch"
   },
   "tab_main": {
     "en": "Application",
