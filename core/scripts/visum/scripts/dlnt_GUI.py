@@ -155,7 +155,9 @@ class _PandoButton(wx.Panel):
         self._enabled = True
         self.SetBackgroundStyle(wx.BG_STYLE_PAINT)
         self.SetMinSize((-1, height))
-        self.SetCursor(wx.Cursor(wx.CURSOR_HAND))
+        self._cursor_hand = wx.Cursor(wx.CURSOR_HAND)
+        self._cursor_arrow = wx.Cursor(wx.CURSOR_ARROW)
+        self.SetCursor(self._cursor_hand)
 
         self.Bind(wx.EVT_PAINT, self._on_paint)
         self.Bind(wx.EVT_ENTER_WINDOW, self._on_enter)
@@ -171,8 +173,12 @@ class _PandoButton(wx.Panel):
         return self._label
 
     def Enable(self, enable: bool = True):
-        self._enabled = bool(enable)
-        self.SetCursor(wx.Cursor(wx.CURSOR_HAND if self._enabled else wx.CURSOR_ARROW))
+        new_state = bool(enable)
+        self._enabled = new_state
+        try:
+            self.SetCursor(self._cursor_hand if self._enabled else self._cursor_arrow)
+        except Exception:
+            pass
         super().Enable(self._enabled)
         self.Refresh()
         return True
@@ -787,8 +793,11 @@ class DirectLineNetworkToolFrame(wx.Frame):
             self.set_progress(0, 1, f"Calculation failed: {exc}")
             wx.MessageBox(f"Calculation failed:\n{exc}", "Error", wx.OK | wx.ICON_ERROR)
         finally:
-            if wx.IsBusy():
-                wx.EndBusyCursor()
+            try:
+                if wx.IsBusy():
+                    wx.EndBusyCursor()
+            except Exception:
+                pass
             for handler in logging.getLogger().handlers:
                 try:
                     handler.flush()
@@ -844,8 +853,11 @@ class DirectLineNetworkToolFrame(wx.Frame):
             self.SetStatusText(f"Import failed: {exc}")
             wx.MessageBox(f"Data import failed:\n{exc}", "Error", wx.OK | wx.ICON_ERROR)
         finally:
-            if wx.IsBusy():
-                wx.EndBusyCursor()
+            try:
+                if wx.IsBusy():
+                    wx.EndBusyCursor()
+            except Exception:
+                pass
             for handler in logging.getLogger().handlers:
                 try:
                     handler.flush()
@@ -896,8 +908,11 @@ class DirectLineNetworkToolFrame(wx.Frame):
             self.set_progress(0, 1, f"Export failed: {exc}")
             wx.MessageBox(f"Export failed:\n{exc}", "Error", wx.OK | wx.ICON_ERROR)
         finally:
-            if wx.IsBusy():
-                wx.EndBusyCursor()
+            try:
+                if wx.IsBusy():
+                    wx.EndBusyCursor()
+            except Exception:
+                pass
             for handler in logging.getLogger().handlers:
                 try:
                     handler.flush()
@@ -932,8 +947,11 @@ class DirectLineNetworkToolFrame(wx.Frame):
             self.set_progress(0, 1, f"Export failed: {exc}")
             wx.MessageBox(f"Matrix export failed:\n{exc}", "Error", wx.OK | wx.ICON_ERROR)
         finally:
-            if wx.IsBusy():
-                wx.EndBusyCursor()
+            try:
+                if wx.IsBusy():
+                    wx.EndBusyCursor()
+            except Exception:
+                pass
             for handler in logging.getLogger().handlers:
                 try:
                     handler.flush()
@@ -965,8 +983,11 @@ class DirectLineNetworkToolFrame(wx.Frame):
             self.set_progress(0, 1, f"Export failed: {exc}")
             wx.MessageBox(f"Link network export failed:\n{exc}", "Error", wx.OK | wx.ICON_ERROR)
         finally:
-            if wx.IsBusy():
-                wx.EndBusyCursor()
+            try:
+                if wx.IsBusy():
+                    wx.EndBusyCursor()
+            except Exception:
+                pass
             for handler in logging.getLogger().handlers:
                 try:
                     handler.flush()
