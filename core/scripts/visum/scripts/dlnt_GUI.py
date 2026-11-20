@@ -235,8 +235,14 @@ class _PandoButton(wx.Panel):
                 font.SetWeight(wx.FONTWEIGHT_BOLD)
             dc.SetFont(font)
             dc.SetTextForeground(fg)
-            tw, th = dc.GetTextExtent(self._label)
-            dc.DrawText(self._label, int((w - tw) / 2), int((h - th) / 2))
+            lines = self._label.splitlines() or [""]
+            extents = [dc.GetTextExtent(line) for line in lines]
+            line_gap = 2
+            total_h = sum(th for _, th in extents) + line_gap * max(0, len(lines) - 1)
+            y = int((h - total_h) / 2)
+            for line, (tw, th) in zip(lines, extents):
+                dc.DrawText(line, int((w - tw) / 2), y)
+                y += th + line_gap
         except Exception:
             pass
 

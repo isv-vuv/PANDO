@@ -29,11 +29,11 @@
   },
   "toolbar_filter_inserted_links": {
     "en": "Filter inserted links",
-    "de": "Filtern der\neingefügten Strecken"
+    "de": "Eingefügte Strecken filtern"
   },
   "toolbar_delete_inserted_links": {
     "en": "Delete inserted links",
-    "de": "Löschen der\neingefügten Strecken"
+    "de": "Eingefügte Strecken löschen"
   },
   "status_set_defaults": {
     "en": "Set Default Configuration",
