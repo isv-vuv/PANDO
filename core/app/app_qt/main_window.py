@@ -336,7 +336,7 @@ class UrbanActQtMainWindow(BaseMainWindow):
         )
 
     def _set_step1_search_enabled(self, enabled: bool) -> None:
-        if not isinstance(self._current_step_widget, Step1SearchWidget):
+        if not isinstance(self._current_step_widget, SearchStepWidget):
             return
         try:
             self._current_step_widget.set_search_enabled(enabled)

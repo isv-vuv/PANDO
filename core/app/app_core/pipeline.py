@@ -11,7 +11,7 @@ from dataclasses import dataclass
 from datetime import datetime
 from pathlib import Path
 from threading import Event
-from typing import Callable, Mapping, Optional
+from typing import Any, Callable, Mapping, Optional
 
 from core.app.app_core.geo import get_utm_epsg
 from core.app.app_core.grid import restore_grid_geometries
