@@ -342,15 +342,15 @@ class GridAreaStepWidget(_Q_WIDGET_BASE):
             "PA": self.localizer.get_string("step3_mode_pa", default="Planungsraum (PA)"),
             "IA1": self.localizer.get_string("step3_mode_ia1", default="Einflussraum 1 (IA1)"),
             "IA2": self.localizer.get_string("step3_mode_ia2", default="Einflussraum 2 (IA2)"),
-            "OA": self.localizer.get_string("step3_mode_oa", default="Außenraum (EA)"),
+            "EA": self.localizer.get_string("step3_mode_oa", default="Außenraum (EA)"),
         }
         mode_colors = {
             "PA": "#008080",
             "IA1": "#FF8C00",
             "IA2": "#8A2BE2",
-            "OA": "#64748B",
+            "EA": "#64748B",
         }
-        all_modes = list(AREA_MODES) + ["OA"]
+        all_modes = list(AREA_MODES) + ["EA"]
         for mode in all_modes:
             radio = QtWidgets.QRadioButton(mode_labels.get(mode, mode), area_box)
             radio.setProperty("area_mode", mode)
@@ -395,7 +395,7 @@ class GridAreaStepWidget(_Q_WIDGET_BASE):
         self.oa_help_label.setWordWrap(True)
         self.oa_help_label.setStyleSheet("color: #475569; font-size: 11px; line-height: 1.4; padding: 2px 4px 6px 22px;")
         area_layout.addWidget(self.oa_help_label)
-        self.oa_help_label.setVisible(self.current_mode == "OA")
+        self.oa_help_label.setVisible(self.current_mode == "EA")
 
         self.mode_group.buttonClicked.connect(self._mode_changed)
         form_layout.addWidget(area_box)
@@ -837,7 +837,7 @@ class GridAreaStepWidget(_Q_WIDGET_BASE):
         self.grid_layer = self._build_grid_layer()
         self.subgrid_layer = self._build_subgrid_layer()
         
-        is_oa_visible = (self.current_mode == "OA") or (
+        is_oa_visible = (self.current_mode == "EA") or (
             self.show_subgrid_checkbox is not None and self.show_subgrid_checkbox.isChecked()
         )
         if is_oa_visible and self.adm2_layer is None:
@@ -1085,8 +1085,8 @@ class GridAreaStepWidget(_Q_WIDGET_BASE):
         if mode:
             self.current_mode = mode
             if hasattr(self, "oa_help_label") and self.oa_help_label:
-                self.oa_help_label.setVisible(mode == "OA")
-            if mode == "OA":
+                self.oa_help_label.setVisible(mode == "EA")
+            if mode == "EA":
                 self.adm2_layer = self._build_adm2_layer()
                 self._emit_status(
                     self.localizer.get_string(
@@ -1147,7 +1147,7 @@ class GridAreaStepWidget(_Q_WIDGET_BASE):
             return
         if self.map_interaction_mode != "select":
             return
-        if self.current_mode == "OA":
+        if self.current_mode == "EA":
             return
         if not self.grid_map_data:
             self._emit_status(self.localizer.get_string("step3_status_define_grid"))
@@ -1163,7 +1163,7 @@ class GridAreaStepWidget(_Q_WIDGET_BASE):
     def _handle_canvas_drag(self, point) -> None:
         if self.map_interaction_mode != "select":
             return
-        if self.current_mode == "OA":
+        if self.current_mode == "EA":
             return
         if not self.grid_map_data or self.grid_dirty:
             return
