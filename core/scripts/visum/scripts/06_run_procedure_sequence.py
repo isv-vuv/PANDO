@@ -130,7 +130,7 @@ def run_procedure_sequence(target_project_dir=None, visum=None, log=logging.info
 
     if proc_xml and proc_xml.exists():
         log(f"Importiere Verfahrensablauf ({app_lang.upper()}): {proc_xml.name}")
-        visum.Procedures.Open(str(proc_xml.resolve()), True, True, True)
+        visum.Procedures.Open(str(proc_xml.resolve()), True, True, False)
     else:
         log(f"Warnung: Verfahrensablauf-Datei '{target_xml_name}' nicht gefunden in pro/")
 
