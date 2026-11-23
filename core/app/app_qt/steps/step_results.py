@@ -197,6 +197,7 @@ def _set_visum_project_directories(visum, language: str = "de") -> None:
                 25: "\\shapefile",
                 81: "\\qla",
                 33: "\\icon",
+                12: "\\pro",
             }
             for k, v in paths.items():
                 visum.SetPath(k, p + v)

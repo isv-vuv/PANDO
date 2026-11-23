@@ -676,7 +676,8 @@ Visum.SetPath(1,  folder_path_project + "\\net")               # Network
 Visum.SetPath(2,  folder_path_project + "\\ver")               # Versions
 Visum.SetPath(25, folder_path_project + "\\shapefile")         # Shapefiles
 Visum.SetPath(81, folder_path_project + "\\qla")               # Quick view layout
-Visum.SetPath(33, folder_path_project + "\\icon")              # Image files / Icons]]></INTERNALSCRIPTCODE>
+Visum.SetPath(33, folder_path_project + "\\icon")              # Image files / Icons
+Visum.SetPath(12, folder_path_project + "\\pro")               # Procedure parameters]]></INTERNALSCRIPTCODE>
       </EXECUTESCRIPTPARA>
     </OPERATION>
     <OPERATION ACTIVE="1" CODE="" COMMENT="Add POI Categories" COMPUTENODES="" CONDITION="" CURVALCONDITION="1" DURATION="0min" ENDTIME="2026-09-11 16:17:03" ERRORCOUNT="" EXECUTED="1" INFORMATIONCOUNT="" MESSAGES="" NO="3" NUMSKIPPEDEXECUTIONS="" OPERATIONTYPE="Script" OPERATIONVARIABLECOUNT="" PARENTGROUPINDEX="0" RESULTMESSAGE="" STARTTIME="2026-09-11 16:17:03" SUCCESS="1" WARNINGCOUNT="">
