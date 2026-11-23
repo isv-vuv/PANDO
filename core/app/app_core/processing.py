@@ -361,7 +361,7 @@ def extract_street_network(
                    "service", "road"},
         "IA2": {"motorway", "motorway_link", "trunk", "trunk_link", "primary", "primary_link", "secondary",
                 "secondary_link", "tertiary", "tertiary_link", "unclassified", "road"},
-        "OA": {"motorway", "motorway_link", "trunk", "trunk_link", "primary", "primary_link", "secondary",
+        "EA": {"motorway", "motorway_link", "trunk", "trunk_link", "primary", "primary_link", "secondary",
                "secondary_link"},
     }
     parsed_special_tags = _parse_special_tags(special_tags)
@@ -398,7 +398,7 @@ def extract_street_network(
     phases = [
         ("PA+IA1", area_definitions.get("PA_IA1_poly"), hw_filters["PA_IA1"], None),
         ("IA2", area_definitions.get("PA_IA1_IA2_poly"), hw_filters["IA2"], None),
-        ("OA", None, hw_filters["OA"], None),
+        ("EA", None, hw_filters["EA"], None),
         ("Special tags", None, None, parsed_special_tags),
     ]
     for label, filter_polygon, highway_tags, special_kvs in phases:

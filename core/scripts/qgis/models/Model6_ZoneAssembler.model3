@@ -3850,7 +3850,7 @@
               <Option type="Map">
                 <Option name="alias" type="QString" value=""/>
                 <Option name="comment" type="QString" value=""/>
-                <Option name="expression" type="QString" value="coalesce(&quot;Zone_Type&quot;,'OA')"/>
+                <Option name="expression" type="QString" value="coalesce(&quot;Zone_Type&quot;,'EA')"/>
                 <Option name="length" type="int" value="0"/>
                 <Option name="name" type="QString" value="Zone_Type"/>
                 <Option name="precision" type="int" value="0"/>
@@ -4332,7 +4332,7 @@
               <Option type="Map">
                 <Option name="alias" type="invalid"/>
                 <Option name="comment" type="invalid"/>
-                <Option name="expression" type="QString" value="'OA'"/>
+                <Option name="expression" type="QString" value="'EA'"/>
                 <Option name="length" type="int" value="0"/>
                 <Option name="name" type="QString" value="Zone Type"/>
                 <Option name="precision" type="int" value="0"/>
@@ -4562,7 +4562,7 @@
               <Option type="Map">
                 <Option name="alias" type="invalid"/>
                 <Option name="comment" type="invalid"/>
-                <Option name="expression" type="QString" value="coalesce(&quot;Zone Type&quot;, 'OA')"/>
+                <Option name="expression" type="QString" value="coalesce(&quot;Zone Type&quot;, 'EA')"/>
                 <Option name="length" type="int" value="0"/>
                 <Option name="name" type="QString" value="Zone Type"/>
                 <Option name="precision" type="int" value="0"/>

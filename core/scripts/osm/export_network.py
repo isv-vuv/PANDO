@@ -498,7 +498,7 @@ def _route_ferry_access_ways(
     log=print,
 ) -> dict:
     """Select ONLY the OSM road ways on plausible car routes from isolated ferry endpoints
-    to the hierarchical target road network (`PA/IA1 + IA2 + OA`).
+    to the hierarchical target road network (`PA/IA1 + IA2 + EA`).
 
     Terminals without a plausible bidirectional car route (or with an implausible detour
     compared to straight-line distance) receive no buffer ways so Visum's `Ferry_Access`
@@ -537,7 +537,7 @@ def _route_ferry_access_ways(
     if not endpoint_ids:
         return stats
 
-    # 2. Read target road network nodes already present in hierarchical network (PA/IA1 + IA2 + OA)
+    # 2. Read target road network nodes already present in hierarchical network (PA/IA1 + IA2 + EA)
     target_node_ids: set[str] = set()
     target_way_ids: set[str] = set()
     if os.path.isfile(target_roads_osm_path) and os.path.getsize(target_roads_osm_path) > 0:
@@ -810,7 +810,7 @@ def build_hierarchical_network(merged_pbf, osm_dir, osmium_exe, bin_dir, poly_pa
         run_osmium([osmium_exe, "tags-filter", rel_temp_ia2, filter_ia2, "-o", rel_net_ia2, "--overwrite"])
 
         progress("network_oa_filter", 5, total_steps)
-        log("C) Verarbeite Außenraum (OA) ...")
+        log("C) Verarbeite Außenraum (EA) ...")
         filter_oa = "w/highway=motorway,motorway_link,trunk,trunk_link,primary,primary_link,secondary,secondary_link"
         run_osmium([osmium_exe, "tags-filter", merged_pbf, filter_oa, "-o", rel_net_oa, "--overwrite"])
 

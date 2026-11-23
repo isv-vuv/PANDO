@@ -342,7 +342,7 @@ class GridAreaStepWidget(_Q_WIDGET_BASE):
             "PA": self.localizer.get_string("step3_mode_pa", default="Planungsraum (PA)"),
             "IA1": self.localizer.get_string("step3_mode_ia1", default="Einflussraum 1 (IA1)"),
             "IA2": self.localizer.get_string("step3_mode_ia2", default="Einflussraum 2 (IA2)"),
-            "OA": self.localizer.get_string("step3_mode_oa", default="Außenraum (OA)"),
+            "OA": self.localizer.get_string("step3_mode_oa", default="Außenraum (EA)"),
         }
         mode_colors = {
             "PA": "#008080",
