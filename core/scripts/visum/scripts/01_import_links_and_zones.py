@@ -25,7 +25,7 @@ UDA_DESCRIPTIONS = {
     "POP": "Total population in the traffic zone (aggregated GHS-POP dataset, sum-conserving redistributed)",
     "TYPENO": "Hierarchy or centrality level of the traffic cell/area (RIN / Central Places)",
     "MAINZONENO": "Reference ID of the superordinate main zone / aggregation area",
-    "ZONETYPE": "Zone type classification: PA (Planning Area), IA1/IA2 (Influence Areas 1/2), EA (External Area)",
+    "ZONETYPE": "Zone type classification: PA (Planning Area), IA1/IA2 (Impact Areas 1/2), EA (External Area)",
     "ISLAND_ID": "Unique ID of the contiguous landmass/island for topological separation",
 
     # --- Administrative Boundaries (GADM) ---
@@ -37,8 +37,8 @@ UDA_DESCRIPTIONS = {
     "NAME_2": "GADM district/city name (Level 2)",
 
     # --- Grid Hierarchy References ---
-    "NO_E0": "Reference ID of grid cell level E0 (Influence Area 2, cell size = 4,500 m)",
-    "NO_E1": "Reference ID of grid cell level E1 (Influence Area 1, cell size = 1,500 m)",
+    "NO_E0": "Reference ID of grid cell level E0 (Impact Area 2, cell size = 4,500 m)",
+    "NO_E1": "Reference ID of grid cell level E1 (Impact Area 1, cell size = 1,500 m)",
     "NO_E2": "Reference ID of grid cell level E2 (Planning Area, cell size = 500 m)",
 
     # --- POI Functional Area Intensities ---

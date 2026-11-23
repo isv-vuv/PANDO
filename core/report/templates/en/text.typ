@@ -37,7 +37,7 @@ The following OpenStreetMap data were used:
 
 The GADM data were obtained from #gadm_source and the population data from #pop_source.
 
-== Planning area, influence areas and external area
+== Planning area, impact areas and external area
 
 #figure(
   table(
@@ -45,19 +45,19 @@ The GADM data were obtained from #gadm_source and the population data from #pop_
     align: (left, right),
     table.header([Parameter], [Selected edge length]),
     [Planning area edge length], [#calc.round(cell_size_pa_m, digits: 2) m],
-    [Edge length of influence area 1], [#calc.round(cell_size_ia1_m, digits: 2) m],
-    [Edge length of influence area 2], [#calc.round(cell_size_ia2_m, digits: 2) m],
+    [Edge length of impact area 1], [#calc.round(cell_size_ia1_m, digits: 2) m],
+    [Edge length of impact area 2], [#calc.round(cell_size_ia2_m, digits: 2) m],
   ), caption: [Selected edge lengths of traffic analysis zones]
 )
 
-The following figures show the selected planning area, influence areas 1 and 2, and the external area.
+The following figures show the selected planning area, impact areas 1 and 2, and the external area.
 
-#figure(image("pictures/maps/01_planungsraeume.png"), caption: [Selected planning area and influence areas 1 and 2])
-#figure(image("pictures/maps/02_aussenraum.png"), caption: [Entire external area with planning area and influence areas 1 and 2])
+#figure(image("pictures/maps/01_planungsraeume.png"), caption: [Selected planning area and impact areas 1 and 2])
+#figure(image("pictures/maps/02_aussenraum.png"), caption: [Entire external area with planning area and impact areas 1 and 2])
 
 The following figures show the generated traffic analysis zones:
 
-#figure(image("pictures/maps/03_verkehrszellen_planung_einfluss.png"), caption: [Generated traffic analysis zones in the planning and influence areas])
+#figure(image("pictures/maps/03_verkehrszellen_planung_einfluss.png"), caption: [Generated traffic analysis zones in the planning and impact areas])
 #figure(image("pictures/maps/04_verkehrszellen_aussenraum.png"), caption: [Generated traffic analysis zones in the external area])
 
 == Selected parameters for identifying centralities
@@ -88,14 +88,14 @@ The methodology used to calculate the results is described in @GenerischeVerkehr
 
 #figure(image("pictures/maps/05a_einwohner_detail.png"), caption: [Population distribution in the detail view of the three intra-municipal centralities with the highest intensities])
 #figure(image("pictures/maps/05_einwohner_planung.png"), caption: [Population distribution in the planning area])
-#figure(image("pictures/maps/06_einwohner_planung_einfluss.png"), caption: [Population distribution in the planning and influence areas])
+#figure(image("pictures/maps/06_einwohner_planung_einfluss.png"), caption: [Population distribution in the planning and impact areas])
 
 = Central places
 
 #figure(image("pictures/maps/07_zentrale_orte.png"), caption: [Central places throughout the external area])
 #figure(image("pictures/maps/07a_intensitaet_detail.png"), caption: [Intra-municipal intensities in the detail view of the three highest-intensity centralities in the planning area])
 #figure(image("pictures/maps/08_intensitaet_planung.png"), caption: [Intensity estimates and intra-municipal centralities in the planning area])
-#figure(image("pictures/maps/09_intensitaet_planung_einfluss.png"), caption: [Intensity estimates and intra-municipal centralities in the planning and influence areas])
+#figure(image("pictures/maps/09_intensitaet_planung_einfluss.png"), caption: [Intensity estimates and intra-municipal centralities in the planning and impact areas])
 
 = Network classification
 

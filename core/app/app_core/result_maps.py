@@ -164,7 +164,7 @@ def layer_draw_order_key(layer_path: str | Path) -> int:
     if name == "zones" or name.startswith("zone_assembled") or name.startswith("06_"):
         return 11
 
-    # 2. Model 5 (Planning & Influence Areas PA / IA1 / IA2 & Nationwide Centralities)
+    # 2. Model 5 (Planning & Impact Areas PA / IA1 / IA2 & Nationwide Centralities)
     if ("inner_urban" in name or "pa_ia" in name or "urban" in name) and ("point" in name or "pt" in name):
         return 20
     if "central_place" in name and "nationwide" in name:
