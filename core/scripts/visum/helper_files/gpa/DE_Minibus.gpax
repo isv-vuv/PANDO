@@ -44,8 +44,8 @@
 				<layer draw="false" type="BARLABELS"/>
 				<layer draw="false" type="LABELS"/>
 				<layer draw="false" type="ISOCHRONES"/>
-				<layer draw="true" type="OBJECTS"/>
 				<layer draw="true" type="BARS"/>
+				<layer draw="true" type="OBJECTS"/>
 			</layers>
 			<display>
 				<active classificationAttrID="RIN_CFL" numDecPlaces="0" useClassifiedMode="true" useLayerOrder="true">
@@ -68,7 +68,7 @@
 							<contents draw="true" drawArrow="false" drawUntilScale="false" drawUntilScaleValue="10000">
 								<lineStyle>
 									<strokes>
-										<stroke color="ffeb2d40" dashPattern="1" dashWidth="1.7666666666666668" width="2"/>
+										<stroke color="80eb2d40" dashPattern="1" dashWidth="1.7666666666666668" width="1.0"/>
 									</strokes>
 								</lineStyle>
 								<arrow drawSymbolChar="false" size="3" symbolChar="" symbolCharColor="ff000000" symbolDisplayType="SYMBOL_TRIANGLE">
@@ -84,7 +84,7 @@
 							<contents draw="true" drawArrow="false" drawUntilScale="false" drawUntilScaleValue="10000">
 								<lineStyle>
 									<strokes>
-										<stroke color="ff2495ff" dashPattern="1" dashWidth="1.3250000000000002" width="1.5"/>
+										<stroke color="802495ff" dashPattern="1" dashWidth="1.3250000000000002" width="0.8"/>
 									</strokes>
 								</lineStyle>
 								<arrow drawSymbolChar="false" size="3" symbolChar="" symbolCharColor="ff000000" symbolDisplayType="SYMBOL_TRIANGLE">
@@ -100,7 +100,7 @@
 							<contents draw="true" drawArrow="false" drawUntilScale="false" drawUntilScaleValue="10000">
 								<lineStyle>
 									<strokes>
-										<stroke color="ff32cd32" dashPattern="1" dashWidth="0.88333333333333341" width="1"/>
+										<stroke color="8032cd32" dashPattern="1" dashWidth="0.88333333333333341" width="0.6"/>
 									</strokes>
 								</lineStyle>
 								<arrow drawSymbolChar="false" size="3" symbolChar="" symbolCharColor="ff000000" symbolDisplayType="SYMBOL_TRIANGLE">
@@ -116,7 +116,7 @@
 							<contents draw="true" drawArrow="false" drawUntilScale="false" drawUntilScaleValue="10000">
 								<lineStyle>
 									<strokes>
-										<stroke color="ffffa600" dashPattern="1" dashWidth="0.6183333333333334" width="0.7"/>
+										<stroke color="80ffa600" dashPattern="1" dashWidth="0.6183333333333334" width="0.45"/>
 									</strokes>
 								</lineStyle>
 								<arrow drawSymbolChar="false" size="3" symbolChar="" symbolCharColor="ff000000" symbolDisplayType="SYMBOL_TRIANGLE">
@@ -132,7 +132,7 @@
 							<contents draw="false" drawArrow="false" drawUntilScale="false" drawUntilScaleValue="10000">
 								<lineStyle>
 									<strokes>
-										<stroke color="ffa8a8a8" dashPattern="1" dashWidth="0.265" width="0.2"/>
+										<stroke color="99a8a8a8" dashPattern="1" dashWidth="0.265" width="0.18"/>
 									</strokes>
 								</lineStyle>
 								<arrow drawSymbolChar="false" size="3" symbolChar="" symbolCharColor="ff000000" symbolDisplayType="SYMBOL_TRIANGLE">
@@ -380,7 +380,7 @@
 				</general>
 				<items>
 					<item barType="STANDARD" draw="true" gridColumnWidth="148">
-						<scale autoScaleFactor="1" maxDimension="1" maxValue="1" minValue="0" useAutoScale="false" useMinDimension="false"/>
+						<scale autoScaleFactor="1" maxDimension="1.2" maxValue="1" minValue="0" useAutoScale="false" useMinDimension="false"/>
 						<label labelThreshold="0" multiplyFactor="1" numDecPlaces="0" roundValue="1" showTitle="false" showUnit="false" showValue="true" stringFormatType="DEFAULTFMT" textContentType="TEXTFROMATTRIBUTEVALUE" textPriority="1" useLabelThreshold="true" useMultiplyFactor="false" useUserDefinedTitleText="false" userDefinedTitleText=""/>
 						<standardBar classificationAttrID="IS_MINIBUS_CURRENTSTATE" negativeScaleAttrID="IS_MINIBUS_CURRENTSTATE" numDecPlaces="0" scaleAttrID="IS_MINIBUS_CURRENTSTATE" useClassifiedMode="true" useLayerOrder="false">
 							<uniform draw="true">
@@ -410,7 +410,7 @@
 						</standardBar>
 					</item>
 					<item barType="STANDARD" draw="true" gridColumnWidth="148">
-						<scale autoScaleFactor="1" maxDimension="1" maxValue="1" minValue="0" useAutoScale="false" useMinDimension="false"/>
+						<scale autoScaleFactor="1" maxDimension="1.2" maxValue="1" minValue="0" useAutoScale="false" useMinDimension="false"/>
 						<label labelThreshold="0" multiplyFactor="1" numDecPlaces="0" roundValue="1" showTitle="false" showUnit="false" showValue="true" stringFormatType="DEFAULTFMT" textContentType="TEXTFROMATTRIBUTEVALUE" textPriority="1" useLabelThreshold="true" useMultiplyFactor="false" useUserDefinedTitleText="false" userDefinedTitleText=""/>
 						<standardBar classificationAttrID="IS_MINIBUS_PLAN" negativeScaleAttrID="IS_MINIBUS_PLAN" numDecPlaces="0" scaleAttrID="IS_MINIBUS_PLAN" useClassifiedMode="true" useLayerOrder="false">
 							<uniform draw="true">
