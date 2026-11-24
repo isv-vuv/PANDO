@@ -221,8 +221,8 @@ def populate_visum_gpa_files(project_path: str, language: Optional[str] = None) 
 
 
 def populate_visum_script_files(project_path: str) -> list[str]:
-    """Copy the Luftlinientool GUI launcher and its standalone dependencies into processed/visum/script."""
-    visum_script_dir = os.path.join(project_path, "processed", "visum", "script")
+    """Copy the Luftlinientool GUI launcher and its standalone dependencies into processed/visum/script/dlnt."""
+    visum_script_dir = os.path.join(project_path, "processed", "visum", "script", "dlnt")
     os.makedirs(visum_script_dir, exist_ok=True)
 
     root = tool_root() if "tool_root" in globals() else os.path.abspath(os.path.join(os.path.dirname(__file__), "..", "..", ".."))
