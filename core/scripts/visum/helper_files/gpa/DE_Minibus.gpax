@@ -129,7 +129,7 @@
 							</contents>
 						</class>
 						<class hasCustomLegendName="true" layerNo="1" legendName="keine VFS" stringValue="*" upperLimit="INF">
-							<contents draw="false" drawArrow="false" drawUntilScale="false" drawUntilScaleValue="10000">
+							<contents draw="true" drawArrow="false" drawUntilScale="false" drawUntilScaleValue="10000">
 								<lineStyle>
 									<strokes>
 										<stroke color="99a8a8a8" dashPattern="1" dashWidth="0.265" width="0.18"/>
