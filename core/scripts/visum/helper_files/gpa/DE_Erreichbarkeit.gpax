@@ -421,7 +421,7 @@
 							<contents draw="false" drawArrow="false" drawUntilScale="false" drawUntilScaleValue="10000">
 								<lineStyle>
 									<strokes>
-										<stroke color="ff0000a8" dashPattern="1" dashWidth="0.26499" width="0.3"/>
+										<stroke color="ffa8a8a8" dashPattern="1" dashWidth="0.26499" width="0.3"/>
 									</strokes>
 								</lineStyle>
 								<arrow drawSymbolChar="false" size="3" symbolChar="" symbolCharColor="ff000000" symbolDisplayType="SYMBOL_TRIANGLE">

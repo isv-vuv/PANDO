@@ -1,0 +1,17 @@
+# Dependabot configuration focused strictly on security updates.
+# Make sure "Dependabot alerts" and "Dependabot security updates" are enabled
+# under GitHub Repository Settings -> Code security.
+version: 2
+updates:
+  - package-ecosystem: "pip"
+    directory: "/"
+    schedule:
+      interval: "weekly"
+    # 0 disables routine version-bump PRs while keeping automated
+    # Dependabot security-update PRs active for known CVEs.
+    open-pull-requests-limit: 0
+    labels:
+      - "dependencies"
+      - "security"
+    commit-message:
+      prefix: "security(deps)"

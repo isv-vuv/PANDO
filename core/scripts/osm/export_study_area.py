@@ -98,14 +98,3 @@ def export_study_area(
     except Exception as exc:
         log(f"Fehler bei POI-Aufbereitung: {exc}")
         return False
-
-        if os.path.exists(abs_temp_pbf):
-            try:
-                os.remove(abs_temp_pbf)
-            except Exception:
-                pass
-        return {"study_area_points": output_points, "study_area_polygons": output_polygons}
-
-    except Exception as e:
-        log(f"Fehler: {e}")
-        return False

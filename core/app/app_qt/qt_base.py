@@ -542,13 +542,21 @@ def bind_header_scroll_separator(header_widget: Optional[QWidget], scroll_area: 
 
 def create_step_header(
     title_raw: str,
-    current_step: int,
-    total_steps: int = 7,
+    current_step: Union[int, object],
+    total_steps: Optional[int] = None,
     localizer: Optional[object] = None,
     parent: Optional[object] = None,
     scroll_area: Optional[QtWidgets.QScrollArea] = None,
 ) -> tuple[QWidget, QLabel, QLabel]:
     """Creates a standardized modern step header widget with main title, step badge, quick help button, and scroll separator."""
+    from core.app.app_core.workflow_state import STEP_COUNT, StepId, step_number_for_id
+
+    if isinstance(current_step, StepId):
+        resolved_step = step_number_for_id(current_step)
+    else:
+        resolved_step = int(current_step)
+    resolved_total = STEP_COUNT if total_steps is None else int(total_steps)
+
     header_container = QWidget(parent)
     if QtWidgets is not None:
         header_container.setSizePolicy(QtWidgets.QSizePolicy.Policy.Preferred, QtWidgets.QSizePolicy.Policy.Fixed)
@@ -573,9 +581,9 @@ def create_step_header(
     layout.addWidget(title_label)
 
     if localizer and hasattr(localizer, "get_string"):
-        step_text = localizer.get_string("wizard_step_indicator", current=current_step, total=total_steps)
+        step_text = localizer.get_string("wizard_step_indicator", current=resolved_step, total=resolved_total)
     else:
-        step_text = f"Schritt {current_step} von {total_steps}"
+        step_text = f"Schritt {resolved_step} von {resolved_total}"
 
     step_label = QLabel(step_text, top_row)
     step_label.setFont(app_font(10, qfont_bold()))

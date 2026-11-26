@@ -11,7 +11,7 @@ from dataclasses import dataclass
 from datetime import datetime
 from pathlib import Path
 from threading import Event
-from typing import Callable, Mapping, Optional
+from typing import Any, Callable, Mapping, Optional
 
 from core.app.app_core.geo import get_utm_epsg
 from core.app.app_core.grid import restore_grid_geometries
@@ -26,6 +26,7 @@ from core.app.app_core.osm_pipeline import (
     OsmPhaseAConfig,
     OsmPhaseCConfig,
     OsmPipeline,
+    canonical_osm_outputs,
 )
 from core.app.app_core.osmium import resolve_osmium
 from core.app.app_core.pipeline_metrics import benchmark_run, benchmark_step
@@ -713,8 +714,23 @@ def prepare_clipped_gadm_layers(
     return result_paths
 
 
+ORDERED_PIPELINE_PHASES: tuple[str, ...] = (
+    "osm_phase_a",
+    "model1",
+    "model2",
+    "model3",
+    "model3_4",
+    "model4",
+    "osm_phase_c",
+    "model5",
+    "model6",
+)
+
+
 class UrbanActPipeline:
-    """Coordinate phase A, models 1-4, phase C, and models 5-6."""
+    """Coordinate OSM base extraction, models 1-4, OSM network/POI extraction, and models 5-6."""
+
+    ORDERED_PIPELINE_PHASES: tuple[str, ...] = ORDERED_PIPELINE_PHASES
 
     def __init__(self, project_path: str, step_data: Mapping[str, object]):
         self.project_path = os.path.abspath(project_path)
@@ -756,9 +772,9 @@ class UrbanActPipeline:
         manifest = load_pipeline_manifest(self.project_path)
         reused = self.reusable_phase_a_outputs()
         if reused is not None:
-            callbacks.phase_started("OSM-Vorverarbeitung (wiederverwendet)", 1, 9)
+            callbacks.phase_started("OSM-Basisdaten: Regionen, Siedlungsflächen & Orte (wiederverwendet)", 1, 9)
             callbacks.phase_progress(100)
-            callbacks.log("Vorhandene OSM-Vorverarbeitungsdateien werden wiederverwendet.")
+            callbacks.log("Vorhandene OSM-Basisdaten (zusammengeführtes PBF, Siedlungsflächen, Orte) werden wiederverwendet.")
             for key, value in reused.items():
                 callbacks.output(key, value)
             return reused
@@ -782,11 +798,12 @@ class UrbanActPipeline:
             text = str(message)
             log_lines.append(text)
             callbacks.log(text)
-            Path(paths["osm_log"]).parent.mkdir(parents=True, exist_ok=True)
-            with open(paths["osm_log"], "a", encoding="utf-8") as stream:
+            project_log_path = Path(self.project_path) / "pipeline.log"
+            project_log_path.parent.mkdir(parents=True, exist_ok=True)
+            with open(project_log_path, "a", encoding="utf-8") as stream:
                 stream.write(text + "\n")
 
-        callbacks.phase_started("OSM-Vorverarbeitung", 1, 9)
+        callbacks.phase_started("OSM-Basisdaten (Regionen zusammenführen, Siedlungsflächen & Orte)", 1, 9)
         update_manifest_phase(
             manifest,
             "osm_phase_a",
@@ -945,6 +962,67 @@ class UrbanActPipeline:
         except (ImportError, OSError, ValueError):
             return False
 
+    def prepare_start_phase_invalidation(
+        self,
+        manifest: dict[str, object],
+        *,
+        start_from_phase: Optional[str] = None,
+        force_restart_models: bool = False,
+        log: Callable[[str], None] = lambda _m: None,
+    ) -> set[str]:
+        """Invalidate manifest phases and OSM outputs from `start_from_phase` onward."""
+        effective_start = start_from_phase
+        if force_restart_models and effective_start is None:
+            effective_start = "osm_phase_a"
+        if effective_start not in ORDERED_PIPELINE_PHASES:
+            return set()
+
+        start_idx = ORDERED_PIPELINE_PHASES.index(effective_start)
+        forced_keys = set(ORDERED_PIPELINE_PHASES[start_idx:])
+        paths = canonical_project_paths(self.project_path)
+
+        log(f"Neuberechnung angefordert ab Schritt '{effective_start}': Betroffene Zwischenstände werden zurückgesetzt.")
+        phases = manifest.get("phases")
+        if isinstance(phases, dict):
+            for phase_key in ORDERED_PIPELINE_PHASES[start_idx:]:
+                phases.pop(phase_key, None)
+        save_pipeline_manifest(self.project_path, manifest)
+
+        if effective_start == "osm_phase_a":
+            osm_dir = Path(paths["osm"])
+            if osm_dir.exists():
+                for item in osm_dir.iterdir():
+                    try:
+                        if item.is_file():
+                            item.unlink()
+                        elif item.is_dir():
+                            shutil.rmtree(item, ignore_errors=True)
+                    except Exception as exc:
+                        log(f"Hinweis: Konnte {item.name} in processed/osm nicht löschen: {exc}")
+        elif start_idx <= ORDERED_PIPELINE_PHASES.index("osm_phase_c"):
+            osm_outputs = canonical_osm_outputs(self.project_path)
+            net_dir = osm_outputs["network_modified"].parent
+            if net_dir.exists():
+                try:
+                    shutil.rmtree(net_dir, ignore_errors=True)
+                except Exception as exc:
+                    log(f"Hinweis: Konnte OSM-Netzordner nicht löschen: {exc}")
+            for poi_key in (
+                "study_area_points",
+                "study_area_polygons",
+                "model5_pois_nationwide_all",
+                "model5_pois_nationwide_cleaned",
+                "model5_pois_study_area_cleaned",
+            ):
+                poi_path = osm_outputs.get(poi_key)
+                if poi_path is not None and poi_path.is_file():
+                    try:
+                        poi_path.unlink()
+                    except Exception as exc:
+                        log(f"Hinweis: Konnte {poi_path.name} nicht löschen: {exc}")
+
+        return forced_keys
+
     @benchmark_run
     def run(
         self,
@@ -960,6 +1038,7 @@ class UrbanActPipeline:
         stop_event: Optional[Event] = None,
         callbacks: PipelineCallbacks = PipelineCallbacks(),
         force_restart_models: bool = False,
+        start_from_phase: Optional[str] = None,
         run_nationwide_intensity: bool = False,
         nationwide_parameters: Optional[Mapping[str, object]] = None,
     ) -> ModelPipelineResult:
@@ -969,41 +1048,30 @@ class UrbanActPipeline:
         stored_runtime_models = dict(
             (manifest.get("runtime") or {}).get("models") or {}
         )
+        stored_export_net_mtime = (manifest.get("runtime") or {}).get("export_network_mtime")
         logs: list[str] = []
         project_log_path = Path(self.project_path) / "pipeline.log"
-        osm_log_path = Path(paths["osm_log"])
 
         def log(message: str) -> None:
             text = str(message)
             logs.append(text)
             callbacks.log(text)
-            for log_file in (osm_log_path, project_log_path):
-                try:
-                    log_file.parent.mkdir(parents=True, exist_ok=True)
-                    with open(log_file, "a", encoding="utf-8") as stream:
-                        stream.write(text + "\n")
-                        stream.flush()
-                except Exception:
-                    pass
+            try:
+                project_log_path.parent.mkdir(parents=True, exist_ok=True)
+                with open(project_log_path, "a", encoding="utf-8") as stream:
+                    stream.write(text + "\n")
+                    stream.flush()
+            except Exception:
+                pass
 
-        if force_restart_models:
+        forced_recalc_keys = self.prepare_start_phase_invalidation(
+            manifest,
+            start_from_phase=start_from_phase,
+            force_restart_models=force_restart_models,
+            log=log,
+        )
+        if "osm_phase_a" in forced_recalc_keys:
             reused_phase_a = None
-            log("Neuberechnung angefordert: Alle bisherigen OSM- und Modell-Zwischenstände werden verworfen.")
-            for phase_key in ("osm_phase_a", "osm_phase_c", "model1", "model2", "model3", "model3_4", "model4", "model5", "model6"):
-                if "phases" in manifest and phase_key in manifest["phases"]:
-                    del manifest["phases"][phase_key]
-            save_pipeline_manifest(self.project_path, manifest)
-
-            osm_dir = Path(paths["osm"])
-            if osm_dir.exists():
-                for item in osm_dir.iterdir():
-                    try:
-                        if item.is_file():
-                            item.unlink()
-                        elif item.is_dir():
-                            shutil.rmtree(item, ignore_errors=True)
-                    except Exception as exc:
-                        log(f"Hinweis: Konnte {item.name} in processed/osm nicht löschen: {exc}")
         else:
             reused_phase_a = self.reusable_phase_a_outputs()
 
@@ -1054,6 +1122,13 @@ class UrbanActPipeline:
             for description in MODEL_DESCRIPTIONS
         }
 
+        root = Path(tool_root())
+        export_net_script = root / "core" / "scripts" / "osm" / "export_network.py"
+        current_export_net_mtime = (
+            export_net_script.stat().st_mtime if export_net_script.is_file() else None
+        )
+        manifest["runtime"]["export_network_mtime"] = current_export_net_mtime
+
         runtime = resolve_osmium(explicit_osmium)
         manifest["runtime"]["osmium"] = {
             "path": str(runtime.executable),
@@ -1072,9 +1147,9 @@ class UrbanActPipeline:
         )
         if reused_phase_a is not None:
             phase_a = dict(reused_phase_a)
-            callbacks.phase_started("OSM-Vorverarbeitung (wiederverwendet)", 1, 9)
+            callbacks.phase_started("OSM-Basisdaten: Regionen, Siedlungsflächen & Orte (wiederverwendet)", 1, 9)
             callbacks.phase_progress(100)
-            log("Gültige OSM-Vorverarbeitungs-Outputs werden wiederverwendet.")
+            log("Vorhandene OSM-Basisdaten (zusammengeführtes PBF, Siedlungsflächen, Orte) werden wiederverwendet.")
         else:
             update_manifest_phase(
                 manifest,
@@ -1086,7 +1161,7 @@ class UrbanActPipeline:
                 },
             )
             save_pipeline_manifest(self.project_path, manifest)
-            callbacks.phase_started("OSM-Vorverarbeitung", 1, 9)
+            callbacks.phase_started("OSM-Basisdaten (Regionen zusammenführen, Siedlungsflächen & Orte)", 1, 9)
             try:
                 phase_a = dict(
                     osm.run_phase_a(
@@ -1104,7 +1179,6 @@ class UrbanActPipeline:
         for key, value in phase_a.items():
             callbacks.output(key, str(value))
 
-        root = Path(tool_root())
         benchmark_step("model_input_preparation")
         effective_pop = custom_census or str(root / "core/data/ghs_pop/ghs_pop_global.tif")
         if no_local_reference:
@@ -1179,16 +1253,28 @@ class UrbanActPipeline:
         }
         current_runtime_models = dict(manifest["runtime"]["models"])
         reusable_outputs: dict[str, dict[str, object]] = {}
-        reuse_allowed = not force_restart_models
+        reuse_allowed = not force_restart_models and not ("osm_phase_a" in forced_recalc_keys)
         phase_c_reusable = False
+        export_net_unchanged = (
+            stored_export_net_mtime is None
+            or current_export_net_mtime is None
+            or stored_export_net_mtime == current_export_net_mtime
+        )
         for description in MODEL_DESCRIPTIONS:
             if description.key == "model5":
-                phase_c_reusable = reuse_allowed and phase_can_be_reused(
-                    manifest,
-                    "osm_phase_c",
+                phase_c_reusable = (
+                    reuse_allowed
+                    and ("osm_phase_c" not in forced_recalc_keys)
+                    and export_net_unchanged
+                    and phase_can_be_reused(
+                        manifest,
+                        "osm_phase_c",
+                    )
                 )
                 if not phase_c_reusable:
                     reuse_allowed = False
+            if description.key in forced_recalc_keys:
+                reuse_allowed = False
             stored_runtime = stored_runtime_models.get(description.key) or {}
             current_runtime = current_runtime_models.get(description.key) or {}
             source_unchanged = (
@@ -1205,6 +1291,7 @@ class UrbanActPipeline:
             )
             can_reuse = (
                 reuse_allowed
+                and (description.key not in forced_recalc_keys)
                 and source_unchanged
                 and parameters_unchanged
                 and phase_can_be_reused(manifest, description.key)
@@ -1229,6 +1316,7 @@ class UrbanActPipeline:
                 parameters=model_parameters[description.key],
             )
             save_pipeline_manifest(self.project_path, manifest)
+            any_model_executed["flag"] = True
 
         def model_reused(description, index: int, _total: int, model_context) -> None:
             phase_num = index + 1 if index < 6 else index + 2
@@ -1258,7 +1346,7 @@ class UrbanActPipeline:
 
             idx = next((i for i, d in enumerate(MODEL_DESCRIPTIONS) if d.key == description.key), -1)
             if description.key == "model4":
-                next_step_desc = "OSM-Verkehrsnetz- und POI-Aufbereitung (Phase C)"
+                next_step_desc = "OSM-Straßennetz & POIs (hierarchisches Netz, Fähren & Einrichtungen)"
             elif idx >= 0 and idx + 1 < len(MODEL_DESCRIPTIONS):
                 next_step_desc = f"{MODEL_DESCRIPTIONS[idx + 1].key} ({MODEL_DESCRIPTIONS[idx + 1].name})"
             elif description.key == "model6":
@@ -1328,9 +1416,9 @@ class UrbanActPipeline:
             if phase_c_reusable:
                 phase = (manifest.get("phases") or {}).get("osm_phase_c") or {}
                 outputs = dict(phase.get("outputs") or {})
-                callbacks.phase_started("OSM-Verkehrsnetz & POIs (wiederverwendet)", 7, 9)
+                callbacks.phase_started("OSM-Straßennetz & POIs (wiederverwendet)", 7, 9)
                 callbacks.phase_progress(100)
-                log("OSM-Verkehrsnetz & POIs: vorhandene, vollständige Outputs werden wiederverwendet.")
+                log("OSM-Straßennetz & POIs (hierarchisches Netz, Fähren & Einrichtungen): vorhandene Outputs werden wiederverwendet.")
                 for key, value in outputs.items():
                     callbacks.output(key, str(value))
                 return {
@@ -1338,9 +1426,16 @@ class UrbanActPipeline:
                     "poi_polygons": str(outputs["study_area_polygons"]),
                     **outputs,
                 }
-            callbacks.phase_started("OSM-Verkehrsnetz & POIs", 7, 9)
+            from core.app.app_core.linktypes_config import resolve_project_master_net
+
+            callbacks.phase_started("OSM-Straßennetz & POIs (hierarchisches Netz, Fähren & Einrichtungen)", 7, 9)
+            any_model_executed["flag"] = True
             update_manifest_phase(manifest, "osm_phase_c", "running")
             save_pipeline_manifest(self.project_path, manifest)
+            master_net_path = resolve_project_master_net(
+                self.project_path,
+                root / "core/scripts/visum/helper_files/master_linktypes.net",
+            )
             outputs = dict(
                 osm.run_phase_c(
                     OsmPhaseCConfig(
@@ -1348,7 +1443,7 @@ class UrbanActPipeline:
                         Path(str(model_context["merged_pbf"])),
                         Path(str(model_context["poly_paia1"])),
                         Path(str(model_context["poly_study_area_paia1ia2"])),
-                        root / "core/scripts/visum/helper_files/master_linktypes.net",
+                        master_net_path,
                     )
                 )
             )
@@ -1365,6 +1460,7 @@ class UrbanActPipeline:
             self.project_path,
             model_directory=manifest["active_model_source"],
         )
+        any_model_executed = {"flag": False}
         try:
             result = pipeline.run(
                 context,
@@ -1396,8 +1492,20 @@ class UrbanActPipeline:
                 update_manifest_phase(manifest, str(current_model["key"]), "failed", error=f"{exc}\n{error_trace}")
                 save_pipeline_manifest(self.project_path, manifest)
             raise
-        callbacks.phase_started("Exporte und Projektaufbereitung", 9, 9)
-        post_process_exports_and_styles(self.project_path, log=log)
+        visum_zones_dir = os.path.join(self.project_path, "processed", "visum", "shapefile", "Zones")
+        master_qgs = os.path.join(self.project_path, "processed", "qgis_output", "pando_master.qgs")
+        exports_exist = (
+            os.path.isfile(os.path.join(visum_zones_dir, "zones.shp"))
+            and os.path.isfile(os.path.join(visum_zones_dir, "mainzones.shp"))
+            and os.path.isfile(os.path.join(visum_zones_dir, "adm0.geojson"))
+            and os.path.isfile(master_qgs)
+        )
+        if any_model_executed["flag"] or forced_recalc_keys or not exports_exist:
+            callbacks.phase_started("Exporte und Projektaufbereitung", 9, 9)
+            post_process_exports_and_styles(self.project_path, log=log)
+        else:
+            callbacks.phase_started("Exporte und Projektaufbereitung (wiederverwendet)", 9, 9)
+            log("Exporte, Shapefiles/GeoJSON und Styles bereits aktuell – übersprungen.")
         save_pipeline_manifest(self.project_path, manifest)
         callbacks.phase_progress(100)
         return result
@@ -1513,6 +1621,88 @@ def export_vector_file_to_shapefile(input_gpkg: str, output_shp: str, target_crs
             gdf = gdf.to_crs(target_crs)
         gdf.to_file(output_shp, driver="ESRI Shapefile", encoding="utf-8")
         return True
+    except Exception:
+        pass
+
+    return False
+
+
+def export_vector_file_to_geojson(
+    input_gpkg: str,
+    output_geojson: str,
+    drop_fields: Optional[tuple[str, ...] | list[str]] = None,
+    int_fields: Optional[tuple[str, ...] | list[str]] = None,
+) -> bool:
+    """Export a GeoPackage vector file to RFC 7946 GeoJSON (EPSG:4326) preserving full field names."""
+    if not os.path.isfile(input_gpkg):
+        return False
+    out_dir = os.path.dirname(output_geojson)
+    if out_dir:
+        os.makedirs(out_dir, exist_ok=True)
+    drop_set = {str(name).lower() for name in (drop_fields or ())}
+
+    # Strategy 1: GeoPandas (guarantees nullable Int64 normalization and RFC 7946 WGS84 output)
+    tmp_path = f"{output_geojson}.tmp.geojson"
+    try:
+        import geopandas as gpd
+        from core.scripts.visum.scripts.poi_import import (
+            _normalize_geodata_attributes,
+            _write_rfc7946_geojson,
+        )
+
+        gdf = gpd.read_file(input_gpkg)
+        gdf, _ = _normalize_geodata_attributes(
+            gdf,
+            drop_attrs=drop_fields or (),
+            int_attrs=int_fields or (),
+        )
+        _write_rfc7946_geojson(gdf, Path(tmp_path))
+        os.replace(tmp_path, output_geojson)
+        return True
+    except Exception:
+        if os.path.isfile(tmp_path):
+            try:
+                os.remove(tmp_path)
+            except OSError:
+                pass
+
+    # Strategy 2: PyQGIS QgsVectorFileWriter
+    try:
+        from qgis.core import QgsVectorLayer, QgsVectorFileWriter, QgsCoordinateTransformContext, QgsCoordinateReferenceSystem
+        layer = QgsVectorLayer(input_gpkg, "export_layer", "ogr")
+        if layer.isValid():
+            options = QgsVectorFileWriter.SaveVectorOptions()
+            options.driverName = "GeoJSON"
+            options.fileEncoding = "UTF-8"
+            options.layerOptions = ["RFC7946=YES"]
+            options.overrideCrs = QgsCoordinateReferenceSystem("EPSG:4326")
+            if drop_set:
+                options.attributes = [
+                    idx for idx, fld in enumerate(layer.fields())
+                    if fld.name().lower() not in drop_set
+                ]
+            write_fn = getattr(QgsVectorFileWriter, "writeAsVectorFormatV3", None) or getattr(QgsVectorFileWriter, "writeAsVectorFormatV2", None) or QgsVectorFileWriter.writeAsVectorFormat
+            writer_res = write_fn(
+                layer, output_geojson, QgsCoordinateTransformContext(), options
+            )
+            err = writer_res[0] if isinstance(writer_res, tuple) else writer_res
+            if err == QgsVectorFileWriter.NoError:
+                return True
+    except Exception:
+        pass
+
+    # Strategy 3: OSGeo GDAL / OGR
+    try:
+        from osgeo import gdal
+        options = gdal.VectorTranslateOptions(
+            format="GeoJSON",
+            dstSRS="EPSG:4326",
+            layerCreationOptions=["RFC7946=YES"],
+        )
+        ds = gdal.VectorTranslate(output_geojson, input_gpkg, options=options)
+        if ds is not None:
+            ds = None
+            return True
     except Exception:
         pass
 
@@ -1750,13 +1940,20 @@ def post_process_exports_and_styles(project_path: str, *, log: Optional[Callable
                     if log:
                         log(f"Warnung beim Kopieren von ADM{i}-Style: {e}")
 
-    # 3. Export Shapefiles for Zones & Mainzones in local CRS
+    # 3. Export Shapefiles & RFC 7946 GeoJSON for Zones & Mainzones
     visum_zones_dir = os.path.join(project_path, "processed", "visum", "shapefile", "Zones")
+    int_poi_fields = ("fid", "zoneno", "mainzoneno", "pop")
     for level in range(4):
         source = os.path.join(model1_dir, f"adm{level}.gpkg")
         if os.path.isfile(source):
             export_vector_file_to_shapefile(
                 source, os.path.join(visum_zones_dir, f"adm{level}.shp"), target_crs=local_crs)
+            export_vector_file_to_geojson(
+                source,
+                os.path.join(visum_zones_dir, f"adm{level}.geojson"),
+                drop_fields=("path",),
+                int_fields=int_poi_fields,
+            )
     for zone_name in ("zones", "mainzones"):
         gpkg_path = os.path.join(model6_dir, f"{zone_name}.gpkg")
         shp_path = os.path.join(visum_zones_dir, f"{zone_name}.shp")
@@ -1765,7 +1962,7 @@ def post_process_exports_and_styles(project_path: str, *, log: Optional[Callable
             if ok and log:
                 log(f"Visum-Shapefile exportiert: {shp_path}")
 
-    # 4. Export Shapefiles for POI Sector Points from Model 5
+    # 4. Export Shapefiles & RFC 7946 GeoJSON for POI Sector Points from Model 5
     visum_poi_dir = os.path.join(project_path, "processed", "visum", "shapefile", "POI")
     if os.path.isdir(model5_dir):
         for filename in os.listdir(model5_dir):
@@ -1776,13 +1973,22 @@ def post_process_exports_and_styles(project_path: str, *, log: Optional[Callable
                 ok = export_vector_file_to_shapefile(gpkg_path, shp_path, target_crs=local_crs)
                 if ok and log:
                     log(f"Visum-POI-Shapefile exportiert: {shp_path}")
+                geojson_path = os.path.join(visum_poi_dir, filename.replace(".gpkg", ".geojson"))
+                gj_ok = export_vector_file_to_geojson(
+                    gpkg_path,
+                    geojson_path,
+                    drop_fields=("path",),
+                    int_fields=int_poi_fields,
+                )
+                if gj_ok and log:
+                    log(f"Visum-POI-GeoJSON exportiert: {geojson_path}")
 
     # 5. Populate Visum template GPA files
     populate_visum_gpa_files(project_path)
 
     # 6. Generate Master QGIS Project with local CRS and OpenStreetMap background
     try:
-        from core.app.app_qt.steps.step6_results import create_qgis_project_for_layers
+        from core.app.app_qt.steps.step_results import create_qgis_project_for_layers
         qgis_out = Path(project_path) / "processed" / "qgis_output"
         all_layers = [
             qgis_out / "model6_ZoneAssembler" / "zone_centroids.gpkg",

@@ -237,6 +237,13 @@ def run_visum_postprocessing_chain(project_path: str | Path, *, start_step: int 
 
         # Step 01: Import Links and Zones
         if start_step <= 1:
+            try:
+                from core.app.app_core.linktypes_config import apply_linktypes_to_modified_osm
+
+                if apply_linktypes_to_modified_osm(base_dir, log=log):
+                    log("Angepasste Streckentyp-Stufen auf modifiziertes OSM-Netz übertragen.")
+            except Exception as exc:
+                log(f"Hinweis: Konnte modifiziertes OSM-Netz nicht neu klassifizieren: {exc}")
             log("Schritt 1/7: Strecken und Verkehrszellen werden importiert")
             step1 = importlib.import_module("01_import_links_and_zones")
             zones_gpkg = base_dir / "processed" / "qgis_output" / "model6_ZoneAssembler" / "zones.gpkg"

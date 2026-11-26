@@ -1,10 +1,15 @@
 # ==============================================================================
-# 1. VERKEHRSSYSTEM & MODUS 'PUTCAR' EINRICHTEN (aus Skript 1)
+# 1. VERKEHRSSYSTEM & MODUS 'PUTCAR' IDEMPOTENT EINRICHTEN
 # ==============================================================================
 if 'Visum' not in globals() and 'visum' in globals():
     Visum = visum
 
 code_tsys = "PUTCAR"
+
+
+def _split_tsys(raw: str) -> list[str]:
+    return [t.strip() for t in str(raw or "").split(",") if t.strip()]
+
 
 try:
     Visum.Net.TSystems.ItemByKey(code_tsys)
@@ -13,17 +18,64 @@ except Exception:
     Visum.Net.AddTSystem(code_tsys, "PRT")
     print(f"Transport system '{code_tsys}' (Type: PRT) newly created.")
 
-    updated_lt = 0
-    for lt in Visum.Net.LinkTypes.GetAll:
-        tsys_set = lt.AttValue("TSysSet") or ""
-        tsys_list = [t.strip() for t in tsys_set.split(",") if t.strip()]
-        
-        if "MINIBUS" in tsys_list and code_tsys not in tsys_list:
-            tsys_list.append(code_tsys)
-            lt.SetAttValue("TSysSet", ",".join(tsys_list))
-            updated_lt += 1
-            
-    print(f"{updated_lt} link types updated with '{code_tsys}'.")
+# 1a) LinkTypes: PUTCAR exakt auf alle Streckentypen setzen, auf denen MINIBUS erlaubt ist
+updated_lt = 0
+for lt in Visum.Net.LinkTypes.GetAll:
+    tsys_list = _split_tsys(lt.AttValue("TSysSet"))
+    has_minibus = "MINIBUS" in tsys_list
+    has_putcar = code_tsys in tsys_list
+    if has_minibus and not has_putcar:
+        tsys_list.append(code_tsys)
+        lt.SetAttValue("TSysSet", ",".join(tsys_list))
+        updated_lt += 1
+    elif not has_minibus and has_putcar:
+        lt.SetAttValue("TSysSet", ",".join(t for t in tsys_list if t != code_tsys))
+        updated_lt += 1
+print(f"{updated_lt} link types updated with '{code_tsys}'.")
+
+# 1b) Links: PUTCAR exakt synchron zu MINIBUS auf Strecken setzen
+link_updates = []
+for vid, raw_tsys in Visum.Net.Links.GetMultiAttValues("TSYSSET", False):
+    tsys_list = _split_tsys(raw_tsys)
+    has_minibus = "MINIBUS" in tsys_list
+    has_putcar = code_tsys in tsys_list
+    if has_minibus and not has_putcar:
+        link_updates.append((vid, ",".join(tsys_list + [code_tsys])))
+    elif not has_minibus and has_putcar:
+        link_updates.append((vid, ",".join(t for t in tsys_list if t != code_tsys)))
+if link_updates:
+    Visum.Net.Links.SetMultiAttValues("TSYSSET", link_updates)
+print(f"{len(link_updates)} links updated with '{code_tsys}' (matching MINIBUS).")
+
+# 1c) Turns: PUTCAR für offene CAR-Abbieger zwischen PUTCAR-fähigen Strecken freigeben
+turn_updates = []
+turn_rows = Visum.Net.Turns.GetMultipleAttributes(
+    ["TSYSSET", r"FROMLINK\TSYSSET", r"TOLINK\TSYSSET"], False
+)
+for idx, (raw_t, raw_from, raw_to) in enumerate(turn_rows, start=1):
+    t_list = _split_tsys(raw_t)
+    from_ok = code_tsys in _split_tsys(raw_from)
+    to_ok = code_tsys in _split_tsys(raw_to)
+    car_ok = "CAR" in t_list
+    want_putcar = car_ok and from_ok and to_ok
+    has_putcar = code_tsys in t_list
+    if want_putcar and not has_putcar:
+        turn_updates.append((idx, ",".join(t_list + [code_tsys])))
+    elif not want_putcar and has_putcar:
+        turn_updates.append((idx, ",".join(t for t in t_list if t != code_tsys)))
+if turn_updates:
+    Visum.Net.Turns.SetMultiAttValues("TSYSSET", turn_updates)
+print(f"{len(turn_updates)} turns updated with '{code_tsys}'.")
+
+# 1d) Connectors: Anbindungen für PUTCAR freigeben, wenn CAR offen ist
+conn_updates = []
+for idx, (_, raw_c) in enumerate(Visum.Net.Connectors.GetMultiAttValues("TSYSSET", False), start=1):
+    c_list = _split_tsys(raw_c)
+    if "CAR" in c_list and code_tsys not in c_list:
+        conn_updates.append((idx, ",".join(c_list + [code_tsys])))
+if conn_updates:
+    Visum.Net.Connectors.SetMultiAttValues("TSYSSET", conn_updates)
+print(f"{len(conn_updates)} connectors updated with '{code_tsys}'.")
 
 try:
     Visum.Net.Modes.ItemByKey(code_tsys)

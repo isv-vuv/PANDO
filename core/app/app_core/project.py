@@ -67,7 +67,7 @@ PROJECT_VISUM_SUBDIRS = (
     "icon",
     "lay",
     "lla",
-    "log-file",
+    "log",
     "mtx",
     "net",
     "par",
@@ -220,6 +220,42 @@ def populate_visum_gpa_files(project_path: str, language: Optional[str] = None) 
     return copied
 
 
+def populate_visum_script_files(project_path: str) -> list[str]:
+    """Copy the Luftlinientool GUI launcher and its standalone dependencies into processed/visum/script/dlnt."""
+    visum_script_dir = os.path.join(project_path, "processed", "visum", "script", "dlnt")
+    os.makedirs(visum_script_dir, exist_ok=True)
+
+    root = tool_root() if "tool_root" in globals() else os.path.abspath(os.path.join(os.path.dirname(__file__), "..", "..", ".."))
+    scripts_src_dir = os.path.join(root, "core", "scripts", "visum", "scripts")
+    helper_src_dir = os.path.join(root, "core", "scripts", "visum", "helper_files")
+
+    copied: list[str] = []
+    for filename in (
+        "dlnt_GUI.py",
+        "05_cfl_directlinenetwork_tool.py",
+        "05_language_management.py",
+    ):
+        src = os.path.join(scripts_src_dir, filename)
+        if os.path.isfile(src):
+            dst = os.path.join(visum_script_dir, filename)
+            shutil.copy2(src, dst)
+            copied.append(dst)
+
+    translations_src = os.path.join(helper_src_dir, "translations.json")
+    if os.path.isfile(translations_src):
+        translations_dst = os.path.join(visum_script_dir, "translations.json")
+        shutil.copy2(translations_src, translations_dst)
+        copied.append(translations_dst)
+
+    docs_src = os.path.join(helper_src_dir, "documentation")
+    if os.path.isdir(docs_src):
+        docs_dst = os.path.join(visum_script_dir, "documentation")
+        shutil.copytree(docs_src, docs_dst, dirs_exist_ok=True)
+        copied.append(docs_dst)
+
+    return copied
+
+
 def create_project_structure(project_path: str) -> None:
     paths = canonical_project_paths(project_path)
     for key in ("root", "input", "temp", "processed", "osm", "qgis_output", "visum"):
@@ -235,6 +271,7 @@ def create_project_structure(project_path: str) -> None:
     for subfolder in PROJECT_VISUM_SHAPEFILE_SUBDIRS:
         os.makedirs(os.path.join(paths["visum"], "shapefile", subfolder), exist_ok=True)
     populate_visum_gpa_files(project_path)
+    populate_visum_script_files(project_path)
 
 
 def populate_project_qgis_files(project_path: str, root_dir: Optional[str] = None) -> list[str]:

@@ -55,38 +55,62 @@ class StepId(IntEnum):
     PROJECT_PBF = 3
     GRID_AREA = 4
     PROCESSING = 5
-    VISUM = 6
-    RESULTS = 7
-    REPORT = 8
+    LINKTYPES = 6
+    VISUM = 7
+    RESULTS = 8
+    REPORT = 9
 
 
-STEP_COUNT = 7  # Active process steps (1 to 7)
+ACTIVE_WORKFLOW_STEPS: tuple[StepId, ...] = (
+    StepId.SEARCH,
+    StepId.PROJECT_PBF,
+    StepId.GRID_AREA,
+    StepId.PROCESSING,
+    StepId.LINKTYPES,
+    StepId.VISUM,
+    StepId.RESULTS,
+    StepId.REPORT,
+)
+
+STEP_COUNT = len(ACTIVE_WORKFLOW_STEPS)  # Active process steps (1 to STEP_COUNT)
 
 
 def coerce_step_id(value: StepId | int) -> StepId:
     return value if isinstance(value, StepId) else StepId(int(value))
 
 
+def step_number_for_id(step_id: StepId | int) -> int:
+    """Return 1-based display step number (0 for WELCOME), derived from ACTIVE_WORKFLOW_STEPS."""
+    step = coerce_step_id(step_id)
+    if step == StepId.WELCOME:
+        return 0
+    if step == StepId.CITY_SELECTION:
+        step = StepId.SEARCH
+    try:
+        return ACTIVE_WORKFLOW_STEPS.index(step) + 1
+    except ValueError:
+        return int(step)
+
+
 def previous_step_id(step_id: StepId | int) -> StepId | None:
     step = coerce_step_id(step_id)
     if step == StepId.WELCOME:
         return None
-    if step == StepId.SEARCH or step == StepId.CITY_SELECTION:
+    if step in (StepId.SEARCH, StepId.CITY_SELECTION):
         return StepId.WELCOME
-    if step == StepId.PROJECT_PBF:
-        return StepId.SEARCH
-    if step == StepId.GRID_AREA:
-        return StepId.PROJECT_PBF
-    return StepId(int(step) - 1)
+    try:
+        idx = ACTIVE_WORKFLOW_STEPS.index(step)
+    except ValueError:
+        return StepId(int(step) - 1)
+    if idx == 0:
+        return StepId.WELCOME
+    return ACTIVE_WORKFLOW_STEPS[idx - 1]
 
 
 def progress_percent_for_step(step_id: StepId | int) -> int:
-    step = coerce_step_id(step_id)
-    if step == StepId.WELCOME:
+    step_num = step_number_for_id(step_id)
+    if step_num <= 0:
         return 0
-    step_num = int(step)
-    if step_num >= 2:
-        step_num -= 1
     return round(min(STEP_COUNT, step_num) / STEP_COUNT * 100)
 
 
@@ -178,7 +202,7 @@ class AppState:
         self.current_step = StepId.GRID_AREA
         self.last_saved_step = StepId.PROJECT_PBF
 
-    def payload_for_step4(self) -> dict[str, Any]:
+    def payload_for_data_step(self) -> dict[str, Any]:
         payload: dict[str, Any] = {}
         if self.step4_data:
             payload.update(self.step4_data)
@@ -196,7 +220,10 @@ class AppState:
             payload["pbf_references"] = list(self.pbf_references)
         return payload
 
-    def payload_for_step5(self) -> dict[str, Any]:
+    def payload_for_step4(self) -> dict[str, Any]:
+        return self.payload_for_data_step()
+
+    def payload_for_processing_step(self) -> dict[str, Any]:
         payload = dict(self.step4_data)
         payload.update(self.step3_data)
         if self.workspace_path:
@@ -208,6 +235,9 @@ class AppState:
         if self.pbf_references:
             payload["pbf_references"] = list(self.pbf_references)
         return payload
+
+    def payload_for_step5(self) -> dict[str, Any]:
+        return self.payload_for_processing_step()
 
     def to_project_metadata(self) -> dict[str, Any]:
         if not self.project_path:

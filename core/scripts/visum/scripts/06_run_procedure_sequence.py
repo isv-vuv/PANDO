@@ -78,6 +78,7 @@ def run_procedure_sequence(target_project_dir=None, visum=None, log=logging.info
     base_project_dir, visum_input_dir, visum_helper_dir = get_project_paths(target_project_dir)
     ver_dir = visum_input_dir / "ver"
     ver_dir.mkdir(parents=True, exist_ok=True)
+    (visum_input_dir / "log").mkdir(parents=True, exist_ok=True)
 
     city_name = get_model_city_name(base_project_dir)
     target_ver = ver_dir / f"07_{city_name}_Model.ver"
@@ -129,7 +130,7 @@ def run_procedure_sequence(target_project_dir=None, visum=None, log=logging.info
 
     if proc_xml and proc_xml.exists():
         log(f"Importiere Verfahrensablauf ({app_lang.upper()}): {proc_xml.name}")
-        visum.Procedures.Open(str(proc_xml.resolve()), True, True, True)
+        visum.Procedures.Open(str(proc_xml.resolve()), True, True, False)
     else:
         log(f"Warnung: Verfahrensablauf-Datei '{target_xml_name}' nicht gefunden in pro/")
 

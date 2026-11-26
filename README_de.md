@@ -57,14 +57,17 @@ PANDO leitet Schritt für Schritt durch den Prozess der Modellgenerierung:
 2. **Projektordner & Geodaten-Setup**: Erstellung des Projektordners, Bereitstellung der Basisdaten (GADM, GHS-POP) und Download der OSM-Daten (PBF).
 3. **Untersuchungsraum & Gitterfestlegung**: Festlegung des Gitters, Definition der Modellräume (PA, IA1, IA2) sowie ADM2-Außenraum-Vorschau.
 4. **Verarbeitung der Geodaten**: Ausführung der OSM-Vorverarbeitung mit Osmium sowie der QGIS-Modellverarbeitungsschritte (Datenvorbereitung, Klassifizierung zentraler Orte, Gittererzeugung & -zuweisung, Intensitätsschätzungen und innergemeindliche Zentralitäten im Untersuchungsraum sowie landesweit, Verkehrszellengenerierung).
-5. **Visum-Import & Auswertung**:
+5. **Streckentypen & Fährparameter**: OSM-Straßenkategorien, Fahrstreifenklassen, Geschwindigkeitsstufen, zugelassene Verkehrssysteme (`TSysSet`), Kapazitäten (`CapPrT`), getrennte Widerstandsfaktoren (Pkw, Rad, Fuß), Sonderstreckentypen und Fährwartezeit vor der Visum-Verarbeitung festlegen.
+6. **Visum-Import und Verarbeitung**:
    - Import von Streckennetz (Links) und Verkehrszellen (Zones).
+   - Ableitung der Anbindungsknoten und Anbindung der Fährterminals.
+   - Umstrukturierung der Streckentypen anhand der Vorgaben aus Schritt 5.
    - Anbindungserzeugung (Connectors).
    - Luftlinienmatrizen (Direct Line Matrices).
-   - Ausführen des Verfahrensablaufs (RIN-Netzkategorisierung und Erreichbarkeitsanalysen).
+   - Ausführen des Verfahrensablaufs (RIN-Netzkategorisierung, POI-/ADM-GeoJSON-Import und Erreichbarkeitsanalysen).
    - Speichern der finalen Visum-Datei und Anwendung von Grafikparametern.
-6. **Ergebnisse**: Übersicht und QGIS-/Visum-Export ausgewählter Ergebnisdaten und Analysen.
-7. **Bericht**: Neun QGIS-Karten und einen PDF-Bericht mit den tatsächlich verwendeten Projektdaten und Parametern erzeugen, direkt ansehen und speichern. Vorlagen, Karten und PDF liegen im Projektordner unter `report/`.
+7. **Ergebnisse und Auswertung**: Übersicht und QGIS-/Visum-Export ausgewählter Ergebnisdaten und Analysen.
+8. **Bericht**: Neun QGIS-Karten und einen PDF-Bericht mit den tatsächlich verwendeten Projektdaten und Parametern erzeugen, direkt ansehen und speichern. Vorlagen, Karten und PDF liegen im Projektordner unter `report/`.
 
 ---
 

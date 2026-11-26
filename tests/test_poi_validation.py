@@ -61,7 +61,7 @@ class POIPreflightTests(unittest.TestCase):
             return import_project_pois(self.visum, self.root, MagicMock())
 
     def report(self):
-        return json.loads((self.root / 'poi_validation_report.json').read_text(encoding='utf-8'))
+        return json.loads((self.root / 'shapefile' / 'POI' / 'poi_validation_report.json').read_text(encoding='utf-8'))
 
     def test_collects_errors_across_files_before_any_visum_write(self):
         self.add_source('sector_education_points.shp', [Point(1, 2), LineString([(0, 0), (1, 1)])])

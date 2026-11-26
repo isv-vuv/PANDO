@@ -14,14 +14,15 @@ from core.app.app_core.settings import load_app_settings, save_app_settings
 from core.app.app_core.update_checker import check_for_updates, perform_git_pull
 from core.app.app_qt.app_state import AppState, StepId, previous_step_id, progress_percent_for_step
 from core.app.app_qt.help_panel import HelpPanelWidget
-from core.app.app_qt.steps.step0_welcome import Step0WelcomeWidget
-from core.app.app_qt.steps.step1_search import Step1SearchWidget
-from core.app.app_qt.steps.step2_data import Step2DataWidget
-from core.app.app_qt.steps.step3_grid_area import Step3GridAreaWidget
-from core.app.app_qt.steps.step4_processing import Step4ProcessingWidget
-from core.app.app_qt.steps.step5_visum import Step5VisumWidget
-from core.app.app_qt.steps.step6_results import Step6ResultsWidget
-from core.app.app_qt.steps.step7_report import Step7ReportWidget
+from core.app.app_qt.steps.step_welcome import WelcomeStepWidget
+from core.app.app_qt.steps.step_search import SearchStepWidget
+from core.app.app_qt.steps.step_data import DataStepWidget
+from core.app.app_qt.steps.step_grid_area import GridAreaStepWidget
+from core.app.app_qt.steps.step_processing import ProcessingStepWidget
+from core.app.app_qt.steps.step_linktypes import LinkTypesStepWidget
+from core.app.app_qt.steps.step_visum import VisumStepWidget
+from core.app.app_qt.steps.step_results import ResultsStepWidget
+from core.app.app_qt.steps.step_report import ReportStepWidget
 
 
 USER_AGENT = "PANDO V1.0 (Urban-Act Tool)"
@@ -121,7 +122,7 @@ class UrbanActQtMainWindow(BaseMainWindow):
         except Exception:
             pass
 
-        self._show_step0()
+        self._show_welcome_step()
         self._trigger_update_check()
         if QTimer is not None:
             QTimer.singleShot(100, self._start_background_index_preload)
@@ -214,11 +215,11 @@ class UrbanActQtMainWindow(BaseMainWindow):
 
         self._set_step1_search_enabled(True)
         self.state.set_geocode_results(locations)
-        if isinstance(self._current_step_widget, Step1SearchWidget):
+        if isinstance(self._current_step_widget, SearchStepWidget):
             self._current_step_widget.set_locations(locations)
             self.set_status(localizer.get_string("step2_status_select_or_confirm"))
         else:
-            self._show_step1()
+            self._show_search_step()
 
     def _handle_geocode_error(self, error_message: str) -> None:
         err_lower = error_message.lower()
@@ -286,7 +287,7 @@ class UrbanActQtMainWindow(BaseMainWindow):
             )
             return
         self._persist_app_settings(workspace_path=workspace_path)
-        self._show_step1()
+        self._show_search_step()
         self.set_status(localizer.get_string("status_project_folder_created", folder_path=os.path.normpath(project_path)))
 
     def _handle_language_switch_requested(self, lang_code: str | None = None) -> None:
@@ -335,7 +336,7 @@ class UrbanActQtMainWindow(BaseMainWindow):
         )
 
     def _set_step1_search_enabled(self, enabled: bool) -> None:
-        if not isinstance(self._current_step_widget, Step1SearchWidget):
+        if not isinstance(self._current_step_widget, SearchStepWidget):
             return
         try:
             self._current_step_widget.set_search_enabled(enabled)
@@ -374,7 +375,7 @@ class UrbanActQtMainWindow(BaseMainWindow):
                 selected_location=self.state.selected_location,
                 unknown_place=localizer.get_string("message_unknown_place"),
             )
-        self._show_step2()
+        self._show_data_step()
         self._save_project_metadata_if_possible()
 
     def _handle_step2_confirmed(self, step2_data: dict) -> None:
@@ -385,7 +386,7 @@ class UrbanActQtMainWindow(BaseMainWindow):
             Dialogs.error(self, localizer.get_string("message_general_error_title"), str(exc))
             return
         self._save_project_metadata_if_possible()
-        self._show_step3()
+        self._show_grid_area_step()
 
     def _handle_step3_position_changed(self, location) -> None:
         self.state.set_selected_location(location)
@@ -398,7 +399,7 @@ class UrbanActQtMainWindow(BaseMainWindow):
             Dialogs.error(self, localizer.get_string("message_general_error_title"), str(exc))
             return
         self._save_project_metadata_if_possible()
-        self._show_step4()
+        self._show_processing_step()
 
     def _home_navigation_busy(self) -> bool:
         if self._geocode_thread is not None:
@@ -443,7 +444,8 @@ class UrbanActQtMainWindow(BaseMainWindow):
         self.state.set_project_context(tool_root())
         # Resources have already been released against the old project state.
         self._current_step_widget = None
-        self._show_step0()
+        show_welcome = getattr(self, "_show_welcome_step", None)
+        (show_welcome if callable(show_welcome) else self._show_step0)()
 
     def _handle_back_requested(self) -> None:
         widget = self._current_step_widget
@@ -452,7 +454,7 @@ class UrbanActQtMainWindow(BaseMainWindow):
         target_step = previous_step_id(self.state.current_step)
         if target_step is None:
             return
-        if isinstance(widget, Step7ReportWidget) and widget.process is not None:
+        if isinstance(widget, ReportStepWidget) and widget.process is not None:
             self._back_button.setEnabled(False)
             widget.generation_finished.connect(
                 self._finish_report_back_navigation, Qt.ConnectionType.QueuedConnection
@@ -474,34 +476,36 @@ class UrbanActQtMainWindow(BaseMainWindow):
             self._handle_back_requested()
 
     def _cancel_pbf_region_search(self) -> None:
-        if isinstance(self._current_step_widget, Step2DataWidget):
+        if isinstance(self._current_step_widget, DataStepWidget):
             self._current_step_widget.cancel_region_search()
 
     def _show_step_by_id(self, step_id: StepId) -> None:
         if step_id == StepId.WELCOME:
-            self._show_step0()
+            self._show_welcome_step()
         elif step_id in (StepId.SEARCH, StepId.CITY_SELECTION):
-            self._show_step1()
+            self._show_search_step()
         elif step_id == StepId.PROJECT_PBF:
-            self._show_step2()
+            self._show_data_step()
         elif step_id == StepId.GRID_AREA:
-            self._show_step3()
+            self._show_grid_area_step()
         elif step_id == StepId.PROCESSING:
-            self._show_step4()
+            self._show_processing_step()
+        elif step_id == StepId.LINKTYPES:
+            self._show_linktypes_step()
         elif step_id == StepId.VISUM:
-            self._show_step5()
+            self._show_visum_step()
         elif step_id == StepId.RESULTS:
-            self._show_step6()
+            self._show_results_step()
         elif step_id == StepId.REPORT:
-            self._show_step7()
+            self._show_report_step()
         else:
             raise ValueError(f"Unsupported step: {step_id}")
 
     def _rebuild_current_step(self) -> None:
         self._show_step_by_id(self.state.current_step)
 
-    def _show_step0(self) -> None:
-        step0_widget = Step0WelcomeWidget(localizer, self)
+    def _show_welcome_step(self) -> None:
+        step0_widget = WelcomeStepWidget(localizer, self)
         step0_widget.start_requested.connect(self._handle_step0_start_requested)
         step0_widget.project_folder_open_requested.connect(self._handle_open_project_folder_requested)
         step0_widget.language_switch_requested.connect(self._handle_language_switch_requested)
@@ -510,10 +514,10 @@ class UrbanActQtMainWindow(BaseMainWindow):
     def _handle_step0_start_requested(self) -> None:
         if not self.show_copyright_dialog():
             return
-        self._show_step1()
+        self._show_search_step()
 
-    def _show_step1(self) -> None:
-        step1_widget = Step1SearchWidget(
+    def _show_search_step(self) -> None:
+        step1_widget = SearchStepWidget(
             localizer,
             self,
             project_path=self.state.project_path,
@@ -533,14 +537,27 @@ class UrbanActQtMainWindow(BaseMainWindow):
             self._handle_step2_selection(step1_widget.selected())
         QTimer.singleShot(0, step1_widget.focus_city_input)
 
-    def _show_step2(self) -> None:
-        step2_widget = Step2DataWidget(localizer, self.state.payload_for_step4(), self._get_geofabrik_index(), self)
+    def _show_data_step(self) -> None:
+        step2_widget = DataStepWidget(localizer, self.state.payload_for_data_step(), self._get_geofabrik_index(), self)
         step2_widget.status_changed.connect(self.set_status)
+        step2_widget.readiness_changed.connect(self._handle_data_readiness_changed)
         step2_widget.confirmed.connect(self._handle_step2_confirmed)
         self._show_step(StepId.PROJECT_PBF, step2_widget)
 
-    def _show_step3(self) -> None:
-        step3_widget = Step3GridAreaWidget(
+    def _handle_data_readiness_changed(self, ready: bool) -> None:
+        if self.state.current_step == StepId.PROJECT_PBF and self._next_button is not None:
+            self._next_button.setEnabled(ready)
+            self._update_download_hint()
+
+    def _update_download_hint(self) -> None:
+        text = ""
+        if self.state.current_step == StepId.PROJECT_PBF:
+            text = getattr(self._current_step_widget, "download_requirement_text", "")
+        self._download_hint_label.setText(text)
+        self._download_hint_label.setVisible(bool(text))
+
+    def _show_grid_area_step(self) -> None:
+        step3_widget = GridAreaStepWidget(
             localizer,
             self.state.selected_location,
             self,
@@ -552,10 +569,10 @@ class UrbanActQtMainWindow(BaseMainWindow):
         step3_widget.confirmed.connect(self._handle_step3_confirmed)
         self._show_step(StepId.GRID_AREA, step3_widget)
 
-    def _show_step4(self) -> None:
-        step4_widget = Step4ProcessingWidget(localizer, self.state.payload_for_step5(), self)
+    def _show_processing_step(self) -> None:
+        step4_widget = ProcessingStepWidget(localizer, self.state.payload_for_processing_step(), self)
         step4_widget.status_changed.connect(self._handle_step4_status_changed)
-        step4_widget.next_requested.connect(self._show_step5)
+        step4_widget.next_requested.connect(self._show_linktypes_step)
         project_path = self.state.step4_data.get("project_path") or ""
         self._show_step(
             StepId.PROCESSING,
@@ -563,24 +580,46 @@ class UrbanActQtMainWindow(BaseMainWindow):
             localizer.get_string("step4_status_pbf_ready") + f" {project_path}",
         )
 
+    def _show_linktypes_step(self) -> None:
+        project_path = self.state.project_path or self.state.step4_data.get("project_path") or ""
+        step5_lt_widget = LinkTypesStepWidget(localizer, self, project_path=project_path)
+        step5_lt_widget.next_requested.connect(self._proceed_from_linktypes_to_visum)
+        step5_lt_widget.status_changed.connect(self.set_status)
+        self._show_step(
+            StepId.LINKTYPES,
+            step5_lt_widget,
+            localizer.get_string("step5_linktypes_title", default="Schritt 5: Streckentypen und Fährparameter")
+            + (f": {project_path}" if project_path else ""),
+        )
+
+    def _proceed_from_linktypes_to_visum(self) -> None:
+        widget = self._current_step_widget
+        if isinstance(widget, LinkTypesStepWidget) and not widget.save_all():
+            Dialogs.warning(
+                self,
+                localizer.get_string("linktypes_err_empty_title", default="Keine Streckentypen"),
+                localizer.get_string("linktypes_err_empty_body", default="Bitte mindestens eine Streckentyp-Klasse aktivieren."),
+            )
+            return
+        self._show_visum_step()
+
     def _handle_step4_status_changed(self, status_msg: str) -> None:
         self.set_status(status_msg)
         if self.state.current_step == StepId.PROCESSING and self._next_button is not None:
             is_done = getattr(self._current_step_widget, "is_pipeline_completed", lambda: False)()
             self._next_button.setEnabled(is_done)
 
-    def _show_step5(self, selective=False) -> None:
+    def _show_visum_step(self, selective=False) -> None:
         project_path = self.state.project_path or self.state.step4_data.get("project_path") or ""
-        step5_widget = Step5VisumWidget(localizer, self, project_path=project_path)
+        step5_widget = VisumStepWidget(localizer, self, project_path=project_path)
         if selective:
             step5_widget.prepare_centrality_update()
-        step5_widget.finished.connect(lambda ok, msg: self._show_step6() if ok else None)
         if hasattr(step5_widget, "running_state_changed") and step5_widget.running_state_changed is not None:
             step5_widget.running_state_changed.connect(self._handle_step5_running_state_changed)
         self._show_step(
             StepId.VISUM,
             step5_widget,
-            f"Visum 2025 Import und Verarbeitung: {project_path}",
+            f"Visum 2026 Import und Verarbeitung: {project_path}",
         )
 
     def _handle_step5_running_state_changed(self, is_running: bool) -> None:
@@ -601,20 +640,48 @@ class UrbanActQtMainWindow(BaseMainWindow):
             release()
         super().closeEvent(event)
 
-    def _show_step6(self) -> None:
+    def _show_results_step(self) -> None:
         project_path = self.state.project_path or self.state.step4_data.get("project_path") or ""
-        step6_widget = Step6ResultsWidget(localizer, self, project_path=project_path)
-        step6_widget.recalculate_requested.connect(lambda: self._show_step5(selective=True))
+        step6_widget = ResultsStepWidget(localizer, self, project_path=project_path)
+        step6_widget.recalculate_requested.connect(lambda: self._show_visum_step(selective=True))
         self._show_step(
             StepId.RESULTS,
             step6_widget,
-            localizer.get_string("step6_title", default="Schritt 6: Ergebnisse & Auswertung") + f": {project_path}",
+            localizer.get_string("step6_title", default="Schritt 7: Ergebnisse und Auswertung") + f": {project_path}",
         )
 
-    def _show_step7(self) -> None:
+    def _show_report_step(self) -> None:
         project_path = self.state.project_path or self.state.step4_data.get("project_path") or ""
-        widget = Step7ReportWidget(localizer, self, project_path=project_path)
+        widget = ReportStepWidget(localizer, self, project_path=project_path)
         self._show_step(StepId.REPORT, widget, localizer.get_string("step7_title"))
+
+    # Backward-compatible step navigation method aliases
+    def _show_step0(self) -> None:
+        self._show_welcome_step()
+
+    def _show_step1(self) -> None:
+        self._show_search_step()
+
+    def _show_step2(self) -> None:
+        self._show_data_step()
+
+    def _show_step3(self) -> None:
+        self._show_grid_area_step()
+
+    def _show_step4(self) -> None:
+        self._show_processing_step()
+
+    def _show_step5_linktypes(self) -> None:
+        self._show_linktypes_step()
+
+    def _show_step5(self, selective=False) -> None:
+        self._show_visum_step(selective=selective)
+
+    def _show_step6(self) -> None:
+        self._show_results_step()
+
+    def _show_step7(self) -> None:
+        self._show_report_step()
 
     def show_copyright_dialog(self, force: bool = False) -> bool:
         if getattr(self, "_licenses_accepted_this_session", False) and not force:
@@ -659,10 +726,13 @@ class UrbanActQtMainWindow(BaseMainWindow):
         if widget is None:
             return
         if self.state.current_step == StepId.RESULTS:
-            self._show_step7()
+            self._show_report_step()
             return
         if self.state.current_step == StepId.VISUM:
-            self._show_step6()
+            self._show_results_step()
+            return
+        if self.state.current_step == StepId.LINKTYPES:
+            self._proceed_from_linktypes_to_visum()
             return
         if hasattr(widget, "_confirm_selection"):
             widget._confirm_selection()
@@ -798,6 +868,12 @@ class UrbanActQtMainWindow(BaseMainWindow):
 
         self._update_nav_button_widths()
 
+        self._download_hint_label = QtWidgets.QLabel(left_box)
+        self._download_hint_label.setWordWrap(True)
+        self._download_hint_label.setAlignment(qt_enum(Qt, "AlignRight", "AlignmentFlag"))
+        self._download_hint_label.setStyleSheet("color: #475569; padding: 0px 8px;")
+        self._download_hint_label.hide()
+        left_layout.addWidget(self._download_hint_label)
         left_layout.addWidget(nav)
 
         # Splitter dividing main view (left) and help panel (right)
@@ -849,6 +925,8 @@ class UrbanActQtMainWindow(BaseMainWindow):
                         getattr(self._current_step_widget, "selected", lambda: None)() is not None
                     )
                     self._next_button.setEnabled(has_sel)
+                elif step_id == StepId.PROJECT_PBF:
+                    self._next_button.setEnabled(self._current_step_widget.next_button.isEnabled())
                 elif step_id == StepId.PROCESSING:
                     is_done = getattr(self._current_step_widget, "is_pipeline_completed", lambda: False)()
                     self._next_button.setEnabled(is_done)
@@ -858,6 +936,7 @@ class UrbanActQtMainWindow(BaseMainWindow):
                 else:
                     self._next_button.setEnabled(True)
 
+        self._update_download_hint()
         self._update_nav_button_widths()
 
     def _update_nav_button_widths(self) -> None:

@@ -228,6 +228,16 @@ def run_generate_connectors(target_project_dir=None, visum=None):
     zf = visum.Filters.ZoneFilter()
     cf = visum.Filters.ConnectorFilter()
 
+    # 0. Erreichbarkeits-Attribut nach Streckentyp-/TSysSet-Umstrukturierung (Schritt 3) auffrischen
+    import importlib
+    derive_mod = (
+        importlib.import_module(".02_derive_access_nodes", package=__package__)
+        if __package__
+        else importlib.import_module("02_derive_access_nodes")
+    )
+    logging.info("Aktualisiere 'Reachable_Node' nach finaler Streckentyp-/TSysSet-Konfiguration...")
+    derive_mod.AccessNodeDeriver(visum, visum_input_dir).calculate_reachable_nodes(max_start_nodes=10)
+
     # 1. Distanzen berechnen
     calculate_zone_distances(visum, nf, use_island_logic=USE_ISLAND_ID)
 
@@ -262,6 +272,14 @@ def run_generate_connectors(target_project_dir=None, visum=None):
     node_types_to_try = [int(v[1]) for v in connector_config_near.values()]
     output_connectors_dir = visum_input_dir / "net"
     output_connectors_dir.mkdir(parents=True, exist_ok=True)
+    for stale_pattern in ("Anbindungen_Typ*.net", "Anbindungen_Typ*.att"):
+        for stale_file in output_connectors_dir.glob(stale_pattern):
+            try:
+                stale_file.unlink()
+                logging.info(f"Alte Anbindungsdatei vor Neuberechnung entfernt: {stale_file.name}")
+            except Exception as exc:
+                logging.warning(f"Konnte alte Anbindungsdatei '{stale_file.name}' nicht entfernen: {exc}")
+    written_connector_types: set[int] = set()
 
     addnetread_anbindungen = visum.IO.CreateAddNetReadController()
     addnetread_anbindungen.SetWhatToDo("Connector", 4)
@@ -417,6 +435,7 @@ def run_generate_connectors(target_project_dir=None, visum=None):
 
         logging.info(f"Speichere {visum.Net.Connectors.CountActive} Anbindungen in Datei {path_anb_type.name}...")
         visum.IO.SaveNet(NetFile=str(path_anb_type), LayoutFile=str(layout_file), ActiveNetElemsOnly=True)
+        written_connector_types.add(anb_typeno)
 
         conn_uda_name = f"Anbindung_Typ{anb_typeno}"
         add_uda(visum.Net.Connectors, conn_uda_name, 1, 0, f'CFL connector type {anb_typeno}')
@@ -455,7 +474,7 @@ def run_generate_connectors(target_project_dir=None, visum=None):
 
         path_to_merge = None
         potential_existing_file = output_connectors_dir / f'Anbindungen_Typ{anb_typeno}.net'
-        if potential_existing_file.exists():
+        if anb_typeno in written_connector_types and potential_existing_file.exists():
             path_to_merge = potential_existing_file
 
         create_connectors_for_type(anb_typeno, filter_zentralitaet, anb_knoten_typnr, max_entf, anz,

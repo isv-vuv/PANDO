@@ -1,9 +1,11 @@
 if __package__:
     from .visum_logging import measured, timed_step, log_network_counts
     from .visum_com import create_visum, get_visum_appdata_dir
+    from .ferry_access import connect_ferries_to_road_network
 else:
     from visum_logging import measured, timed_step, log_network_counts
     from visum_com import create_visum, get_visum_appdata_dir
+    from ferry_access import connect_ferries_to_road_network
 import os
 import re
 import sys
@@ -23,7 +25,7 @@ UDA_DESCRIPTIONS = {
     "POP": "Total population in the traffic zone (aggregated GHS-POP dataset, sum-conserving redistributed)",
     "TYPENO": "Hierarchy or centrality level of the traffic cell/area (RIN / Central Places)",
     "MAINZONENO": "Reference ID of the superordinate main zone / aggregation area",
-    "ZONETYPE": "Zone type classification: PA (Planning Area), IA1/IA2 (Influence Areas 1/2), EA (External Area)",
+    "ZONETYPE": "Zone type classification: PA (Planning Area), IA1/IA2 (Impact Areas 1/2), EA (External Area)",
     "ISLAND_ID": "Unique ID of the contiguous landmass/island for topological separation",
 
     # --- Administrative Boundaries (GADM) ---
@@ -35,8 +37,8 @@ UDA_DESCRIPTIONS = {
     "NAME_2": "GADM district/city name (Level 2)",
 
     # --- Grid Hierarchy References ---
-    "NO_E0": "Reference ID of grid cell level E0 (Influence Area 2, cell size = 4,500 m)",
-    "NO_E1": "Reference ID of grid cell level E1 (Influence Area 1, cell size = 1,500 m)",
+    "NO_E0": "Reference ID of grid cell level E0 (Impact Area 2, cell size = 4,500 m)",
+    "NO_E1": "Reference ID of grid cell level E1 (Impact Area 1, cell size = 1,500 m)",
     "NO_E2": "Reference ID of grid cell level E2 (Planning Area, cell size = 500 m)",
 
     # --- POI Functional Area Intensities ---
@@ -421,15 +423,20 @@ def run_import_links_and_zones(
     with timed_step('visum.Net.SetProjection'):
         visum.Net.SetProjection(wgs84_geographic_wkt, False)
 
-    step1_ver = ver_dir / "01_Links_Imported.ver"
-    logging.info(f"Speichere Schritt 1 unter: {step1_ver}")
-    with timed_step('visum.SaveVersion'):
-        visum.SaveVersion(str(step1_ver))
-
     # Schritt 2: Umschalten auf UTM & OSM-Strecken mathematisch transformieren
     logging.info("Schritt 2: Schalte auf UTM-Zielprojektion um & transformiere Streckenkoordinaten")
     with timed_step('visum.Net.SetProjection'):
         visum.Net.SetProjection(wkt_text, True)  # True = Rechnet WGS84-Grad-Koordinaten der Strecken in UTM-Meter um
+
+    # Fährknoten qualifizieren und isolierte Fähranleger an das Straßennetz anbinden
+    logging.info("Qualifiziere Fährknoten und binde isolierte Fähranleger an das Straßennetz an...")
+    with timed_step('connect_ferries_to_road_network'):
+        connect_ferries_to_road_network(visum, osm_file=osm_file, log=logging.info)
+
+    step1_ver = ver_dir / "01_Links_Imported.ver"
+    logging.info(f"Speichere Schritt 1 unter: {step1_ver}")
+    with timed_step('visum.SaveVersion'):
+        visum.SaveVersion(str(step1_ver))
 
     # Erst jetzt die Bezirke additiv ins UTM-Netz laden
     logging.info("Lade Bezirke additiv ins UTM-Netz...")

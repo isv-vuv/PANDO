@@ -4,7 +4,27 @@ import unittest
 from pathlib import Path
 from unittest.mock import MagicMock, patch
 
-from core.scripts.visum.scripts.poi_import import category_for_file, ensure_import_categories, import_project_pois
+from core.scripts.visum.scripts.poi_import import (
+    VISUM_VALUETYPE_BOOL,
+    VISUM_VALUETYPE_INT,
+    VISUM_VALUETYPE_REAL,
+    VISUM_VALUETYPE_STRING,
+    build_attribute_mapping,
+    category_for_file,
+    ensure_import_categories,
+    ensure_poi_geojson_files,
+    import_project_pois,
+    iter_poi_geodata_files,
+)
+
+try:
+    # Match the application startup order before loading geospatial DLLs.
+    from core.app.app_qt import qt_base  # noqa: F401
+    import geopandas as gpd
+    from pyproj import CRS
+    from shapely.geometry import Point, Polygon
+except ImportError:
+    gpd = None
 
 
 class POIImportTests(unittest.TestCase):
@@ -115,6 +135,277 @@ class POIImportTests(unittest.TestCase):
             self.assertEqual(visum.Net.AddPOI.call_count, 2)
             visum.Net.AddPOI.assert_called_with(9, category, 123.0, 456.0)
             visum.Net.AddPOI.return_value.SetAttValue.assert_called_once_with('WKTSURFACE', polygon.wkt)
+
+    @unittest.skipIf(gpd is None, 'Requires the QGIS geospatial Python environment')
+    def test_creates_poi_udas_from_geodata_dtypes_and_uses_native_shapefile_import(self):
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            poi_dir = root / 'shapefile' / 'POI'
+            zones_dir = root / 'shapefile' / 'Zones'
+            poi_dir.mkdir(parents=True)
+            zones_dir.mkdir(parents=True)
+
+            pts = gpd.GeoDataFrame(
+                {
+                    'name': ['Klinik A', 'Klinik B'],
+                    'Weight': [3, 1],
+                    'Score': [1.5, 2.5],
+                    'fid': [1.0, 2.0],
+                    'is_polygon': [0.0, 1.0],
+                    'sector': ['HEALTHCARE', 'HEALTHCARE'],
+                    'path': ['layer_a.gpkg', 'layer_b.gpkg'],
+                    'classifica': ['Hospital', 'Clinic'],
+                },
+                geometry=[Point(10, 20), Point(30, 40)],
+                crs='EPSG:3857',
+            )
+            pts_path = poi_dir / 'sector_healthcare_points.shp'
+            pts.to_file(pts_path, encoding='utf-8')
+
+            adm = gpd.GeoDataFrame(
+                {
+                    'NAME_2': ['Bezirk X'],
+                    'ZONENO': [2002.0],
+                    'MAINZONENO': [200.0],
+                    'POP': [12500.0],
+                    'path': ['adm2.gpkg'],
+                },
+                geometry=[Polygon([(0, 0), (10, 0), (10, 10), (0, 0)])],
+                crs='EPSG:3857',
+            )
+            adm_path = zones_dir / 'adm2.shp'
+            adm.to_file(adm_path, encoding='utf-8')
+
+            visum = MagicMock()
+            visum._use_native_shapefile_import = True
+            visum.Net.AttValue.return_value = CRS.from_epsg(3857).to_wkt()
+
+            cat21 = MagicMock()
+            cat21.POIs.AttrExists.return_value = False
+            cat21.POIs.GetMultiAttValues.return_value = []
+
+            cat12 = MagicMock()
+            cat12.POIs.AttrExists.return_value = False
+
+            def get_multi(attr_id, OnlyActive=False):
+                if attr_id == 'NAME_2':
+                    return [(1, 'Bezirk X')]
+                return []
+
+            cat12.POIs.GetMultiAttValues.side_effect = get_multi
+            visum.Net.POICategories.ItemByKey.side_effect = lambda key: {21: cat21, 12: cat12}[key]
+
+            para_pt = MagicMock()
+            para_adm = MagicMock()
+            visum.IO.CreateImportShapeFilePara.side_effect = [para_pt, para_adm]
+
+            count = import_project_pois(visum, root, log=MagicMock())
+            self.assertEqual(count, 3)
+            visum.Net.AddPOI.assert_not_called()
+            self.assertEqual(visum.IO.ImportShapefile.call_count, 2)
+
+            created_pt_udas = {
+                call.args[0]: call.args[3]
+                for call in cat21.POIs.AddUserDefinedAttribute.call_args_list
+            }
+            self.assertEqual(
+                created_pt_udas,
+                {
+                    'WEIGHT': VISUM_VALUETYPE_INT,
+                    'SCORE': VISUM_VALUETYPE_REAL,
+                    'FID': VISUM_VALUETYPE_INT,
+                    'IS_POLYGON': VISUM_VALUETYPE_BOOL,
+                    'SECTOR': VISUM_VALUETYPE_STRING,
+                    'CLASSIFICATION': VISUM_VALUETYPE_STRING,
+                },
+            )
+            self.assertNotIn('PATH', created_pt_udas)
+            self.assertEqual(para_pt.ObjectType, 59)
+            self.assertTrue(para_pt.CreateUserDefinedAttributes)
+            self.assertTrue(para_pt.SetAttributeAllocationsByIDs)
+            para_pt.SetAttValue.assert_any_call('POIKey', 21)
+            para_pt.SetAttValue.assert_any_call('ReadAdditive', True)
+            para_pt.AddAttributeAllocation.assert_any_call('Weight', 'WEIGHT')
+            para_pt.AddAttributeAllocation.assert_any_call('classifica', 'CLASSIFICATION')
+            para_pt.AddAttributeAllocation.assert_any_call('name', 'NAME')
+
+            created_adm_udas = {
+                call.args[0]: call.args[3]
+                for call in cat12.POIs.AddUserDefinedAttribute.call_args_list
+            }
+            self.assertEqual(created_adm_udas['ZONENO'], VISUM_VALUETYPE_INT)
+            self.assertEqual(created_adm_udas['MAINZONENO'], VISUM_VALUETYPE_INT)
+            self.assertEqual(created_adm_udas['POP'], VISUM_VALUETYPE_INT)
+            self.assertNotIn('PATH', created_adm_udas)
+            self.assertEqual(para_adm.ObjectType, 9)
+            para_adm.SetAttValue.assert_any_call('POIKey', 12)
+            cat12.POIs.SetMultiAttValues.assert_called_once_with('NAME', [(1, 'Bezirk X')], False)
+
+    @unittest.skipIf(gpd is None, 'Requires the QGIS geospatial Python environment')
+    def test_native_geojson_import_uses_create_import_geojson_para(self):
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            poi_dir = root / 'shapefile' / 'POI'
+            poi_dir.mkdir(parents=True)
+
+            pts = gpd.GeoDataFrame(
+                {'name': ['Schule 1'], 'Radius': [200]},
+                geometry=[Point(122.95, 10.67)],
+                crs='EPSG:4326',
+            )
+            gj_path = poi_dir / 'sector_education_points.geojson'
+            pts.to_file(gj_path, driver='GeoJSON')
+
+            visum = MagicMock()
+            visum._use_native_shapefile_import = True
+            visum.Net.AttValue.return_value = CRS.from_epsg(4326).to_wkt()
+
+            cat24 = MagicMock()
+            cat24.POIs.AttrExists.return_value = False
+            cat24.POIs.GetMultiAttValues.return_value = []
+            visum.Net.POICategories.ItemByKey.return_value = cat24
+
+            para_gj = MagicMock()
+            visum.IO.CreateImportGeoJSONPara.return_value = para_gj
+
+            count = import_project_pois(visum, root, log=MagicMock())
+            self.assertEqual(count, 1)
+            visum.IO.CreateImportGeoJSONPara.assert_called_once()
+            visum.IO.ImportGeoJSON.assert_called_once()
+            imported_file, used_para = visum.IO.ImportGeoJSON.call_args.args
+            self.assertTrue(imported_file.endswith('.geojson'))
+            self.assertIs(used_para, para_gj)
+            self.assertEqual(para_gj.ObjectType, 59)
+            para_gj.SetAttValue.assert_any_call('POIKey', 24)
+            para_gj.AddAttributeAllocation.assert_any_call('Radius', 'RADIUS')
+            cat24.POIs.AddUserDefinedAttribute.assert_called_once_with(
+                'RADIUS', 'Radius', 'Radius', VISUM_VALUETYPE_INT, 0
+            )
+
+    def test_iter_poi_geodata_files_prefers_geojson_over_shapefile(self):
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            poi_dir = root / 'shapefile' / 'POI'
+            poi_dir.mkdir(parents=True)
+            (poi_dir / 'sector_retail_points.shp').touch()
+            (poi_dir / 'sector_retail_points.geojson').touch()
+            (poi_dir / 'sector_leisure_points.shp').touch()
+
+            found = iter_poi_geodata_files(root)
+            self.assertEqual(
+                [(p.name, cat, adm) for p, cat, adm in found],
+                [
+                    ('sector_leisure_points.shp', 22, False),
+                    ('sector_retail_points.geojson', 23, False),
+                ],
+            )
+
+    @unittest.skipIf(gpd is None, 'Requires the QGIS geospatial Python environment')
+    def test_ensure_poi_geojson_files_exports_untruncated_attrs_and_drops_path(self):
+        with tempfile.TemporaryDirectory() as directory:
+            proj = Path(directory)
+            m1_dir = proj / 'processed' / 'qgis_output' / 'model1_DataPrep'
+            m5_dir = proj / 'processed' / 'qgis_output' / 'model5_UrbanCentrality'
+            visum_dir = proj / 'processed' / 'visum'
+            m1_dir.mkdir(parents=True)
+            m5_dir.mkdir(parents=True)
+            visum_dir.mkdir(parents=True)
+
+            adm2 = gpd.GeoDataFrame(
+                {
+                    'NAME_2': ['Bacolod'],
+                    'ZONENO': [2002.0],
+                    'MAINZONENO': [200.0],
+                    'POP': [600783.0],
+                },
+                geometry=[Polygon([(0, 0), (1000, 0), (1000, 1000), (0, 0)])],
+                crs='EPSG:32651',
+            )
+            adm2.to_file(m1_dir / 'adm2.gpkg', driver='GPKG')
+
+            pts = gpd.GeoDataFrame(
+                {
+                    'name': ['Mall'],
+                    'classification': ['Shopping Centre'],
+                    'description': ['Large mall'],
+                    'primary_tag': ['shop=mall'],
+                    'secondary_tag': ['building=retail'],
+                    'Weight': [3],
+                    'Radius': [200],
+                    'is_polygon': [True],
+                    'path': ['source.gpkg'],
+                },
+                geometry=[Point(500, 500)],
+                crs='EPSG:32651',
+            )
+            pts.to_file(m5_dir / 'sector_retail_points.gpkg', driver='GPKG')
+            # Stale shapefile should be ignored once GeoJSON exists.
+            (visum_dir / 'shapefile' / 'POI').mkdir(parents=True, exist_ok=True)
+            (visum_dir / 'shapefile' / 'POI' / 'sector_retail_points.shp').touch()
+
+            written = ensure_poi_geojson_files(visum_dir, log=MagicMock())
+            self.assertEqual(written, 2)
+
+            pt_gj = visum_dir / 'shapefile' / 'POI' / 'sector_retail_points.geojson'
+            adm_gj = visum_dir / 'shapefile' / 'Zones' / 'adm2.geojson'
+            self.assertTrue(pt_gj.is_file())
+            self.assertTrue(adm_gj.is_file())
+            self.assertNotIn('"crs"', pt_gj.read_text(encoding='utf-8'))
+            self.assertNotIn('"path"', pt_gj.read_text(encoding='utf-8'))
+
+            visum = MagicMock()
+            visum._use_native_shapefile_import = True
+            visum.Net.AttValue.return_value = CRS.from_epsg(32651).to_wkt()
+
+            cat23 = MagicMock()
+            cat23.POIs.AttrExists.side_effect = lambda key: key in ('PATH', 'CLASSIFICA')
+            cat23.POIs.GetMultiAttValues.return_value = []
+
+            cat12 = MagicMock()
+            cat12.POIs.AttrExists.side_effect = lambda key: key == 'POP'
+            cat12.POIs.Attributes.ItemByKey.return_value = types.SimpleNamespace(ValueType=VISUM_VALUETYPE_REAL)
+            cat12.POIs.GetMultiAttValues.side_effect = (
+                lambda attr_id, OnlyActive=False: [(1, 'Bacolod')] if attr_id == 'NAME_2' else []
+            )
+            visum.Net.POICategories.ItemByKey.side_effect = lambda key: {23: cat23, 12: cat12}[key]
+
+            para_pt = MagicMock()
+            para_adm = MagicMock()
+            visum.IO.CreateImportGeoJSONPara.side_effect = [para_pt, para_adm]
+
+            count = import_project_pois(visum, visum_dir, log=MagicMock())
+            self.assertEqual(count, 2)
+            # Valid RFC 7946 WGS84 GeoJSON is passed directly without temp rewrite.
+            self.assertEqual(visum.IO.ImportGeoJSON.call_args_list[0].args[0], str(pt_gj))
+            self.assertEqual(visum.IO.ImportGeoJSON.call_args_list[1].args[0], str(adm_gj))
+            cat23.POIs.DeleteUserDefinedAttribute.assert_any_call('PATH')
+            cat23.POIs.DeleteUserDefinedAttribute.assert_any_call('CLASSIFICA')
+            cat12.POIs.DeleteUserDefinedAttribute.assert_any_call('POP')
+
+            pt_attr_map, pt_uda_defs = build_attribute_mapping(gpd.read_file(pt_gj))
+            self.assertNotIn('path', pt_attr_map)
+            self.assertEqual(
+                {aid: vt for aid, _, vt, _ in pt_uda_defs},
+                {
+                    'CLASSIFICATION': VISUM_VALUETYPE_STRING,
+                    'DESCRIPTION': VISUM_VALUETYPE_STRING,
+                    'PRIMARY_TAG': VISUM_VALUETYPE_STRING,
+                    'SECONDARY_TAG': VISUM_VALUETYPE_STRING,
+                    'WEIGHT': VISUM_VALUETYPE_INT,
+                    'RADIUS': VISUM_VALUETYPE_INT,
+                    'IS_POLYGON': VISUM_VALUETYPE_BOOL,
+                },
+            )
+            _, adm_uda_defs = build_attribute_mapping(gpd.read_file(adm_gj))
+            self.assertEqual(
+                {aid: vt for aid, _, vt, _ in adm_uda_defs},
+                {
+                    'NAME_2': VISUM_VALUETYPE_STRING,
+                    'ZONENO': VISUM_VALUETYPE_INT,
+                    'MAINZONENO': VISUM_VALUETYPE_INT,
+                    'POP': VISUM_VALUETYPE_INT,
+                },
+            )
 
 
 if __name__ == '__main__':

@@ -68,6 +68,23 @@ def run_direct_line_matrix_generation(target_project_dir=None, visum=None):
     mtx_dir = visum_input_dir / "mtx"
     mtx_dir.mkdir(parents=True, exist_ok=True)
 
+    # Ensure Luftlinientool GUI and standalone dependencies are available in processed/visum/script/dlnt
+    import shutil
+    script_dir = Path(__file__).resolve().parent
+    helper_dir = script_dir.parent / "helper_files"
+    dlnt_dst = visum_input_dir / "script" / "dlnt"
+    dlnt_dst.mkdir(parents=True, exist_ok=True)
+    for filename in ("dlnt_GUI.py", "05_cfl_directlinenetwork_tool.py", "05_language_management.py"):
+        src_file = script_dir / filename
+        if src_file.is_file():
+            shutil.copy2(src_file, dlnt_dst / filename)
+    translations_src = helper_dir / "translations.json"
+    if translations_src.is_file():
+        shutil.copy2(translations_src, dlnt_dst / "translations.json")
+    docs_src = helper_dir / "documentation"
+    if docs_src.is_dir():
+        shutil.copytree(docs_src, dlnt_dst / "documentation", dirs_exist_ok=True)
+
     output_ver = ver_dir / "06_DirectLineMatrices_Added.ver"
 
     # Import des ISV DLNT Tools & Translator

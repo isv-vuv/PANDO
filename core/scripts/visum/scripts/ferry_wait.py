@@ -1,23 +1,74 @@
-"""Fixed boarding delay, in seconds, on land-to-ferry turns only."""
+"""Fixed boarding delay, in seconds, upon entering the ferry system."""
 import json
 import math
 from pathlib import Path
 
+FERRY_LINK_TYPES = frozenset({'Ferry', 'Ferry_Access'})
+
 
 def load_wait_minutes(root):
-    path = Path(root) / 'ferry_parameters.json'
-    value = json.loads(path.read_text(encoding='utf-8'))['wait_minutes'] if path.exists() else 20
+    root_path = Path(root)
+    config_path = root_path / 'config.json'
+    value = None
+    if config_path.is_file():
+        try:
+            cfg = json.loads(config_path.read_text(encoding='utf-8'))
+            visum_cfg = cfg.get('visum') if isinstance(cfg, dict) else None
+            if isinstance(visum_cfg, dict) and 'ferry_wait_minutes' in visum_cfg:
+                value = visum_cfg['ferry_wait_minutes']
+        except Exception:
+            value = None
+    if value is None:
+        legacy_path = root_path / 'ferry_parameters.json'
+        value = json.loads(legacy_path.read_text(encoding='utf-8'))['wait_minutes'] if legacy_path.exists() else 20
     value = float(value)
     if not math.isfinite(value) or value < 0:
         raise ValueError('Ferry waiting time must be finite and non-negative')
     return value
 
 
+def save_wait_minutes(root, minutes):
+    value = float(minutes)
+    if not math.isfinite(value) or value < 0:
+        raise ValueError('Ferry waiting time must be finite and non-negative')
+    root_path = Path(root)
+    config_path = root_path / 'config.json'
+    config_path.parent.mkdir(parents=True, exist_ok=True)
+    cfg = {}
+    if config_path.is_file():
+        try:
+            loaded = json.loads(config_path.read_text(encoding='utf-8'))
+            if isinstance(loaded, dict):
+                cfg = loaded
+        except Exception:
+            cfg = {}
+    visum_cfg = cfg.get('visum')
+    if not isinstance(visum_cfg, dict):
+        visum_cfg = {}
+        cfg['visum'] = visum_cfg
+    visum_cfg['ferry_wait_minutes'] = value
+    temporary = config_path.with_suffix('.json.tmp')
+    temporary.write_text(json.dumps(cfg, indent=2, ensure_ascii=False), encoding='utf-8')
+    temporary.replace(config_path)
+    legacy_path = root_path / 'ferry_parameters.json'
+    if legacy_path.is_file():
+        try:
+            legacy_path.unlink()
+        except OSError:
+            pass
+    return config_path
+
+
 def apply_ferry_wait(visum, minutes):
     """Replace our previous delay, preserving other turn penalties and restrictions.
 
-    Link type names survive the conversion from importer type 94 to master 939.
-    Ferry-to-ferry turns do not board again, even across split OSM ways.
+    Both ``Ferry`` (importer type 94 / master 939) and ``Ferry_Access``
+    (importer type 95 / master 940) are treated as part of the ferry system.
+    The waiting-time penalty is applied exactly once per ferry boarding:
+    - Road -> Ferry (direct ferry connection)
+    - Road -> Ferry_Access (isolated terminal connected via Ferry_Access)
+    Turns inside the ferry system (Ferry_Access -> Ferry, Ferry -> Ferry,
+    Ferry -> Ferry_Access) receive zero additional boarding penalty.
     """
     seconds = float(minutes) * 60
     if not math.isfinite(seconds) or seconds < 0:
@@ -40,7 +91,7 @@ def apply_ferry_wait(visum, minutes):
         raise ValueError('AddVal2 is reserved for the ferry waiting-time skim')
     times, waits = [], []
     for index, (incoming, outgoing, current, previous) in enumerate(rows, 1):
-        delay = seconds if outgoing == 'Ferry' and incoming != 'Ferry' else 0
+        delay = seconds if (outgoing in FERRY_LINK_TYPES and incoming not in FERRY_LINK_TYPES) else 0
         times.append((index, float(current) - float(previous or 0) + delay))
         waits.append((index, delay))
     if times:

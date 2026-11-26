@@ -27,13 +27,14 @@ def step4_payload(**overrides):
 class AppStateTests(unittest.TestCase):
     def test_step_progress_maps_current_step_to_percent(self):
         self.assertEqual(progress_percent_for_step(StepId.WELCOME), 0)
-        self.assertEqual(progress_percent_for_step(StepId.SEARCH), 14)
-        self.assertEqual(progress_percent_for_step(StepId.CITY_SELECTION), 14)
-        self.assertEqual(progress_percent_for_step(StepId.PROJECT_PBF), 29)
-        self.assertEqual(progress_percent_for_step(StepId.GRID_AREA), 43)
-        self.assertEqual(progress_percent_for_step(StepId.PROCESSING), 57)
-        self.assertEqual(progress_percent_for_step(StepId.VISUM), 71)
-        self.assertEqual(progress_percent_for_step(StepId.RESULTS), 86)
+        self.assertEqual(progress_percent_for_step(StepId.SEARCH), 12)
+        self.assertEqual(progress_percent_for_step(StepId.CITY_SELECTION), 12)
+        self.assertEqual(progress_percent_for_step(StepId.PROJECT_PBF), 25)
+        self.assertEqual(progress_percent_for_step(StepId.GRID_AREA), 38)
+        self.assertEqual(progress_percent_for_step(StepId.PROCESSING), 50)
+        self.assertEqual(progress_percent_for_step(StepId.LINKTYPES), 62)
+        self.assertEqual(progress_percent_for_step(StepId.VISUM), 75)
+        self.assertEqual(progress_percent_for_step(StepId.RESULTS), 88)
         self.assertEqual(progress_percent_for_step(StepId.REPORT), 100)
         self.assertEqual(previous_step_id(StepId.REPORT), StepId.RESULTS)
 
@@ -41,7 +42,8 @@ class AppStateTests(unittest.TestCase):
         state = AppState(current_step=StepId.PROJECT_PBF, search_city="Berlin")
 
         self.assertEqual(previous_step_id(StepId.RESULTS), StepId.VISUM)
-        self.assertEqual(previous_step_id(StepId.VISUM), StepId.PROCESSING)
+        self.assertEqual(previous_step_id(StepId.VISUM), StepId.LINKTYPES)
+        self.assertEqual(previous_step_id(StepId.LINKTYPES), StepId.PROCESSING)
         self.assertEqual(previous_step_id(StepId.PROCESSING), StepId.GRID_AREA)
         self.assertEqual(previous_step_id(StepId.GRID_AREA), StepId.PROJECT_PBF)
         self.assertEqual(previous_step_id(state.current_step), StepId.SEARCH)
