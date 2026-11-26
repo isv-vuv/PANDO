@@ -461,16 +461,16 @@
       <Option type="Map" name="params">
         <Option type="List" name="INPUT">
           <Option type="Map">
-            <Option type="QString" name="child_id" value="native:refactorfields_1"/>
-            <Option type="QString" name="output_name" value="OUTPUT"/>
-            <Option type="int" name="source" value="1"/>
+            <Option name="child_id" type="QString" value="native:createspatialindex_2"/>
+            <Option name="output_name" type="QString" value="OUTPUT"/>
+            <Option name="source" type="int" value="1"/>
           </Option>
         </Option>
         <Option type="List" name="INTERSECT">
           <Option type="Map">
-            <Option type="QString" name="child_id" value="native:reprojectlayer_1"/>
-            <Option type="QString" name="output_name" value="OUTPUT"/>
-            <Option type="int" name="source" value="1"/>
+            <Option name="child_id" type="QString" value="native:createspatialindex_3"/>
+            <Option name="output_name" type="QString" value="OUTPUT"/>
+            <Option name="source" type="int" value="1"/>
           </Option>
         </Option>
         <Option type="List" name="PREDICATE">
@@ -576,16 +576,16 @@
         </Option>
         <Option type="List" name="INPUT">
           <Option type="Map">
-            <Option type="QString" name="child_id" value="native:reprojectlayer_2"/>
-            <Option type="QString" name="output_name" value="OUTPUT"/>
-            <Option type="int" name="source" value="1"/>
+            <Option name="child_id" type="QString" value="native:createspatialindex_4"/>
+            <Option name="output_name" type="QString" value="OUTPUT"/>
+            <Option name="source" type="int" value="1"/>
           </Option>
         </Option>
         <Option type="List" name="JOIN">
           <Option type="Map">
-            <Option type="QString" name="child_id" value="native:reprojectlayer_1"/>
-            <Option type="QString" name="output_name" value="OUTPUT"/>
-            <Option type="int" name="source" value="1"/>
+            <Option name="child_id" type="QString" value="native:createspatialindex_3"/>
+            <Option name="output_name" type="QString" value="OUTPUT"/>
+            <Option name="source" type="int" value="1"/>
           </Option>
         </Option>
         <Option type="List" name="JOIN_FIELDS">
@@ -652,16 +652,16 @@
         </Option>
         <Option type="List" name="INPUT">
           <Option type="Map">
-            <Option type="QString" name="child_id" value="native:joinattributesbylocation_1"/>
-            <Option type="QString" name="output_name" value="OUTPUT"/>
-            <Option type="int" name="source" value="1"/>
+            <Option name="child_id" type="QString" value="native:createspatialindex_5"/>
+            <Option name="output_name" type="QString" value="OUTPUT"/>
+            <Option name="source" type="int" value="1"/>
           </Option>
         </Option>
         <Option type="List" name="JOIN">
           <Option type="Map">
-            <Option type="QString" name="child_id" value="native:reprojectlayer_1"/>
-            <Option type="QString" name="output_name" value="OUTPUT"/>
-            <Option type="int" name="source" value="1"/>
+            <Option name="child_id" type="QString" value="native:createspatialindex_3"/>
+            <Option name="output_name" type="QString" value="OUTPUT"/>
+            <Option name="source" type="int" value="1"/>
           </Option>
         </Option>
         <Option type="List" name="JOIN_FIELDS">
@@ -728,16 +728,16 @@
         </Option>
         <Option type="List" name="INPUT">
           <Option type="Map">
-            <Option type="QString" name="child_id" value="native:reprojectlayer_1"/>
-            <Option type="QString" name="output_name" value="OUTPUT"/>
-            <Option type="int" name="source" value="1"/>
+            <Option name="child_id" type="QString" value="native:createspatialindex_3"/>
+            <Option name="output_name" type="QString" value="OUTPUT"/>
+            <Option name="source" type="int" value="1"/>
           </Option>
         </Option>
         <Option type="List" name="JOIN">
           <Option type="Map">
-            <Option type="QString" name="child_id" value="native:refactorfields_2"/>
-            <Option type="QString" name="output_name" value="OUTPUT"/>
-            <Option type="int" name="source" value="1"/>
+            <Option name="child_id" type="QString" value="native:createspatialindex_6"/>
+            <Option name="output_name" type="QString" value="OUTPUT"/>
+            <Option name="source" type="int" value="1"/>
           </Option>
         </Option>
         <Option type="List" name="JOIN_FIELDS">
@@ -804,16 +804,16 @@
         </Option>
         <Option type="List" name="INPUT">
           <Option type="Map">
-            <Option type="QString" name="child_id" value="native:joinattributesbylocation_3"/>
-            <Option type="QString" name="output_name" value="OUTPUT"/>
-            <Option type="int" name="source" value="1"/>
+            <Option name="child_id" type="QString" value="native:createspatialindex_7"/>
+            <Option name="output_name" type="QString" value="OUTPUT"/>
+            <Option name="source" type="int" value="1"/>
           </Option>
         </Option>
         <Option type="List" name="JOIN">
           <Option type="Map">
-            <Option type="QString" name="child_id" value="script:central_place_categorisation_2"/>
-            <Option type="QString" name="output_name" value="OUTPUT"/>
-            <Option type="int" name="source" value="1"/>
+            <Option name="child_id" type="QString" value="native:createspatialindex_8"/>
+            <Option name="output_name" type="QString" value="OUTPUT"/>
+            <Option name="source" type="int" value="1"/>
           </Option>
         </Option>
         <Option type="List" name="JOIN_FIELDS">
@@ -1953,6 +1953,251 @@
           <Option type="Map">
             <Option type="QString" name="parameter_name" value="population_tolerance_"/>
             <Option type="int" name="source" value="0"/>
+          </Option>
+        </Option>
+      </Option>
+    </Option>
+    <Option name="native:createspatialindex_2" type="Map">
+      <Option name="active" type="bool" value="true"/>
+      <Option name="alg_config"/>
+      <Option name="alg_id" type="QString" value="native:createspatialindex"/>
+      <Option name="color" type="QString" value=""/>
+      <Option name="comment" type="Map">
+        <Option name="color" type="QString" value=""/>
+        <Option name="component_description" type="QString" value=""/>
+        <Option name="component_height" type="double" value="60"/>
+        <Option name="component_pos_x" type="double" value="2420"/>
+        <Option name="component_pos_y" type="double" value="1725"/>
+        <Option name="component_width" type="double" value="100"/>
+        <Option name="outputs_collapsed" type="bool" value="true"/>
+        <Option name="parameters_collapsed" type="bool" value="true"/>
+      </Option>
+      <Option name="component_description" type="QString" value="Create spatial index"/>
+      <Option name="component_height" type="double" value="30"/>
+      <Option name="component_pos_x" type="double" value="720.0"/>
+      <Option name="component_pos_y" type="double" value="730.0"/>
+      <Option name="component_width" type="double" value="200"/>
+      <Option name="dependencies"/>
+      <Option name="id" type="QString" value="native:createspatialindex_2"/>
+      <Option name="outputs"/>
+      <Option name="outputs_collapsed" type="bool" value="true"/>
+      <Option name="parameters_collapsed" type="bool" value="true"/>
+      <Option name="params" type="Map">
+        <Option name="INPUT" type="List">
+          <Option type="Map">
+            <Option type="QString" name="child_id" value="native:refactorfields_1"/>
+            <Option type="QString" name="output_name" value="OUTPUT"/>
+            <Option type="int" name="source" value="1"/>
+          </Option>
+        </Option>
+      </Option>
+    </Option>
+    <Option name="native:createspatialindex_3" type="Map">
+      <Option name="active" type="bool" value="true"/>
+      <Option name="alg_config"/>
+      <Option name="alg_id" type="QString" value="native:createspatialindex"/>
+      <Option name="color" type="QString" value=""/>
+      <Option name="comment" type="Map">
+        <Option name="color" type="QString" value=""/>
+        <Option name="component_description" type="QString" value=""/>
+        <Option name="component_height" type="double" value="60"/>
+        <Option name="component_pos_x" type="double" value="2420"/>
+        <Option name="component_pos_y" type="double" value="1725"/>
+        <Option name="component_width" type="double" value="100"/>
+        <Option name="outputs_collapsed" type="bool" value="true"/>
+        <Option name="parameters_collapsed" type="bool" value="true"/>
+      </Option>
+      <Option name="component_description" type="QString" value="Create spatial index"/>
+      <Option name="component_height" type="double" value="30"/>
+      <Option name="component_pos_x" type="double" value="680.0"/>
+      <Option name="component_pos_y" type="double" value="690.0"/>
+      <Option name="component_width" type="double" value="200"/>
+      <Option name="dependencies"/>
+      <Option name="id" type="QString" value="native:createspatialindex_3"/>
+      <Option name="outputs"/>
+      <Option name="outputs_collapsed" type="bool" value="true"/>
+      <Option name="parameters_collapsed" type="bool" value="true"/>
+      <Option name="params" type="Map">
+        <Option name="INPUT" type="List">
+          <Option type="Map">
+            <Option type="QString" name="child_id" value="native:reprojectlayer_1"/>
+            <Option type="QString" name="output_name" value="OUTPUT"/>
+            <Option type="int" name="source" value="1"/>
+          </Option>
+        </Option>
+      </Option>
+    </Option>
+    <Option name="native:createspatialindex_4" type="Map">
+      <Option name="active" type="bool" value="true"/>
+      <Option name="alg_config"/>
+      <Option name="alg_id" type="QString" value="native:createspatialindex"/>
+      <Option name="color" type="QString" value=""/>
+      <Option name="comment" type="Map">
+        <Option name="color" type="QString" value=""/>
+        <Option name="component_description" type="QString" value=""/>
+        <Option name="component_height" type="double" value="60"/>
+        <Option name="component_pos_x" type="double" value="2420"/>
+        <Option name="component_pos_y" type="double" value="1725"/>
+        <Option name="component_width" type="double" value="100"/>
+        <Option name="outputs_collapsed" type="bool" value="true"/>
+        <Option name="parameters_collapsed" type="bool" value="true"/>
+      </Option>
+      <Option name="component_description" type="QString" value="Create spatial index"/>
+      <Option name="component_height" type="double" value="30"/>
+      <Option name="component_pos_x" type="double" value="640.0"/>
+      <Option name="component_pos_y" type="double" value="380.0"/>
+      <Option name="component_width" type="double" value="200"/>
+      <Option name="dependencies"/>
+      <Option name="id" type="QString" value="native:createspatialindex_4"/>
+      <Option name="outputs"/>
+      <Option name="outputs_collapsed" type="bool" value="true"/>
+      <Option name="parameters_collapsed" type="bool" value="true"/>
+      <Option name="params" type="Map">
+        <Option name="INPUT" type="List">
+          <Option type="Map">
+            <Option type="QString" name="child_id" value="native:reprojectlayer_2"/>
+            <Option type="QString" name="output_name" value="OUTPUT"/>
+            <Option type="int" name="source" value="1"/>
+          </Option>
+        </Option>
+      </Option>
+    </Option>
+    <Option name="native:createspatialindex_5" type="Map">
+      <Option name="active" type="bool" value="true"/>
+      <Option name="alg_config"/>
+      <Option name="alg_id" type="QString" value="native:createspatialindex"/>
+      <Option name="color" type="QString" value=""/>
+      <Option name="comment" type="Map">
+        <Option name="color" type="QString" value=""/>
+        <Option name="component_description" type="QString" value=""/>
+        <Option name="component_height" type="double" value="60"/>
+        <Option name="component_pos_x" type="double" value="2420"/>
+        <Option name="component_pos_y" type="double" value="1725"/>
+        <Option name="component_width" type="double" value="100"/>
+        <Option name="outputs_collapsed" type="bool" value="true"/>
+        <Option name="parameters_collapsed" type="bool" value="true"/>
+      </Option>
+      <Option name="component_description" type="QString" value="Create spatial index"/>
+      <Option name="component_height" type="double" value="30"/>
+      <Option name="component_pos_x" type="double" value="600.0"/>
+      <Option name="component_pos_y" type="double" value="430.0"/>
+      <Option name="component_width" type="double" value="200"/>
+      <Option name="dependencies"/>
+      <Option name="id" type="QString" value="native:createspatialindex_5"/>
+      <Option name="outputs"/>
+      <Option name="outputs_collapsed" type="bool" value="true"/>
+      <Option name="parameters_collapsed" type="bool" value="true"/>
+      <Option name="params" type="Map">
+        <Option name="INPUT" type="List">
+          <Option type="Map">
+            <Option type="QString" name="child_id" value="native:joinattributesbylocation_1"/>
+            <Option type="QString" name="output_name" value="OUTPUT"/>
+            <Option type="int" name="source" value="1"/>
+          </Option>
+        </Option>
+      </Option>
+    </Option>
+    <Option name="native:createspatialindex_6" type="Map">
+      <Option name="active" type="bool" value="true"/>
+      <Option name="alg_config"/>
+      <Option name="alg_id" type="QString" value="native:createspatialindex"/>
+      <Option name="color" type="QString" value=""/>
+      <Option name="comment" type="Map">
+        <Option name="color" type="QString" value=""/>
+        <Option name="component_description" type="QString" value=""/>
+        <Option name="component_height" type="double" value="60"/>
+        <Option name="component_pos_x" type="double" value="2420"/>
+        <Option name="component_pos_y" type="double" value="1725"/>
+        <Option name="component_width" type="double" value="100"/>
+        <Option name="outputs_collapsed" type="bool" value="true"/>
+        <Option name="parameters_collapsed" type="bool" value="true"/>
+      </Option>
+      <Option name="component_description" type="QString" value="Create spatial index"/>
+      <Option name="component_height" type="double" value="30"/>
+      <Option name="component_pos_x" type="double" value="320.0"/>
+      <Option name="component_pos_y" type="double" value="1200.0"/>
+      <Option name="component_width" type="double" value="200"/>
+      <Option name="dependencies"/>
+      <Option name="id" type="QString" value="native:createspatialindex_6"/>
+      <Option name="outputs"/>
+      <Option name="outputs_collapsed" type="bool" value="true"/>
+      <Option name="parameters_collapsed" type="bool" value="true"/>
+      <Option name="params" type="Map">
+        <Option name="INPUT" type="List">
+          <Option type="Map">
+            <Option type="QString" name="child_id" value="native:refactorfields_2"/>
+            <Option type="QString" name="output_name" value="OUTPUT"/>
+            <Option type="int" name="source" value="1"/>
+          </Option>
+        </Option>
+      </Option>
+    </Option>
+    <Option name="native:createspatialindex_7" type="Map">
+      <Option name="active" type="bool" value="true"/>
+      <Option name="alg_config"/>
+      <Option name="alg_id" type="QString" value="native:createspatialindex"/>
+      <Option name="color" type="QString" value=""/>
+      <Option name="comment" type="Map">
+        <Option name="color" type="QString" value=""/>
+        <Option name="component_description" type="QString" value=""/>
+        <Option name="component_height" type="double" value="60"/>
+        <Option name="component_pos_x" type="double" value="2420"/>
+        <Option name="component_pos_y" type="double" value="1725"/>
+        <Option name="component_width" type="double" value="100"/>
+        <Option name="outputs_collapsed" type="bool" value="true"/>
+        <Option name="parameters_collapsed" type="bool" value="true"/>
+      </Option>
+      <Option name="component_description" type="QString" value="Create spatial index"/>
+      <Option name="component_height" type="double" value="30"/>
+      <Option name="component_pos_x" type="double" value="580.0"/>
+      <Option name="component_pos_y" type="double" value="1850.0"/>
+      <Option name="component_width" type="double" value="200"/>
+      <Option name="dependencies"/>
+      <Option name="id" type="QString" value="native:createspatialindex_7"/>
+      <Option name="outputs"/>
+      <Option name="outputs_collapsed" type="bool" value="true"/>
+      <Option name="parameters_collapsed" type="bool" value="true"/>
+      <Option name="params" type="Map">
+        <Option name="INPUT" type="List">
+          <Option type="Map">
+            <Option type="QString" name="child_id" value="native:joinattributesbylocation_3"/>
+            <Option type="QString" name="output_name" value="OUTPUT"/>
+            <Option type="int" name="source" value="1"/>
+          </Option>
+        </Option>
+      </Option>
+    </Option>
+    <Option name="native:createspatialindex_8" type="Map">
+      <Option name="active" type="bool" value="true"/>
+      <Option name="alg_config"/>
+      <Option name="alg_id" type="QString" value="native:createspatialindex"/>
+      <Option name="color" type="QString" value=""/>
+      <Option name="comment" type="Map">
+        <Option name="color" type="QString" value=""/>
+        <Option name="component_description" type="QString" value=""/>
+        <Option name="component_height" type="double" value="60"/>
+        <Option name="component_pos_x" type="double" value="2420"/>
+        <Option name="component_pos_y" type="double" value="1725"/>
+        <Option name="component_width" type="double" value="100"/>
+        <Option name="outputs_collapsed" type="bool" value="true"/>
+        <Option name="parameters_collapsed" type="bool" value="true"/>
+      </Option>
+      <Option name="component_description" type="QString" value="Create spatial index"/>
+      <Option name="component_height" type="double" value="30"/>
+      <Option name="component_pos_x" type="double" value="540.0"/>
+      <Option name="component_pos_y" type="double" value="1810.0"/>
+      <Option name="component_width" type="double" value="200"/>
+      <Option name="dependencies"/>
+      <Option name="id" type="QString" value="native:createspatialindex_8"/>
+      <Option name="outputs"/>
+      <Option name="outputs_collapsed" type="bool" value="true"/>
+      <Option name="parameters_collapsed" type="bool" value="true"/>
+      <Option name="params" type="Map">
+        <Option name="INPUT" type="List">
+          <Option type="Map">
+            <Option type="QString" name="child_id" value="script:central_place_categorisation_2"/>
+            <Option type="QString" name="output_name" value="OUTPUT"/>
+            <Option type="int" name="source" value="1"/>
           </Option>
         </Option>
       </Option>
