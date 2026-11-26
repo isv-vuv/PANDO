@@ -2071,7 +2071,6 @@ class DataStepWidget(_Q_WIDGET_BASE):
                 )
             if self.global_status_label:
                 self.global_status_label.setText(self.localizer.get_string("step2_status_global_complete", default="Download abgeschlossen: Alle POP & GADM Daten vorhanden."))
-            Dialogs.info(self, self.localizer.get_string("step2_dialog_global_download_title", default="Download POP & GADM"), message)
         else:
             if self.global_status_label:
                 self.global_status_label.setText(self.localizer.get_string("step2_status_download_finished_msg", message=message, default=f"Download beendet: {message}"))
@@ -2107,10 +2106,18 @@ class DataStepWidget(_Q_WIDGET_BASE):
         global_ready = all(info["exists"] for info in status_dict.values())
 
         ready = pbf_ready and global_ready
+        missing_key = (
+            "step2_download_required_both" if not global_ready and not pbf_ready
+            else "step2_download_required_global" if not global_ready
+            else "step2_download_required_osm" if not pbf_ready
+            else None
+        )
+        self.download_requirement_text = self.localizer.get_string(missing_key) if missing_key else ""
         download_style = (
-            "QPushButton { background-color: #10b981; color: #ffffff; font-weight: bold; border-radius: 4px; padding: 5px 14px; border: 1px solid #059669; } "
-            "QPushButton:hover { background-color: #059669; } "
-            "QPushButton:disabled { background-color: #cbd5e1; color: #94a3b8; border-color: #cbd5e1; }"
+            "QPushButton:enabled { background-color: #dcfce7; color: #166534; "
+            "border: 1px solid #86efac; border-radius: 4px; padding: 5px 14px; } "
+            "QPushButton:enabled:hover { background-color: #bbf7d0; } "
+            "QPushButton:enabled:pressed { background-color: #86efac; }"
         )
         for name, needed in (("download_button", not pbf_ready), ("global_download_button", not global_ready)):
             button = getattr(self, name, None)

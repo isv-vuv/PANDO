@@ -547,6 +547,14 @@ class UrbanActQtMainWindow(BaseMainWindow):
     def _handle_data_readiness_changed(self, ready: bool) -> None:
         if self.state.current_step == StepId.PROJECT_PBF and self._next_button is not None:
             self._next_button.setEnabled(ready)
+            self._update_download_hint()
+
+    def _update_download_hint(self) -> None:
+        text = ""
+        if self.state.current_step == StepId.PROJECT_PBF:
+            text = getattr(self._current_step_widget, "download_requirement_text", "")
+        self._download_hint_label.setText(text)
+        self._download_hint_label.setVisible(bool(text))
 
     def _show_grid_area_step(self) -> None:
         step3_widget = GridAreaStepWidget(
@@ -860,6 +868,12 @@ class UrbanActQtMainWindow(BaseMainWindow):
 
         self._update_nav_button_widths()
 
+        self._download_hint_label = QtWidgets.QLabel(left_box)
+        self._download_hint_label.setWordWrap(True)
+        self._download_hint_label.setAlignment(qt_enum(Qt, "AlignRight", "AlignmentFlag"))
+        self._download_hint_label.setStyleSheet("color: #475569; padding: 0px 8px;")
+        self._download_hint_label.hide()
+        left_layout.addWidget(self._download_hint_label)
         left_layout.addWidget(nav)
 
         # Splitter dividing main view (left) and help panel (right)
@@ -922,6 +936,7 @@ class UrbanActQtMainWindow(BaseMainWindow):
                 else:
                     self._next_button.setEnabled(True)
 
+        self._update_download_hint()
         self._update_nav_button_widths()
 
     def _update_nav_button_widths(self) -> None:

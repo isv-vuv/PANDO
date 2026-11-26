@@ -51,6 +51,13 @@ class Step2DataLogicTests(unittest.TestCase):
                 widget._emit_status = lambda message: None
                 with patch("core.app.app_qt.steps.step_data.check_global_datasets", return_value={"data": {"exists": global_ready}}):
                     widget._update_next_button_state()
+                expected_hint = (
+                    "step2_download_required_both" if not pbf_ready and not global_ready
+                    else "step2_download_required_global" if not global_ready
+                    else "step2_download_required_osm" if not pbf_ready
+                    else ""
+                )
+                self.assertEqual(widget.download_requirement_text, expected_hint)
                 self.assertEqual(widget.next_button.enabled, pbf_ready and global_ready)
                 self.assertEqual(bool(styles["pbf"]), not pbf_ready)
                 self.assertEqual(bool(styles["global_data"]), not global_ready)
