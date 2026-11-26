@@ -26,7 +26,4 @@ symbology-style.db
 Git_Push.txt
 .deps_ok
 OFF
-core/data/gadm/gadm_adm0.gpkg.sha256
-core/data/gadm/gadm_adm1.gpkg.sha256
-core/data/gadm/gadm_adm2.gpkg.sha256
-core/data/gadm/gadm_adm3.gpkg.sha256
+.gpkg.sha256
