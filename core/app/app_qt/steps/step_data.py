@@ -548,6 +548,7 @@ class DataStepWidget(_Q_WIDGET_BASE):
     """Creates the project folder and prepares geodata inputs (GADM, POP & OSM PBF)."""
 
     status_changed = pyqtSignal(str) if pyqtSignal is not None else None
+    readiness_changed = pyqtSignal(bool) if pyqtSignal is not None else None
     confirmed = pyqtSignal(dict) if pyqtSignal is not None else None
 
     def __init__(
@@ -2106,6 +2107,17 @@ class DataStepWidget(_Q_WIDGET_BASE):
         global_ready = all(info["exists"] for info in status_dict.values())
 
         ready = pbf_ready and global_ready
+        download_style = (
+            "QPushButton { background-color: #10b981; color: #ffffff; font-weight: bold; border-radius: 4px; padding: 5px 14px; border: 1px solid #059669; } "
+            "QPushButton:hover { background-color: #059669; } "
+            "QPushButton:disabled { background-color: #cbd5e1; color: #94a3b8; border-color: #cbd5e1; }"
+        )
+        for name, needed in (("download_button", not pbf_ready), ("global_download_button", not global_ready)):
+            button = getattr(self, name, None)
+            if button is not None:
+                button.setStyleSheet(download_style if needed else "")
+        if self.readiness_changed is not None:
+            self.readiness_changed.emit(ready)
         if self.next_button:
             self.next_button.setEnabled(ready)
 

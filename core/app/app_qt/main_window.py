@@ -540,8 +540,13 @@ class UrbanActQtMainWindow(BaseMainWindow):
     def _show_data_step(self) -> None:
         step2_widget = DataStepWidget(localizer, self.state.payload_for_data_step(), self._get_geofabrik_index(), self)
         step2_widget.status_changed.connect(self.set_status)
+        step2_widget.readiness_changed.connect(self._handle_data_readiness_changed)
         step2_widget.confirmed.connect(self._handle_step2_confirmed)
         self._show_step(StepId.PROJECT_PBF, step2_widget)
+
+    def _handle_data_readiness_changed(self, ready: bool) -> None:
+        if self.state.current_step == StepId.PROJECT_PBF and self._next_button is not None:
+            self._next_button.setEnabled(ready)
 
     def _show_grid_area_step(self) -> None:
         step3_widget = GridAreaStepWidget(
@@ -906,6 +911,8 @@ class UrbanActQtMainWindow(BaseMainWindow):
                         getattr(self._current_step_widget, "selected", lambda: None)() is not None
                     )
                     self._next_button.setEnabled(has_sel)
+                elif step_id == StepId.PROJECT_PBF:
+                    self._next_button.setEnabled(self._current_step_widget.next_button.isEnabled())
                 elif step_id == StepId.PROCESSING:
                     is_done = getattr(self._current_step_widget, "is_pipeline_completed", lambda: False)()
                     self._next_button.setEnabled(is_done)

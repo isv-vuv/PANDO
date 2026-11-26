@@ -40,6 +40,21 @@ class Step2DataLogicTests(unittest.TestCase):
         widget.localizer = SimpleNamespace(get_string=lambda key, **kw: key)
         return widget
 
+    def test_download_readiness_controls_navigation_and_highlight(self):
+        for pbf_ready, global_ready in ((False, False), (False, True), (True, False), (True, True)):
+            with self.subTest(pbf_ready=pbf_ready, global_ready=global_ready):
+                widget = self._widget_without_qt_init()
+                widget._last_verification = SimpleNamespace(all_found=pbf_ready)
+                styles = {}
+                widget.download_button = SimpleNamespace(setStyleSheet=lambda style: styles.update(pbf=style))
+                widget.global_download_button = SimpleNamespace(setStyleSheet=lambda style: styles.update(global_data=style))
+                widget._emit_status = lambda message: None
+                with patch("core.app.app_qt.steps.step_data.check_global_datasets", return_value={"data": {"exists": global_ready}}):
+                    widget._update_next_button_state()
+                self.assertEqual(widget.next_button.enabled, pbf_ready and global_ready)
+                self.assertEqual(bool(styles["pbf"]), not pbf_ready)
+                self.assertEqual(bool(styles["global_data"]), not global_ready)
+
     def test_forced_check_does_not_reuse_cached_missing_result(self):
         widget = self._widget_without_qt_init()
         widget._last_verification = SimpleNamespace(all_found=False)
