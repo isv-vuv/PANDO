@@ -27,3 +27,4 @@ Git_Push.txt
 .deps_ok
 OFF
 *.gpkg.sha256
+core/scripts/visum/helper_files/LINKTYPE_Visum.xlsm
