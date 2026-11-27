@@ -55,7 +55,7 @@ class LinkTypesConfigUnitTests(unittest.TestCase):
             for r in rows
         }
         self.assertEqual(set(master_active), set(gen_active))
-        self.assertEqual(gen_active[911][2], "BIKE,BUS,MINIBUS,CAR,HGV,PUTW,WALK")
+        self.assertEqual(gen_active[911][2], "BIKE,BUS,MINIBUS,PUTCAR,CAR,HGV,PUTW,WALK")
         master_cmp = {k: v for k, v in master_active.items() if k != 911}
         gen_cmp = {k: v for k, v in gen_active.items() if k != 911}
         self.assertEqual(master_cmp, gen_cmp)
@@ -170,8 +170,12 @@ class LinkTypesConfigUnitTests(unittest.TestCase):
                 self.assertEqual(lt940.AttValue("NAME"), "Ferry_Access")
                 self.assertAlmostEqual(float(lt940.AttValue("V0PRT")), 20.0)
                 self.assertAlmostEqual(float(lt940.AttValue("VMAX_PRTSYS(WALK)")), 20.0)
+                self.assertIn("PUTCAR", str(lt940.AttValue("TSYSSET")).split(","))
                 lt400 = visum.Net.LinkTypes.ItemByKey(400)
                 self.assertEqual(lt400.AttValue("NAME"), "Se L2 V80")
+                self.assertIn("PUTCAR", str(lt400.AttValue("TSYSSET")).split(","))
+                lt100 = visum.Net.LinkTypes.ItemByKey(100)
+                self.assertNotIn("PUTCAR", str(lt100.AttValue("TSYSSET")).split(","))
         finally:
             if visum is not None:
                 try:
@@ -211,7 +215,7 @@ class LinkTypesQtWidgetTests(unittest.TestCase):
 
             # Sub-Page 1: Fixed importer modes table
             modes_tsys = {widget.modes_table.item(r, 1).text() for r in range(widget.modes_table.rowCount())}
-            self.assertTrue({"CAR", "HGV", "BIKE", "WALK", "BUS", "PUTW"}.issubset(modes_tsys))
+            self.assertTrue({"CAR", "HGV", "BIKE", "WALK", "PUTCAR", "BUS", "PUTW"}.issubset(modes_tsys))
 
             # Sub-Page 2: _link sits directly after parent, TSys buttons are editable
             cat_keys = [
@@ -220,9 +224,13 @@ class LinkTypesQtWidgetTests(unittest.TestCase):
             ]
             self.assertEqual(cat_keys[:4], ["Motorway", "Motorway_link", "Trunk", "Trunk_link"])
             widget.category_list.setCurrentRow(0)
+            self.assertIn("PUTCAR", widget.editor._tsys_chip_map)
             widget.editor._tsys_chip_map["BIKE"].setChecked(True)
             self.assertIn("BIKE", widget.get_config()["categories"]["Motorway"]["tsys"])
             widget.editor._tsys_chip_map["BIKE"].setChecked(False)
+            widget.editor._tsys_chip_map["PUTCAR"].setChecked(True)
+            self.assertIn("PUTCAR", widget.get_config()["categories"]["Motorway"]["tsys"])
+            widget.editor._tsys_chip_map["PUTCAR"].setChecked(False)
 
             # Sub-Page 3: Capacities sorted 1..4 Lanes with auto-scale lock + separate Imp Car / Bike / Walk
             cap_headers = [widget.cap_table.horizontalHeaderItem(c).text() for c in range(4)]

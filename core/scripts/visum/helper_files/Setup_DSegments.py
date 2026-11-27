@@ -5,10 +5,26 @@ if 'Visum' not in globals() and 'visum' in globals():
     Visum = visum
 
 code_tsys = "PUTCAR"
+# Trunk (20), Trunk_link (21), Ferry / Ferry_Access (100) also allow MINIBUS & PUTCAR (Motorway 10/11 stays excluded)
+EXTRA_PUTCAR_GTYPES = {20, 21, 100}
 
 
 def _split_tsys(raw: str) -> list[str]:
     return [t.strip() for t in str(raw or "").split(",") if t.strip()]
+
+
+def _sync_minibus_putcar(tsys_list: list[str], gtype: int) -> list[str] | None:
+    """Return updated TSys list if changed, ensuring MINIBUS+PUTCAR on Trunk/Ferry & PUTCAR matching MINIBUS."""
+    updated = list(tsys_list)
+    if gtype in EXTRA_PUTCAR_GTYPES and "CAR" in updated and "MINIBUS" not in updated:
+        updated.append("MINIBUS")
+    has_minibus = "MINIBUS" in updated
+    has_putcar = code_tsys in updated
+    if has_minibus and not has_putcar:
+        updated.append(code_tsys)
+    elif not has_minibus and has_putcar:
+        updated = [t for t in updated if t != code_tsys]
+    return updated if updated != tsys_list else None
 
 
 try:
@@ -18,34 +34,40 @@ except Exception:
     Visum.Net.AddTSystem(code_tsys, "PRT")
     print(f"Transport system '{code_tsys}' (Type: PRT) newly created.")
 
-# 1a) LinkTypes: PUTCAR exakt auf alle Streckentypen setzen, auf denen MINIBUS erlaubt ist
-updated_lt = 0
-for lt in Visum.Net.LinkTypes.GetAll:
-    tsys_list = _split_tsys(lt.AttValue("TSysSet"))
-    has_minibus = "MINIBUS" in tsys_list
-    has_putcar = code_tsys in tsys_list
-    if has_minibus and not has_putcar:
-        tsys_list.append(code_tsys)
-        lt.SetAttValue("TSysSet", ",".join(tsys_list))
-        updated_lt += 1
-    elif not has_minibus and has_putcar:
-        lt.SetAttValue("TSysSet", ",".join(t for t in tsys_list if t != code_tsys))
-        updated_lt += 1
-print(f"{updated_lt} link types updated with '{code_tsys}'.")
+# 1a/1b) LinkTypes & Links:
+# Falls PUTCAR im Netz/in den Streckentypen bereits über PANDO_Importer.net oder
+# Schritt-5-GUI (custom_linktypes.net / master_linktypes.net) vorkonfiguriert ist,
+# bleiben diese Nutzerwahlen unverändert erhalten. Nur bei Legacy-Netzen ohne PUTCAR
+# erfolgt der Fallback-Sync (MINIBUS + Trunk/Ferry).
+lt_all = list(Visum.Net.LinkTypes.GetAll)
+has_putcar_on_linktypes = any(code_tsys in _split_tsys(lt.AttValue("TSysSet")) for lt in lt_all)
+link_tsys_rows = Visum.Net.Links.GetMultiAttValues("TSYSSET", False)
+has_putcar_on_links = any(code_tsys in _split_tsys(raw_t) for _, raw_t in link_tsys_rows)
 
-# 1b) Links: PUTCAR exakt synchron zu MINIBUS auf Strecken setzen
-link_updates = []
-for vid, raw_tsys in Visum.Net.Links.GetMultiAttValues("TSYSSET", False):
-    tsys_list = _split_tsys(raw_tsys)
-    has_minibus = "MINIBUS" in tsys_list
-    has_putcar = code_tsys in tsys_list
-    if has_minibus and not has_putcar:
-        link_updates.append((vid, ",".join(tsys_list + [code_tsys])))
-    elif not has_minibus and has_putcar:
-        link_updates.append((vid, ",".join(t for t in tsys_list if t != code_tsys)))
-if link_updates:
-    Visum.Net.Links.SetMultiAttValues("TSYSSET", link_updates)
-print(f"{len(link_updates)} links updated with '{code_tsys}' (matching MINIBUS).")
+if has_putcar_on_linktypes or has_putcar_on_links:
+    print(f"Existing '{code_tsys}' configuration on LinkTypes/Links detected -> preserving GUI/LinkType TSysSet.")
+else:
+    updated_lt = 0
+    for lt in lt_all:
+        tsys_list = _split_tsys(lt.AttValue("TSysSet"))
+        gtype = int(round(float(lt.AttValue("GTYPE") or 0)))
+        new_list = _sync_minibus_putcar(tsys_list, gtype)
+        if new_list is not None:
+            lt.SetAttValue("TSysSet", ",".join(new_list))
+            updated_lt += 1
+    print(f"{updated_lt} link types updated with '{code_tsys}' (legacy fallback).")
+
+    link_gtype_rows = Visum.Net.Links.GetMultiAttValues("GTYPE", False)
+    link_updates = []
+    for (vid, raw_tsys), (_, raw_gtype) in zip(link_tsys_rows, link_gtype_rows):
+        tsys_list = _split_tsys(raw_tsys)
+        gtype = int(round(float(raw_gtype or 0)))
+        new_list = _sync_minibus_putcar(tsys_list, gtype)
+        if new_list is not None:
+            link_updates.append((vid, ",".join(new_list)))
+    if link_updates:
+        Visum.Net.Links.SetMultiAttValues("TSYSSET", link_updates)
+    print(f"{len(link_updates)} links updated with '{code_tsys}' (legacy fallback).")
 
 # 1c) Turns: PUTCAR für offene CAR-Abbieger zwischen PUTCAR-fähigen Strecken freigeben
 turn_updates = []

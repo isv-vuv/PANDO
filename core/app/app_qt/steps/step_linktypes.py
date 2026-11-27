@@ -193,6 +193,7 @@ FIXED_IMPORTER_TSYS: tuple[tuple[str, str, str, str, str], ...] = (
     ("HGV", "HGV", "HGV", "PrT", "2.0"),
     ("BIKE", "BIKE", "Bicycle", "PrT", "1.0"),
     ("WALK", "WALK", "Pedestrian", "PrT", "1.0"),
+    ("PUTCAR", "PUTCAR", "PuT Car", "PrT", "1.0"),
     ("PuT", "BUS", "Bus", "PuT", "1.0"),
     ("PuT", "MINIBUS", "Minibus", "PuT", "1.0"),
     ("PuT", "TRAM", "Tram", "PuT", "1.0"),
@@ -490,7 +491,7 @@ class LinkTypesEditorWidget(_Q_WIDGET_BASE):
         self._table_watchers.append(_TableResizeWatcher(self.modes_table))
         _apply_balanced_column_widths(self.modes_table)
         row_h = self.modes_table.verticalHeader().defaultSectionSize()
-        self.modes_table.setMinimumHeight(min(320, max(220, row_h * len(FIXED_IMPORTER_TSYS) + 34)))
+        self.modes_table.setMinimumHeight(min(360, max(220, row_h * len(FIXED_IMPORTER_TSYS) + 34)))
         modes_layout.addWidget(self.modes_table)
         layout.addWidget(modes_box)
 
